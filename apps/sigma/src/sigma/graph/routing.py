@@ -23,6 +23,9 @@ from sigma.state import (
 # run straight to `finalizer`; FASE 2 routes it through the HITL `human_gate`.
 APPROVAL_NODE = "finalizer"
 
+# Node that pauses the run and waits for a human (FASE 2).
+HITL_NODE = "human_gate"
+
 # Gap class -> the node that can actually fix it (PRD section 5 routing table).
 _GAP_TARGET: dict[str, str] = {
     "structural": "planner",
@@ -145,6 +148,7 @@ def make_route_after_human():
 
 __all__ = [
     "APPROVAL_NODE",
+    "HITL_NODE",
     "budget",
     "fatal_error",
     "has_pending_tools",

@@ -17,13 +17,22 @@ import functools
 import time
 from typing import Any, Callable
 
+from langgraph.errors import GraphBubbleUp
+from langgraph.types import interrupt
+from pydantic import ValidationError
+
 from sigma.agents import reasoning
+from sigma.agents.llm_calls import structured
 from sigma.config import SETTINGS
-from sigma.errors import BudgetExhausted, SigmaError, ToolTimeoutError
+from sigma.errors import (BudgetExhausted, InvalidResume, SigmaError,
+                          ToolTimeoutError)
 from sigma.state import (
     AuditEvent,
     BudgetState,
+    DraftBrief,
     ErrorRecord,
+    Evaluation,
+    HumanDecision,
     PlanState,
     RequestPayload,
     RunStatus,
@@ -37,6 +46,7 @@ from sigma.state import (
     message,
     new_session_id,
 )
+from sigma.llm.deterministic import ToolPlan
 from sigma.tools.market import SECTORS, build_portfolio
 from sigma.tools.registry import ToolContext, ToolRegistry
 
@@ -69,6 +79,12 @@ def guarded(name: str) -> Callable[[Callable[[SigmaState], dict[str, Any]]],
             started = time.perf_counter()
             try:
                 update = fn(state)
+            except GraphBubbleUp:
+                # `interrupt()` and friends are control flow, not failures.
+                raise
+            except InvalidResume:
+                # Bad human input must reach the caller, not be contained.
+                raise
             except ToolTimeoutError:
                 # Transient: let `RESEARCH_RETRY` re-run the node before giving up.
                 raise
@@ -84,9 +100,10 @@ def guarded(name: str) -> Callable[[Callable[[SigmaState], dict[str, Any]]],
                     "errors": [record],
                     "audit_trail": [audit(state, name, "error", str(exc), fatal=record.fatal)],
                 }
+            update["audit_trail"] = _renumber(state, update)
             update.setdefault("audit_trail", []).append(
-                AuditEvent(seq=_next_seq(state, update), node=name, kind="completed",
-                           message=f"{name} finished",
+                AuditEvent(seq=(_last_seq(state) + len(update["audit_trail"]) + 1),
+                           node=name, kind="completed", message=f"{name} finished",
                            data={"ms": round((time.perf_counter() - started) * 1000, 1)}))
             return update
 
@@ -97,15 +114,29 @@ def guarded(name: str) -> Callable[[Callable[[SigmaState], dict[str, Any]]],
     return decorator
 
 
-def _next_seq(state: SigmaState, update: dict[str, Any]) -> int:
-    """Next audit sequence number, accounting for events added by this node.
+def _last_seq(state: SigmaState) -> int:
+    trail = state.get("audit_trail") or []
+    return max((e.seq for e in trail), default=0)
 
-    `audit()` numbers from the incoming state, so a node that appends two events
-    (its own plus the guard's) would otherwise emit a duplicate sequence number.
+
+def _renumber(state: SigmaState, update: dict[str, Any]) -> list[AuditEvent]:
+    """Give every event this node produced a fresh, strictly increasing `seq`.
+
+    Nodes build events from the *incoming* state (provider events, memory
+    compaction, their own summary), so without renumbering a node that emits
+    several events would reuse the same sequence number.
     """
-    sequences = [e.seq for e in (state.get("audit_trail") or [])]
-    sequences += [e.seq for e in (update.get("audit_trail") or [])]
-    return (max(sequences) + 1) if sequences else 1
+    base = _last_seq(state)
+    events: list[AuditEvent] = []
+    for offset, event in enumerate(update.get("audit_trail") or [], start=1):
+        event.seq = base + offset
+        events.append(event)
+    return events
+
+
+def _compact_errors(exc: ValidationError) -> str:
+    return "; ".join(f"{'.'.join(str(p) for p in e['loc'])}: {e['msg']}"
+                     for e in exc.errors()[:3])
 
 
 def _require(state: SigmaState, key: str) -> Any:
@@ -205,23 +236,31 @@ def planner(state: SigmaState) -> dict[str, Any]:
         raise BudgetExhausted(f"revision budget exhausted after {budget.revisions_used} revisions")
 
     directive = _directive(state)
-    plan = reasoning.plan_questions(
-        request, scenario, revision=revision, directive=directive,
-        existing=previous.sub_questions if previous else [],
+    result = structured(
+        state,
+        role="planner",
+        response_model=PlanState,
+        fallback=lambda: reasoning.plan_questions(
+            request, scenario, revision=revision, directive=directive,
+            existing=previous.sub_questions if previous else []),
+        directive=directive,
+        revision=revision,
     )
-    spent = consume_budget(budget, tokens=250)  # revisions are charged by the critic
+    plan: PlanState = result.value
+    # Revisions are charged by the critic, so planning only spends tokens.
+    spent = consume_budget(budget, tokens=result.tokens or 250)
 
-    return {
+    update = dict(result.update)
+    update.update({
         "plan": plan,
         "budget": spent,
         "status": RunStatus.RUNNING,
-        "audit_trail": [audit(state, "planner", "planned",
-                              f"revision={plan.revision} questions={len(plan.sub_questions)}",
-                              directive=directive or "")],
-        "messages": [message("assistant",
-                             f"Rencana rev-{plan.revision}: {len(plan.sub_questions)} sub-pertanyaan. "
-                             f"{plan.hypothesis}"[:600], kind="plan")],
-    }
+    })
+    update.setdefault("audit_trail", []).append(
+        audit(state, "planner", "planned",
+              f"revision={plan.revision} questions={len(plan.sub_questions)}",
+              directive=directive or "", provider=result.provider))
+    return update
 
 
 # --------------------------------------------------------------------------- #
@@ -271,26 +310,48 @@ def researcher(state: SigmaState) -> dict[str, Any]:
     merged["evidence"] = list(state.get("evidence") or []) + evidences
     merged["tool_calls"] = list(state.get("tool_calls") or []) + records
     left = budget.tool_calls_left - len(runnable)
-    new_calls = reasoning.propose_tool_calls(merged, budget_left=max(0, left)) if left > 0 else []
+    passes = int(state.get("research_pass") or 0) + 1
 
-    spent = consume_budget(budget, tools=len(runnable), tokens=180 * max(1, len(runnable)))
-    return {
+    if left > 0:
+        result = structured(
+            state,
+            role="researcher",
+            response_model=ToolPlan,
+            tools=REGISTRY.schemas(),
+            fallback=lambda: ToolPlan(
+                calls=reasoning.propose_tool_calls(
+                    {**merged, "research_pass": passes}, budget_left=left),
+                rationale="deterministic proposal"),
+            evidence=merged["evidence"],
+            tool_calls=merged["tool_calls"],
+            tool_budget_left=left,
+            research_pass=passes,
+        )
+        new_calls = [c for c in result.value.calls][:left]
+    else:
+        result = None
+        new_calls = []
+
+    spent = consume_budget(budget, tools=len(runnable),
+                           tokens=(result.tokens if result else 0) + 180 * max(1, len(runnable)))
+    update = dict(result.update) if result else {}
+    update.update({
         "tool_calls": records,
         "evidence": evidences,
         "errors": errors,
         "pending_tools": new_calls,
         "queued_call_ids": [c.call_id for c in new_calls],
-        "research_pass": int(state.get("research_pass") or 0) + 1,
+        "research_pass": passes,
         "budget": spent,
         "status": RunStatus.RUNNING,
-        "audit_trail": [audit(state, "researcher", "tool_pass",
-                              f"executed={len(runnable)} ok={len(evidences)} "
-                              f"proposed={len(new_calls)} left={left}",
-                              tools=[c.tool for c in runnable])],
-        "messages": [message("assistant",
-                             f"Mengumpulkan bukti: {len(evidences)} baru dari "
-                             f"{[c.tool for c in runnable]}."[:400], kind="research")],
-    }
+    })
+    update.setdefault("audit_trail", []).append(
+        audit(state, "researcher", "tool_pass",
+              f"executed={len(runnable)} ok={len(evidences)} "
+              f"proposed={len(new_calls)} left={left}",
+              tools=[c.tool for c in runnable],
+              provider=(result.provider if result else "none")))
+    return update
 
 
 # --------------------------------------------------------------------------- #
@@ -308,17 +369,27 @@ def analyst(state: SigmaState) -> dict[str, Any]:
     known = {f.finding_id for f in active_findings(state)}
     findings = active_findings(state) + [f for f in new_findings
                                          if f.finding_id not in known]
-    draft = reasoning.build_draft(state, findings)
-    spent = consume_budget(budget, tokens=400)
-    return {
-        "findings": findings,
+    result = structured(
+        state,
+        role="analyst",
+        response_model=DraftBrief,
+        fallback=lambda: reasoning.build_draft(state, findings),
+        new_findings=findings,
+    )
+    draft: DraftBrief = result.value
+    spent = consume_budget(budget, tokens=result.tokens or 400)
+    update = dict(result.update)
+    update.update({
+        "findings": new_findings,
         "draft": draft,
         "budget": spent,
         "status": RunStatus.RUNNING,
-        "audit_trail": [audit(state, "analyst", "synthesised",
-                              f"findings={len(findings)} recommendations={len(draft.recommendations)}")],
-        "messages": [message("assistant", draft.summary[:600], kind="analysis")],
-    }
+    })
+    update.setdefault("audit_trail", []).append(
+        audit(state, "analyst", "synthesised",
+              f"findings={len(findings)} recommendations={len(draft.recommendations)}",
+              provider=result.provider))
+    return update
 
 
 # --------------------------------------------------------------------------- #
@@ -331,22 +402,32 @@ def critic(state: SigmaState) -> dict[str, Any]:
     """Score the draft and enumerate the gaps that drive the macro-cycle."""
     request: RequestPayload = _require(state, "request")
     budget: BudgetState = _require(state, "budget")
-    evaluation = reasoning.critique(state, threshold=request.acceptance_threshold)
+    result = structured(
+        state,
+        role="critic",
+        response_model=Evaluation,
+        fallback=lambda: reasoning.critique(
+            state, threshold=request.acceptance_threshold),
+        threshold=request.acceptance_threshold,
+    )
+    evaluation: Evaluation = result.value
     # One revision is charged per self-correction cycle: this is the single
     # counter that guarantees the macro-cycle terminates (PRD NFR-4).
     spent = consume_budget(budget,
                            revisions=1 if evaluation.verdict == "revise" else 0,
-                           tokens=300)
-    return {
+                           tokens=result.tokens or 300)
+    update = dict(result.update)
+    update.update({
         "evaluation": [evaluation],
         "budget": spent,
         "status": RunStatus.RUNNING,
-        "audit_trail": [audit(state, "critic", "evaluated",
-                              f"score={evaluation.score:.3f} verdict={evaluation.verdict} "
-                              f"gaps={len(evaluation.gaps)}",
-                              dominant=evaluation.dominant_gap or "")],
-        "messages": [message("assistant", evaluation.rationale[:600], kind="critique")],
-    }
+    })
+    update.setdefault("audit_trail", []).append(
+        audit(state, "critic", "evaluated",
+              f"score={evaluation.score:.3f} verdict={evaluation.verdict} "
+              f"gaps={len(evaluation.gaps)}",
+              dominant=evaluation.dominant_gap or "", provider=result.provider))
+    return update
 
 
 # --------------------------------------------------------------------------- #
@@ -364,6 +445,51 @@ def finalizer(state: SigmaState) -> dict[str, Any]:
         "audit_trail": [audit(state, "finalizer", "brief_emitted",
                               f"score={brief.score:.3f} findings={len(brief.findings)}")],
         "messages": [message("assistant", f"Brief final: {brief.headline}"[:400], kind="final")],
+    }
+
+
+@guarded("human_gate")
+def human_gate(state: SigmaState) -> dict[str, Any]:
+    """Pause the run and ask a human to approve, revise or reject (PRD section 8).
+
+    `interrupt` raises on the first pass, so the run stops *inside* the node and
+    resumes from the start of this node with the human's answer. Because the whole
+    transcript lives in the checkpointed `messages` channel, the replay sees the
+    same context — the human is answering the same question the agent asked.
+    """
+    evaluation = latest_evaluation(state)
+    draft: DraftBrief | None = state.get("draft")
+    request: RequestPayload | None = state.get("request")
+
+    payload = {
+        "kind": "approval_request",
+        "session_id": state.get("session_id", ""),
+        "question": (request.question if request else ""),
+        "score": round(evaluation.score, 4) if evaluation else 0.0,
+        "threshold": request.acceptance_threshold if request else None,
+        "rubric": evaluation.scores.model_dump() if evaluation else {},
+        "headline": draft.headline if draft else "",
+        "summary": draft.summary if draft else "",
+        "recommendations": draft.recommendations if draft else [],
+        "open_gaps": [g.model_dump() for g in (evaluation.gaps if evaluation else [])],
+        "prompt": "Setujui brief ini (approve), minta revisi (revise), atau tolak (reject)?",
+    }
+    try:
+        decision = interrupt(payload, response_schema=HumanDecision)
+    except ValidationError as exc:
+        # A malformed human reply is a caller error, not a run failure: bubble it
+        # up so the API can answer 400 and the session stays paused at the gate.
+        raise InvalidResume(_compact_errors(exc)) from exc
+
+    return {
+        "human_decision": decision,
+        "status": RunStatus.RUNNING,
+        "audit_trail": [audit(state, "human_gate", "human_decision",
+                              f"decision={decision.decision} reviewer={decision.reviewer}",
+                              note=decision.note[:200])],
+        "messages": [message("human",
+                             f"[{decision.reviewer}] {decision.decision}: {decision.note}"[:400],
+                             kind="hitl")],
     }
 
 

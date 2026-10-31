@@ -13,8 +13,10 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command, StateSnapshot
 
 from sigma.agents import reasoning
+from sigma.errors import InvalidResume
 from sigma.config import SETTINGS
 from sigma.graph.builder import build_graph
+from sigma.graph.routing import APPROVAL_NODE, HITL_NODE
 from sigma.graph.checkpointer import get_saver
 from sigma.state import (
     ErrorRecord,
@@ -42,8 +44,12 @@ class SessionRunner:
     """Owns the compiled graph and the per-session invocation config."""
 
     def __init__(self, graph: CompiledStateGraph | None = None, *, hitl: bool = False) -> None:
-        self.graph = graph or build_graph(checkpointer=get_saver())
         self.hitl = hitl
+        self.graph = graph or build_graph(
+            checkpointer=get_saver(),
+            hitl=hitl,
+            approval_node=(HITL_NODE if hitl else APPROVAL_NODE),
+        )
 
     # -- config ------------------------------------------------------------ #
 
@@ -101,6 +107,10 @@ class SessionRunner:
         config = self.config(session_id)
         try:
             final = self.graph.invoke(payload, config)
+        except InvalidResume:
+            # The human's payload was invalid: leave the session paused so a
+            # corrected resume is still possible.
+            raise
         except Exception as exc:  # noqa: BLE001 - last-resort containment
             return self._contain(session_id, exc)
 
