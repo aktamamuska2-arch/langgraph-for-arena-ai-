@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SIGMA — Multi-Agent Analytics War Room</title>
+<link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">Σ</span>
+    <div>
+      <h1>SIGMA</h1>
+      <p>Strategic Intelligence · Graph-based Multi-Agent Analytics</p>
+    </div>
+  </div>
+  <div class="meta">
+    <span class="badge" id="health-badge">memuat…</span>
+    <span class="badge" id="size-badge" title="Audit ukuran artefak terhadap budget 125 MB">—</span>
+    <span class="badge" id="provider-badge">—</span>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- ── left column ───────────────────────────────────────────────── -->
+  <section class="col col-left">
+    <div class="card">
+      <h2>Pertanyaan analitik</h2>
+      <form id="run-form">
+        <textarea id="question" rows="3" required
+          placeholder="Contoh: Bagaimana risiko dan alokasi modal portofolio ventura kita kuartal ini?">Bagaimana risiko dan alokasi modal portofolio ventura kita kuartal ini?</textarea>
+        <div class="grid-controls">
+          <label>Seed<input type="number" id="seed" value="7" min="0" max="9999" /></label>
+          <label>Ambang skor<input type="number" id="threshold" value="0.78" step="0.01" min="0" max="1" /></label>
+          <label>Revisi maks<input type="number" id="revisions" value="3" min="0" max="9" /></label>
+          <label class="check"><input type="checkbox" id="hitl" checked /> Gate manusia (HITL)</label>
+        </div>
+        <div class="actions">
+          <button type="submit" class="primary" id="run-btn">Jalankan analisis</button>
+          <button type="button" id="reset-btn" class="ghost">Bersihkan</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card" id="gate-card" hidden>
+      <h2>Persetujuan manusia <span class="pill" id="gate-score"></span></h2>
+      <p class="hint">Graf berhenti di dalam node <code>human_gate</code> (interrupt).
+         State tersimpan di SQLite; sesi tetap bisa dilanjutkan setelah refresh.</p>
+      <div id="gate-body" class="gate-body"></div>
+      <textarea id="gate-note" rows="2" placeholder="Catatan untuk agen (opsional)"></textarea>
+      <div class="actions">
+        <button class="primary" data-decision="approve">Setujui</button>
+        <button class="warn" data-decision="revise">Minta revisi</button>
+        <button class="danger" data-decision="reject">Tolak</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Timeline eksekusi</h2>
+      <ol class="timeline" id="timeline"><li class="empty">Belum ada eksekusi.</li></ol>
+    </div>
+  </section>
+
+  <!-- ── right column ──────────────────────────────────────────────── -->
+  <section class="col col-right">
+    <div class="card">
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="brief">Brief</button>
+        <button class="tab" data-tab="rubric">Rubrik</button>
+        <button class="tab" data-tab="state">State</button>
+        <button class="tab" data-tab="time">Time-travel</button>
+        <button class="tab" data-tab="sessions">Sesi</button>
+      </div>
+
+      <div class="tabpanel active" id="tab-brief">
+        <div id="brief-body" class="empty">Jalankan analisis untuk melihat brief.</div>
+      </div>
+
+      <div class="tabpanel" id="tab-rubric">
+        <div id="rubric-body" class="empty">Belum ada evaluasi.</div>
+      </div>
+
+      <div class="tabpanel" id="tab-state">
+        <pre id="state-body" class="code">{}</pre>
+      </div>
+
+      <div class="tabpanel" id="tab-time">
+        <div class="hint">Checkpoint per superstep. Pilih satu untuk melihat state, lalu
+          <em>fork</em> untuk membuat cabang "bagaimana jika".</div>
+        <div id="timeline-body" class="empty">Belum ada sesi dipilih.</div>
+      </div>
+
+      <div class="tabpanel" id="tab-sessions">
+        <div class="actions"><button id="refresh-sessions" class="ghost">Muat ulang</button></div>
+        <div id="sessions-body" class="empty">Belum ada sesi.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <span>LangGraph cyclic graph · SQLite checkpointer · HITL interrupt</span>
+  <span id="footer-db">—</span>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
