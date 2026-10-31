@@ -85,10 +85,42 @@ class SessionRunner:
         """Re-enter an unfinished run (crash recovery: US-5)."""
         return self._invoke(session_id, None)
 
+    def new_session_id(self) -> str:
+        return new_session_id()
+
+    def fork_from(self, session_id: str, checkpoint_id: str,
+                  patch: dict[str, Any] | None = None) -> RunResult:
+        """Start a new session from a past checkpoint of another session (US-6).
+
+        The branch is a *new thread* seeded with the historical state, so the
+        original timeline stays intact and both branches remain comparable.
+        """
+        snapshot = self.state_at(session_id, checkpoint_id)
+        if snapshot is None:
+            raise KeyError(f"unknown checkpoint {checkpoint_id}")
+        values: dict[str, Any] = dict(snapshot.values or {})
+        if values.get("request") is None:
+            # The first checkpoint of every thread is written before any node
+            # runs, so it carries no request: branching from it is meaningless.
+            raise ValueError("checkpoint predates the request; choose a later one")
+        new_id = new_session_id()
+        values["session_id"] = new_id
+        values["status"] = RunStatus.RUNNING
+        values["human_decision"] = None
+        if patch:
+            values.update(patch)
+        return self._invoke(new_id, values)
+
     # -- inspection -------------------------------------------------------- #
 
     def state(self, session_id: str) -> StateSnapshot | None:
-        return self.graph.get_state(self.config(session_id))
+        """Latest snapshot, or `None` when the thread has no checkpoint yet."""
+        snapshot = self.graph.get_state(self.config(session_id))
+        # `SqliteSaver.get_state` returns an empty snapshot (not None) for an
+        # unknown thread, so emptiness — not identity — is the "missing" signal.
+        if snapshot is None or not snapshot.values:
+            return None
+        return snapshot
 
     def history(self, session_id: str) -> list[StateSnapshot]:
         return list(self.graph.get_state_history(self.config(session_id)))
@@ -96,7 +128,10 @@ class SessionRunner:
     def state_at(self, session_id: str, checkpoint_id: str) -> StateSnapshot | None:
         config = self.config(session_id)
         config["configurable"]["checkpoint_id"] = checkpoint_id
-        return self.graph.get_state(config)
+        snapshot = self.graph.get_state(config)
+        if snapshot is None or not snapshot.values:
+            return None
+        return snapshot
 
     def exists(self, session_id: str) -> bool:
         return self.state(session_id) is not None

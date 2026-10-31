@@ -34,7 +34,9 @@ def sigma_serde() -> JsonPlusSerializer:
         allowed_msgpack_modules=types,
     )
 
-_lock = threading.Lock()
+# Reentrant on purpose: `get_saver` holds this lock while calling
+# `get_connection`, which locks again. A plain Lock deadlocks there.
+_lock = threading.RLock()
 _connection: sqlite3.Connection | None = None
 _saver: SqliteSaver | None = None
 
@@ -73,7 +75,12 @@ def in_memory_saver() -> SqliteSaver:
 
 
 def reset_cache() -> None:
-    """Close and forget the process-wide connection (used by tests)."""
+    """Close and forget the process-wide connection (used by tests).
+
+    Also drops any cached runner: a compiled graph holds a reference to the old
+    saver, so keeping it would leave the application writing to a closed
+    database.
+    """
     global _connection, _saver
     with _lock:
         if _connection is not None:
@@ -83,6 +90,9 @@ def reset_cache() -> None:
                 pass
         _connection = None
         _saver = None
+    from sigma import runtime  # local import: runtime imports this module
+
+    runtime._DEFAULT_RUNNER = None
 
 
 def database_size_bytes(path: str | Path | None = None) -> int:

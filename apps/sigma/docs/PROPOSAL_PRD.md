@@ -472,3 +472,78 @@ Test suite memakai **`unittest` stdlib** (keputusan budget, §10.3) dan bersifat
 | Node di-replay setelah interrupt menggandakan efek samping | Duplikasi tool call | Reducer `merge_unique_by("call_id")` + tool registry idempoten |
 | Ketergantungan pada API LangGraph v1 yang berubah | Break saat upgrade | Semua import berasal dari source repo ini; smoke test impor pada setiap fase |
 | Ukuran artefak melewati 125 MB | Gagal NFR-1 | `audit_size.py` sebagai test + larangan eksplisit (§10.4) |
+
+---
+
+## 15. Catatan Realisasi (ditulis setelah FASE 0–3 selesai)
+
+Bagian ini mencatat apa yang benar-benar terbangun dan terukur, termasuk
+keputusan yang berubah selama implementasi.
+
+### 15.1 Hasil per fase
+
+| Fase | Keluaran | Status |
+| --- | --- | --- |
+| FASE 0 | `docs/PROPOSAL_PRD.md` | Selesai |
+| FASE 1 | `state.py`, node dasar, graf siklik + conditional edge + containment, checkpointer SQLite | Selesai — 65 tes hijau |
+| FASE 2 | Provider LLM + memori transaksional, siklus koreksi-diri, HITL `interrupt()` | Selesai — 106 tes hijau |
+| FASE 3 | FastAPI + konsol web vanilla, time-travel/fork, audit ukuran | Selesai — 138 tes hijau |
+
+### 15.2 Angka terukur
+
+| Metrik | Target | Terukur |
+| --- | --- | --- |
+| Total artefak | < 125 MB | **51,5 MB** (headroom 58,8%) |
+| Dependensi runtime | ≤ 25 distribusi | 25 distribusi (tanpa `streamlit`/`pandas`/`numpy`/SDK vendor) |
+| Determinisme (seed sama) | skor identik | identik (0,8474 untuk seed 7) |
+| Konvergensi | ≤ `max_revisions` | 3 revisi; berhenti dan minta manusia |
+| Latensi satu sesi (offline) | < 3 s | ~0,3 s |
+| Jumlah tes | — | 138, hermetik, `unittest` stdlib |
+
+### 15.3 Keputusan yang menyimpang dari rencana awal
+
+1. **`pytest` diganti `unittest` stdlib.** `pytest` menarik `pygments` (+9,5 MB)
+   dan `_pytest` (+3,2 MB). Mengingat budget adalah *hard gate*, framework tes
+   dihilangkan sepenuhnya. Tidak ada kemampuan yang hilang: fixture diganti
+   `setUp`/`tearDown`, dan parametrization tidak dipakai.
+2. **Revisi di-charge oleh `critic`, bukan `planner`.** Rencana awal
+   (PRD §5) menghitung revisi saat planner menyusun ulang. Implementasi
+   menunjukkan siklus yang melewati `researcher`/`analyst` tidak pernah
+   menambah `revisions_used`, sehingga `revisions_left` tidak pernah habis dan
+   graf berputar tanpa kemajuan. Memindahkan penghitung ke evaluator membuat
+   "satu siklus = satu revisi" berlaku untuk semua lintasan perbaikan.
+3. **Kedalaman pencarian bukti ikut naik per siklus.** Siklus yang hanya
+   mengulang pertanyaan yang sudah terjawab tidak pernah menaikkan skor.
+   `research_pass` menaikkan kedalaman kueri (lebih banyak ventura, horizon
+   lebih panjang, lebih banyak jalur Monte Carlo) sehingga setiap siklus
+   menghasilkan evidensi baru — skor 0,775 → 0,858 pada revisi pertama.
+4. **Resume yang tidak valid mengangkat `InvalidResume`, bukan ditampung.**
+   Awalnya kesalahan validasi ditelan oleh guard dan sesi berakhir di
+   `containment`. Itu berarti satu ketikan salah menghabiskan sesi. Kini
+   `human_gate` mengklasifikasikannya sebagai `InvalidResume`, guard
+   meneruskannya, dan `SessionRunner` membiarkan sesi tetap berhenti di gate
+   sehingga manusia bisa mengulang dengan nilai yang benar (diuji).
+
+### 15.4 Cacat nyata yang ditemukan dan diperbaiki selama FASE 3
+
+| Cacat | Gejala | Perbaikan |
+| --- | --- | --- |
+| `get_saver()` memegang lock non-reentrant lalu memanggil `get_connection()` | **deadlock** pada permintaan pertama yang menyentuh SQLite | lock diganti `threading.RLock()` |
+| `active_runner()` default ke mode non-HITL | resume tidak melakukan apa-apa; status tetap `running` | mode default mengikuti mode aplikasi |
+| `/api/sessions/stream` tertabrak `/api/sessions/{session_id}` | SSE 404 | rute SSE dideklarasikan lebih dulu |
+| `get_state()` mengembalikan snapshot kosong, bukan `None` | 404 tidak pernah terjadi | kekosongan `values` diperlakukan sebagai "tidak ada" |
+| Cache runner usang setelah `reset_cache()` | "Cannot operate on a closed database" | `reset_cache()` ikut mengosongkan cache runner |
+| Fork dari checkpoint pra-permintaan | sesi cabang langsung `degraded` | checkpoint pra-permintaan ditolak (400) dan ditandai `forkable: false` |
+
+### 15.5 Batasan yang jujur
+
+* `DeterministicProvider` adalah mesin heuristik terstruktur, **bukan** model
+  bahasa. Ia menghasilkan rencana, temuan, dan kritik yang bergantung pada isi
+  state (skor rubrik dihitung dari artefak nyata), tetapi tidak memiliki
+  penalaran bahasa terbuka. Untuk itu, set `SIGMA_LLM_BASE_URL` +
+  `SIGMA_LLM_API_KEY` (atau injeksi `LangChainChatProvider`).
+* Korpus ventura adalah data sintetik deterministik, bukan data pasar nyata —
+  disengaja agar platform berjalan tanpa kredensial dan setiap eksperimen
+  dapat direproduksi.
+* Timeout tool bersifat kooperatif (`ThreadPoolExecutor` + batas waktu). Alat
+  yang mengabaikan kooperasi tidak dapat dihentikan paksa oleh interpreter.
