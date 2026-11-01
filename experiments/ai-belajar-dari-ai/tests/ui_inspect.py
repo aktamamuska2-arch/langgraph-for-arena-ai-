@@ -113,9 +113,15 @@ def _words(text: str) -> list[str]:
 def assess(text: str) -> dict:
     """Metrik cepat untuk teks yang baru diuji — keluarga yang sama dengan R8."""
     t = text.strip()
-    # metrik leksikal dihitung pada isi, bukan pada markup: markup milik antarmuka,
-    # dan kalau ikut dihitung, TTR/distinct-2 akan tampak bagus hanya karena berulangnya tag.
-    plain = re.sub(r"<[^>]+>", " ", t)
+    # Metrik leksikal dihitung pada ISI JAWABAN saja (bagian <A>), bukan pada markup dan
+    # bukan pada domain/prompt: keduanya bagian dari antarmuka, bukan keluaran model.
+    # Kalau ikut dihitung, TTR/distinct-2 bisa tampak bagus hanya karena tag atau prompt berulang.
+    region = t
+    if "<A>" in region:
+        region = region.split("<A>", 1)[1]
+    if "</A>" in region:
+        region = region.split("</A>", 1)[0]
+    plain = re.sub(r"<[^>]+>", " ", region)
     w = _words(plain)
     grams8 = [tuple(w[i:i + 8]) for i in range(max(0, len(w) - 7))]
     bigrams = list(zip(w, w[1:]))
@@ -131,7 +137,24 @@ def assess(text: str) -> dict:
         "repetisi8": (round(1 - len(set(grams8)) / len(grams8), 3) if grams8 else None),
         "zlib_bpb": round(len(zlib.compress(raw, 9)) * 8 / max(1, len(raw)), 3),
         "kata_terbanyak": Counter(w).most_common(3),
+        "isi_dihitung": plain.strip()[:120],
     }
+
+
+def render_table(metrics: dict, floor: list[str]) -> str:
+    """Tabel metrik dirender di server, supaya bisa diverifikasi tanpa menjalankan browser."""
+    rows = []
+    for key, val in metrics.items():
+        if val is None:
+            shown = "n/a (teks terlalu pendek)"
+        elif isinstance(val, list):
+            shown = ", ".join(f"{k}×{v}" for k, v in val) if val else "–"
+        else:
+            shown = str(val)
+        note = '<span class="pill p-warn">di lantai</span>' if key in floor else ""
+        rows.append(f"<tr><td><code>{key}</code></td><td>{shown}</td><td>{note}</td></tr>")
+    return ("<table><thead><tr><th>metrik</th><th>nilai</th><th>catatan</th></tr></thead><tbody>"
+            + "".join(rows) + "</tbody></table>")
 
 
 def gate_summary(key: str) -> dict:
@@ -291,13 +314,8 @@ async function assessBox(){
 }
 function renderMetrics(m){
   $('metrics').hidden=false;
-  const rows = Object.entries(m.metrics).map(([k,v])=>{
-    let note='';
-    if(m.floor.includes(k)) note='<span class="pill p-warn">di lantai</span>';
-    return `<tr><td><code>${k}</code></td><td>${typeof v==='object'?JSON.stringify(v):v}</td><td>${note}</td></tr>`;
-  }).join('');
-  $('mtable').innerHTML = `<table><thead><tr><th>metrik</th><th>nilai</th><th>catatan</th></tr></thead>
-    <tbody>${rows}</tbody></table>`;
+  // tabel dirender di server (render_table) sehingga tampilan tidak bergantung pada JS ini
+  $('mtable').innerHTML = m.table_html || '<p class="muted">tabel tidak tersedia</p>';
   $('mnote').textContent = m.note;
 }
 $('go').onclick = run; $('assess').onclick = assessBox;
@@ -370,7 +388,8 @@ class Handler(BaseHTTPRequestHandler):
                         "Angka di sini dihitung atas teks yang kamu uji saja, bukan atas seluruh korpus evaluasi.")
                 if gate.get("validate"):
                     note += f" Reject rate korpus checkpoint ini: {gate['validate'].get('reject_rate', 0):.0%}"
-                body = {"metrics": metrics, "gate": gate.get("gate", {}), "floor": floor, "note": note}
+                body = {"metrics": metrics, "gate": gate.get("gate", {}), "floor": floor, "note": note,
+                        "table_html": render_table(metrics, floor)}
                 self._send(200, json.dumps(body, ensure_ascii=False).encode(), "application/json")
             else:
                 self._send(404, b"tidak ada", "text/plain; charset=utf-8")

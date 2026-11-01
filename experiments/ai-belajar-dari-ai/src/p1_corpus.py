@@ -149,11 +149,44 @@ def _num(rng: random.Random, lo: int = 2, hi: int = 999) -> int:
 # --- perluasan leksikon secara kombinatorial (bukan menambah baris tangan) ---
 _SIFAT_BENDA = ["kecil", "besar", "berat", "ringan", "licin", "kasar", "halus", "berkarat",
                 "retak", "baru", "bekas", "cadangan", "utama", "sementara", "lapangan"]
-BENDA = [f"{b} {m}" for b in BENDA for m in _SIFAT_BENDA] + BENDA
-VERB_TR = [v for v in VERB_TR] + [f"{v} ulang" for v in VERB_TR[:20]] + [f"{v} perlahan" for v in VERB_TR[20:34]]
-ADJ = [a for a in ADJ] + [f"{a} sekali" for a in ADJ[:18]] + [f"agak {a}" for a in ADJ[6:22]]
-TEMPAT = [t for t in TEMPAT] + [f"{t} bagian utara" for t in TEMPAT[:10]] + [f"{t} lantai dua" for t in TEMPAT[10:18]]
-ORANG = ORANG + [f"Pak {o}" for o in ORANG[:16]] + [f"Bu {o}" for o in ORANG[16:30]]
+_BENDA_KHUSUS = [
+    "sekring", "katup", "mur", "baut", "gasket", "sensor", "aktuator", "relai", "kapasitor",
+    "induktor", "dioda", "termokopel", "manometer", "venturimeter", "saringan", "bantalan",
+    "poros", "roda gigi", "sabuk", "rantai", "pegas", "selang", "flensa", "soket", "klip",
+    "braket", "dudukan", "penutup", "segel", "paking", "busi", "koil", "stator", "rotor",
+    "belitan", "komutator", "sikat karbon", "tabung vakum", "kristal", "resonator", "kondensor",
+    "evaporator", "kompresor", "ekspander", "injektor", "nosel", "diafragma", "pelampung",
+    "pengapung", "sirip", "kisi", "jala", "ayakan", "corong", "pipet", "buret", "erlenmeyer",
+    "gelas ukur", "termometer", "higrometer", "barometer", "anemometer", "luxmeter", "tachometer",
+    "mikrometer", "vernier", "jangka sorong", "waterpass", "komparator", "kalibrator",
+]
+_ABSTRAK = [
+    "kestabilan", "keausan", "kekasaran", "kekentalan", "kelonggaran", "ketegangan", "keregangan",
+    "kelembapan", "kemurnian", "kekerasan", "ketahanan", "keterlambatan", "kemacetan", "kebocoran",
+    "kegagalan", "keberhasilan", "keterulangan", "kepekaan", "kestabilan termal", "ketelitian",
+    "kelayakan", "kelimpahan", "keterbacaan", "keterlacakan", "ketertelusuran", "keandalan",
+    "ketersediaan", "keterpeliharaan", "keselamatan", "kepatuhan", "keabsahan", "kecukupan",
+    "ketimpangan", "kesenjangan", "kecenderungan", "keterkaitan", "ketergantungan", "keluaran",
+    "masukan", "keluaran sementara", "ambang batas", "selang kepercayaan", "galat sistematis",
+    "galat acak", "simpangan baku", "nilai tengah", "kuartil", "persentil", "histogram",
+    "sebaran", "korelasi", "regresi", "residu", "autokorelasi", "stasioneritas", "derau",
+    "harmonisa", "redaman", "penguatan", "pelemahan", "hambatan", "konduktansi", "kapasitansi",
+    "impedansi", "induktansi", "fluks", "momen", "torsi", "gaya gesek", "tekanan hidrostatik",
+]
+BENDA = [f"{b} {m}" for b in BENDA for m in _SIFAT_BENDA] + BENDA + _BENDA_KHUSUS + _ABSTRAK
+_ME = [v for v in VERB_TR if v.startswith("me")]
+_DI = ["di" + v[2:] for v in _ME]
+_NOMINA = ["pe" + v[2:] + "an" for v in _ME[:24]]
+VERB_TR = [v for v in VERB_TR] + _DI + [f"{v} ulang" for v in VERB_TR[:20]] + [f"{v} perlahan" for v in VERB_TR[20:34]]
+ADJ = [a for a in ADJ] + [f"{a} sekali" for a in ADJ[:6]]
+_TEMPAT2 = ["gudang pendingin", "pos jaga", "ruang kalibrasi", "gudang bahan", "bengkel las",
+            "garasi belakang", "ruang pompa", "panel listrik", "gudang benih", "teras belakang",
+            "ruang ukur", "pos timbang", "gudang oli", "bengkel kayu", "sudut kanopi"]
+TEMPAT = [t for t in TEMPAT] + _TEMPAT2 + [f"{t} bagian utara" for t in TEMPAT[:10]] + [f"{t} lantai dua" for t in TEMPAT[10:18]]
+_ORANG2 = ["Adi", "Bella", "Cahya", "Dimas", "Elsa", "Fikri", "Galuh", "Hana", "Iwan", "Jihan",
+           "Karno", "Lestari", "Maman", "Ningsih", "Omar", "Prita", "Qori", "Rina", "Soleh",
+           "Tuti", "Ucok", "Vera", "Wahyu", "Yuyun", "Zainal", "Arif", "Bambang", "Cindy"]
+ORANG = ORANG + _ORANG2 + [f"Pak {o}" for o in ORANG[:16]] + [f"Bu {o}" for o in ORANG[16:30]]
 
 KODE_UNIT = ["A", "B", "C", "D", "E", "F", "G", "H"]
 BAHAN = ["kuningan", "tembaga", "nilon", "karet", "kayu", "baja", "kaca", "keramik", "serat", "plastik"]
@@ -215,11 +248,13 @@ def _sentence(rng: random.Random, topic: str) -> str:
         return (f"Pada {rng.choice(TEMPAT)}, {rng.choice(ORANG)} {v1} {np1} selama {_kode(rng)}; "
                 f"catatan {_kode(rng)} menyusul.")
     if p < 0.29:
-        return f"Pengukuran {np1} mencapai {_kode(rng)}, {adv} berbeda dari {np2}."
+        return (f"{rng.choice(_NOMINA).capitalize()} {np1} mencapai {_kode(rng)}, "
+                f"{adv} berbeda dari {np2}.")
     if p < 0.36:
         return f"{rng.choice(KONJ).capitalize()} {v2}, {rng.choice(ORANG)} {v1} {np1} lagi pada {_kode(rng)}."
     if p < 0.43:
-        return f"Catatan {rng.choice(ORANG)} menyebut {np1} {adv} {v2} di {np2}."
+        return (f"Catatan {rng.choice(ORANG)} menyebut {rng.choice(_NOMINA)} {np1} "
+                f"{adv} {v2} di {np2}.")
     if p < 0.50:
         return f"Ada {rng.randint(2, 9)} {np1} {adv} {v2} di {np2}, {rng.choice(KONJ)} belum diperiksa."
     if p < 0.57:

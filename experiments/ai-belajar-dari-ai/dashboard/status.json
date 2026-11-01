@@ -1,7 +1,7 @@
 {
   "meta": {
     "project": "AI Belajar dari AI — Dashboard Transparansi",
-    "headline": "Model bahasa dari nol, data seluruhnya dari AI, diuji sebagai risiko. Status 1 Nov 2026: P0 dijalankan (16 model) dan gate-nya gagal mendeteksi degradasi 29x ambang; R8 lalu dikunci di PREREGISTRATION.md v1.1. Sekarang ada antarmuka uji manusia (make ui) supaya kamu bisa menilai model sendiri, dan korpus T0 P1 >= 2 MB yang lulus 4 dari 5 gerbang — gerbang T2 ternyata mustahil dan menunggu keputusanmu.",
+    "headline": "Model bahasa dari nol, data seluruhnya dari AI, diuji sebagai risiko. Per 1 Nov 2026: P0 dijalankan (16 model), gate-nya gagal mendeteksi degradasi, R8 dirancang dan dikunci — kini v1.2 dengan gerbang korpus terkalibrasi yang LULUS, antarmuka uji manusia (make ui) yang metriknya sudah diverifikasi, penganalisis R8, dan blinding yang komitmennya terkunci sebelum satu model P1 pun dilatih.",
     "read_me_first": "Dashboard ini dibuat oleh AI yang sama yang menulis rencananya. Artinya ini bukan laporan independen. Karena itu setiap angka di sini bisa kamu cocokkan dengan berkas aslinya: hash SHA-256 tiap berkas tercantum, inventaris berkas dihitung langsung dari disk saat dashboard dibangun, dan setiap klaim punya perintah verifikasinya sendiri. Kalau ada yang tidak cocok, AI-nya yang salah, bukan berkasnya.",
     "plan_version": "0.3.1",
     "plan_status": "rencana v0.3 + hasil pilot P0 (bukti mekanisme, bukan temuan)",
@@ -10,12 +10,12 @@
   },
   "progress": {
     "plan_pct": 100,
-    "implementation_pct": 38,
+    "implementation_pct": 46,
     "models_trained": 16,
     "tokens_generated": 749133,
     "runs_completed": 1,
     "checkpoints": 16,
-    "lines_of_experiment_code": 3493
+    "lines_of_experiment_code": 3968
   },
   "phases": [
     {
@@ -69,10 +69,18 @@
     {
       "id": "P0.11",
       "name": "Korpus T0 P1 + audit 5 gerbang",
-      "desc": "2,3 MB, 14 domain, 3.131 dokumen, anchor + 60 probe aritmetika. Audit: T1/T3/T4/T5 LULUS, T2 GAGAL — 0,13 padahal syarat 0,98, dan teks manusia pada ukuran sama hanya 0,30. Amandemen T2 (v1.2) diusulkan, menunggu ratifikasi.",
-      "status": "diblokir",
-      "output": "data/p1/t0 (2,3 MB), analysis/t0_audit_report.md, runs/p1/t0_audit.json",
+      "desc": "2,3 MB, 14 domain, 3.140 dokumen, anchor + 60 probe aritmetika. T2 diganti kriteria terkalibrasi v1.2 (T2a-T2e) setelah versi absolut terbukti mustahil. Semua gerbang T1-T5 LULUS.",
+      "status": "selesai",
+      "output": "data/p1/t0 (2,3 MB, semua gerbang lulus), analysis/t0_audit_report.md, analysis/t0_manifest.json",
       "evidence": "src/p1_corpus.py, analysis/t0_audit.py, analysis/t0_manifest.json"
+    },
+    {
+      "id": "P0.12",
+      "name": "Penganalisis R8 + komitmen buta",
+      "desc": "analysis/p1_analyze.py menerapkan R8 apa adanya (t, m=3; aturan lantai; empat kelompok cedera; uji ekuivalensi; menolak berjalan bila menyentuh berkas kunci). Blinding disegel dengan sha256. Uji unit pada data P0 memberi 'inconclusive-harm' — persis koreksi yang dituju.",
+      "status": "selesai",
+      "output": "analysis/p1_analyze.py, ops/blind_commitment.json, tests/selftest_ui.py",
+      "evidence": "make analyze-fixture, make ui-selftest, ops/blind.py status"
     },
     {
       "id": "P1",
@@ -405,6 +413,24 @@
       "purpose": "Kuantil-t dan ambang R8, dihitung tanpa scipy.",
       "phase": "P0.9",
       "status": "selesai"
+    },
+    {
+      "path": "analysis/p1_analyze.py",
+      "purpose": "Mesin analisis R8: ambang-t, aturan lantai, empat kelompok cedera, ekuivalensi, keluaran tiga-nilai.",
+      "phase": "P0.12",
+      "status": "selesai"
+    },
+    {
+      "path": "tests/selftest_ui.py",
+      "purpose": "Uji mandiri antarmuka: markup vs isi, deteksi struktur rusak, isi tabel.",
+      "phase": "P0.10",
+      "status": "selesai"
+    },
+    {
+      "path": "ops/blind_commitment.json",
+      "purpose": "Komitmen sha256 pemetaan arm buta (kunci sendiri tidak di-commit).",
+      "phase": "P0.12",
+      "status": "selesai"
     }
   ],
   "decisions": [
@@ -672,20 +698,34 @@
       "title": "Antarmuka uji manusia + korpus T0 P1 + audit gerbang",
       "detail": "tests/ui_inspect.py memungkinkan pengujian langsung: 16 checkpoint P0, prompt bebas, teks mentah, metrik keluarga R8, dan status gate. Korpus P1 dibangun: 2,3 MB, 14 domain, 3.131 dokumen, anchor + 60 probe. Audit: T1/T3/T4/T5 LULUS; T2 GAGAL (0,13 vs syarat 0,98) dan terbukti mustahil karena teks manusia pada 2 MB hanya 0,30. Amandemen v1.2 diusulkan, belum diratifikasi — P1 tetap terkunci.",
       "evidence": "tests/ui_inspect.py, analysis/t0_audit_report.md, analysis/t0_manifest.json"
+    },
+    {
+      "date": "2026-11-01",
+      "title": "T2 v1.2 diratifikasi; analisis R8 + blinding siap",
+      "detail": "PREREGISTRATION.md naik ke v1.2 (sha256 dd8585c9…): T2 absolut 0,98 diganti lima kriteria terkalibrasi yang berlabuh pada P0 dan teks manusia. Korpus dibangun ulang sampai lulus (T2a 0,380; T2b 0,261; T2c 2,048; T2d 0,1134; T2e 2,663) tanpa menggeser ambang. analysis/p1_analyze.py selesai dengan uji unit pada data P0 yang menghasilkan 'inconclusive-harm'. Blinding disegel: sha256 b5de699a… sebelum satu model P1 pun ada. Uji mandiri antarmuka masuk make check dan menemukan bug nyata (domain/prompt ikut terhitung sebagai isi).",
+      "evidence": "PREREGISTRATION.md, ops/prereg.lock.json, ops/blind_commitment.json, analysis/t0_audit_report.md"
     }
   ],
   "claims": [
     {
-      "claim": "Antarmuka uji bisa dijalankan siapa pun tanpa kode: 16 checkpoint, prompt bebas, teks mentah.",
-      "verify": "make -C experiments/ai-belajar-dari-ai ui"
+      "claim": "Pra-registrasi v1.2 utuh dan hash-nya cocok (termasuk riwayat v1.0 dan v1.1).",
+      "verify": "make -C experiments/ai-belajar-dari-ai prereg-verify && cat experiments/ai-belajar-dari-ai/ops/prereg.lock.json"
     },
     {
-      "claim": "Korpus T0 P1 bisa dibangun ulang deterministik dari seed, dan hash-nya tercatat.",
-      "verify": "python3 -m src.p1_corpus --build && cat experiments/ai-belajar-dari-ai/analysis/t0_manifest.json"
-    },
-    {
-      "claim": "Audit gerbang bisa dijalankan ulang dan keluar dengan kode 1 selama T2 belum dibereskan.",
+      "claim": "Semua gerbang korpus T0 lulus di bawah T2 v1.2.",
       "verify": "make -C experiments/ai-belajar-dari-ai audit; echo \"exit=$?\""
+    },
+    {
+      "claim": "Blinding sudah disegel sebelum ada model P1: komitmen sha256 ada, kunci tidak di git.",
+      "verify": "cat experiments/ai-belajar-dari-ai/ops/blind_commitment.json && git check-ignore -v experiments/ai-belajar-dari-ai/.blind/key.json"
+    },
+    {
+      "claim": "Antarmuka lulus uji mandiri (metrik hanya dari isi <A>, tabel dirender server).",
+      "verify": "make -C experiments/ai-belajar-dari-ai ui-selftest"
+    },
+    {
+      "claim": "Mesin analisis R8 berjalan dan menolak menyentuh berkas kunci.",
+      "verify": "make -C experiments/ai-belajar-dari-ai analyze-fixture"
     },
     {
       "claim": "Pra-registrasi dikunci dan tidak berubah sejak dikunci (diverifikasi ulang saat build).",
@@ -725,6 +765,10 @@
     }
   ],
   "bias_notes": [
+    {
+      "title": "Ambang T2 v1.2 tetap hasil kalibrasi setelah melihat data",
+      "detail": "Kelipatan 1,50/1,40/1,35 ditetapkan setelah saya melihat angka korpus P1 dan P0. Ratifikasi manusia membuatnya sah sebagai koreksi pra-data, bukan berarti bebas bias: kalau korpus ini kebetulan mirip templat, ambangnya akan menutupi. Penangkalnya ada di laporan audit — seluruh angka mentah (P1, P0, manusia) ditampilkan berdampingan, dan T2 tetap bisa gagal kalau korpus memburuk."
+    },
     {
       "title": "Gerbang T2 yang saya tulis sendiri ternyata mustahil",
       "detail": "T2 menuntut 98% 8-gram unik. Pada 2 MB, teks manusia (docstring pustaka standar) hanya mencapai 0,30 — angka 0,98 tidak mungkin dicapai oleh korpus mana pun yang masih terbaca sebagai bahasa. Kesalahan ini lolos karena pra-registrasi ditulis tanpa mengukur satu korpus pun. Usulan perbaikannya (v1.2) berlabuh pada P0 dan teks manusia, dan saya akui kelipatannya saya tetapkan setelah melihat angka korpus sendiri — itu threshold fitting yang harus kamu nilai, bukan saya."

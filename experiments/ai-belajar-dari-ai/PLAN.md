@@ -679,6 +679,9 @@ langsung, bukan membaca ringkasan buatan saya.
 | Peringatan lantai | metrik yang baseline-nya di lantai ditandai "di lantai", bukan ditampilkan sebagai aman |
 | Dependensi | hanya torch (sudah dipakai pipeline) + pustaka standar; tanpa CDN, tanpa aset eksternal |
 | Keluaran jaringan | tidak ada; halaman dan API dilayani proses yang sama di mesin lokal |
+| Cakupan metrik | dihitung pada isi `<A>` saja, bukan pada markup/domain/prompt |
+| Render tabel | dirender di server (`render_table`), sehingga bisa diperiksa tanpa peramban |
+| Uji mandiri | `make ui-selftest` (ikut `make check`) memeriksa pemisahan markup, deteksi struktur rusak, dan isi tabel |
 
 Batas yang saya akui: halaman ini menunjukkan **apa** yang dihasilkan model, bukan **mengapa**.
 Ia juga tidak menjalankan uji konfirmatori R8 — itu ada di `analysis/` dan hanya sah bila
@@ -815,6 +818,19 @@ Default-ku di kolom kanan; kalau tidak dijawab, aku pakai default dan mencatatny
 ---
 
 ## 19. Riwayat versi
+
+### v0.6 — 2026-11-01 (T2 v1.2 diratifikasi, analisis & blinding siap)
+
+| # | Perubahan | Alasan | Bukti |
+| --- | --- | --- | --- |
+| 23 | T2 diganti kriteria terkalibrasi T2a-T2e (§2.1a) dan pra-registrasi naik ke **v1.2** | Syarat lama (>= 0,98) mustahil: teks manusia pada 2 MB hanya 0,3012. Dinyatakan terbuka bahwa kelipatan ambang ditetapkan setelah melihat angka korpus sendiri | `ops/prereg.lock.json` (v1.2), `analysis/t0_audit_report.md` |
+| 24 | Korpus T0 dibangun ulang: kosakata diperluas (morfologi di-, nominalisasi, 60 alat ukur, 65 istilah abstrak) sampai T2d lulus tanpa menggeser ambang | T2d sempat gagal tipis (0,0999 vs 0,1025). Menggeser ambang akan mengulangi kesalahan yang sedang kita perbaiki | `data/p1/t0`, `analysis/t0_manifest.json` |
+| 25 | `analysis/p1_analyze.py`: mesin R8 + mode `--check`/`--fixture`/`--run`, menolak berjalan bila kode sumbernya merujuk berkas kunci buta | Tanpa ini, R8 adalah niat, bukan prosedur | `make analyze-fixture` |
+| 26 | Blinding disegel: `.blind/key.json` (tidak di-commit) + `ops/blind_commitment.json` (sha256) | Komitmen harus ada **sebelum** model P1 pertama, bukan sesudah | `ops/blind_commitment.json` |
+| 27 | `tests/selftest_ui.py` masuk `make check`; tabel metrik dirender di server | Uji mandiri menemukan bug nyata: menghapus tag masih menyisakan domain/prompt sebagai "isi". Sekarang metrik hanya dihitung pada `<A>` | `make ui-selftest` |
+
+Status P1: gerbang korpus **lulus** dan infrastruktur analisis siap. Pelatihan baseline tetap
+menunggu perintah eksplisit.
 
 ### v0.5 — 2026-11-01 (antarmuka uji manusia + korpus T0 P1)
 

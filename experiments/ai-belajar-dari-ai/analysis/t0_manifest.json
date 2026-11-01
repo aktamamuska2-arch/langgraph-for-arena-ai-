@@ -2,53 +2,53 @@
   "generator": "src/p1_corpus.py",
   "seed": 20261101,
   "target_bytes": 2300000,
-  "docs": 3131,
-  "bytes_with_markup": 2300508,
-  "bytes_content": 2030734,
+  "docs": 3165,
+  "bytes_with_markup": 2301328,
+  "bytes_content": 2028237,
   "domains": {
-    "kode": 245944,
-    "faktual": 165169,
-    "narasi": 161856,
-    "dialog": 142947,
-    "definisi": 159992,
-    "perbandingan": 167643,
-    "aritmetika": 143321,
-    "prosedur": 119455,
-    "analisis": 161462,
-    "ringkasan": 168811,
-    "jurnal": 177248,
-    "tinjauan": 165234,
-    "kebijakan": 164165,
-    "sains": 157261
+    "kode": 241745,
+    "faktual": 165202,
+    "narasi": 166126,
+    "dialog": 141263,
+    "definisi": 158302,
+    "perbandingan": 174062,
+    "aritmetika": 144136,
+    "prosedur": 116027,
+    "analisis": 161551,
+    "ringkasan": 166143,
+    "jurnal": 171365,
+    "tinjauan": 163154,
+    "kebijakan": 168007,
+    "sains": 164245
   },
   "splits": {
     "train": {
-      "docs": 3009,
-      "bytes": 2214215
+      "docs": 3057,
+      "bytes": 2224080
     },
     "valid": {
-      "docs": 61,
-      "bytes": 43511
+      "docs": 59,
+      "bytes": 43988
     },
     "test": {
-      "docs": 61,
-      "bytes": 42782
+      "docs": 49,
+      "bytes": 33260
     }
   },
   "anchor": {
-    "docs": 142,
-    "bytes": 160253
+    "docs": 153,
+    "bytes": 160153
   },
   "arith_probes": 60,
-  "uniq8_content": 0.1305,
-  "uniq8_markup": 0.1174,
-  "zlib_bpb_content": 1.9352,
-  "zlib_bpb_markup": 1.8658,
+  "uniq8_content": 0.1529,
+  "uniq8_markup": 0.137,
+  "zlib_bpb_content": 2.0509,
+  "zlib_bpb_markup": 1.9702,
   "sha256": {
-    "train": "5add1a2fbc909b9fb706440552929c02a07fed52f421b2303e5f2588752a6b8e",
-    "valid": "3abf2f4269c421f2e8e892653442bc8069cc02f908a2f7f2a31124b5e0c11d55",
-    "test": "c3f99641c2fd42eb925456e890753ddd8d3d4e803eb0b3eb91243cf325f8ea6e",
-    "anchor": "ff0be21341cc0db2b0670ae1f436094a9785a758cf8d1677f20cd17685d61fdf",
+    "train": "0e5a85037c0c1a619e37e34e4c9ef6064d6285f4f18812fdd14269abdf7f1bfc",
+    "valid": "140aa06956a7762aafb96ef32ba77534e65a492ff582176a2e3fd1841836cd34",
+    "test": "fe17cb21d082aaabb29c8db0d5d67b615eddfa0b73266202c98e2959dc6aba98",
+    "anchor": "5db797eecb0cd5b388d9b2bc2de2dde50648019355e15a441c6f3a39cbc7d45a",
     "arith_probes": "c38ba91b34872941e9449301010e55fa33a3eaf68c9776a12c8a6d64dd274a11"
   },
   "catatan": "Manifest korpus T0 P1 (salinan dari data/p1/t0/manifest.json; data mentah tidak masuk git karena .gitignore, tetapi hash di sini membuatnya bisa diperiksa ulang)."

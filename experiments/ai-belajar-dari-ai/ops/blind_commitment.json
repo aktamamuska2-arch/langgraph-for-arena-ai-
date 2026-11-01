@@ -1,0 +1,7 @@
+{
+  "sealed_at": "2026-11-01T04:03:04Z",
+  "n_arms": 3,
+  "key_sha256": "b5de699a669df8ddc0cd4985900b15800d9ab38327562bf23b778602d26085ad",
+  "key_path": ".blind/key.json",
+  "note": "Kunci tidak di-commit. Hash ini membuktikan pemetaan tidak diubah setelah analisis."
+}

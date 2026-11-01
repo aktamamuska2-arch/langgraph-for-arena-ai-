@@ -11,6 +11,9 @@
 #   make audit       audit 5 gerbang korpus T0 (keluar != 0 bila ada yang gagal)
 #   make ui          antarmuka uji manusia di http://localhost:8010
 #   make ui-cli      versi terminal dari antarmuka uji
+#   make ui-selftest uji mandiri metrik antarmuka (ikut di make check)
+#   make analyze-check   periksa kelengkapan data sebelum analisis R8
+#   make analyze-fixture uji mesin analisis R8 pada data P0 (bukan hasil P1)
 #
 # Semua target hanya butuh python3 (tanpa paket eksternal).
 #
@@ -24,7 +27,7 @@ PY ?= python3
 PORT ?= 8000
 HERE := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: dashboard open verify policy calibrate prereg prereg-verify blind-status corpus audit ui ui-cli check clean
+.PHONY: dashboard open verify policy calibrate prereg prereg-verify blind-status corpus audit ui ui-cli ui-selftest analyze-check analyze-fixture check clean
 
 dashboard:
 	$(PY) $(HERE)dashboard/build.py
@@ -58,6 +61,15 @@ ui:
 ui-cli:
 	$(PY) $(HERE)tests/ui_inspect.py --cli
 
+ui-selftest:
+	$(PY) $(HERE)tests/selftest_ui.py
+
+analyze-check:
+	$(PY) $(HERE)analysis/p1_analyze.py --check
+
+analyze-fixture:
+	$(PY) $(HERE)analysis/p1_analyze.py --fixture
+
 prereg:
 	$(PY) $(HERE)ops/prereg_lock.py --lock
 
@@ -67,8 +79,8 @@ prereg-verify:
 blind-status:
 	@$(PY) $(HERE)ops/blind.py status
 
-check: policy prereg-verify dashboard
-	@echo "OK: kebijakan lolos lint, pra-registrasi utuh, dashboard dibangun ulang"
+check: policy prereg-verify ui-selftest dashboard
+	@echo "OK: kebijakan lolos lint, pra-registrasi utuh, antarmuka lulus uji mandiri, dashboard dibangun ulang"
 
 clean:
 	rm -f $(HERE)dashboard/index.html

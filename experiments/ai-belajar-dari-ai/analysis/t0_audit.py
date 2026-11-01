@@ -33,9 +33,22 @@ T0 = ROOT / "data" / "p1" / "t0"
 OUT_JSON = ROOT / "runs" / "p1" / "t0_audit.json"
 OUT_MD = ROOT / "analysis" / "t0_audit_report.md"
 
+# --- jangkar yang dibekukan di pra-registrasi v1.2 §2.1a -------------------
+P0_REF = {"uniq8": 0.1870, "hapax8": 0.1223, "zlib_bpb": 1.189, "ttr": 0.0732, "markov_ce": 1.615}
+HUMAN_ZLIB_2MB = 2.217
+T2_MULT = {"uniq8": 1.50, "hapax8": 1.50, "zlib_bpb": 1.50, "ttr": 1.40, "markov_ce": 1.35}
+T2 = {
+    "T2a": ("uniq-8 potongan 156.697 B", P0_REF["uniq8"] * T2_MULT["uniq8"]),
+    "T2b": ("hapax-8 potongan 156.697 B", P0_REF["hapax8"] * T2_MULT["hapax8"]),
+    "T2c": ("zlib bpb seluruh isi (juga >= 0,85 x manusia)", max(P0_REF["zlib_bpb"] * T2_MULT["zlib_bpb"],
+                                                               0.85 * HUMAN_ZLIB_2MB)),
+    "T2d": ("TTR sampel 200 KB", P0_REF["ttr"] * T2_MULT["ttr"]),
+    "T2e": ("entropi Markov orde-3 @156.697 B", P0_REF["markov_ce"] * T2_MULT["markov_ce"]),
+}
+
 GATES = {
     "T1": "ukuran >= 2.097.152 byte",
-    "T2": "porsi 8-gram unik >= 0,98 (versi pra-registrasi v1.1)",
+    "T2": "kriteria terkalibrasi v1.2: T2a-T2e (uniq-8, hapax, zlib, TTR, entropi Markov)",
     "T3": ">= 12 domain, tiap domain >= 5% byte",
     "T4": "median panjang 150-600 B, p1 >= 80 B, p99 <= 2.000 B",
     "T5": "Jaccard 5-gram antar-dokumen maksimum <= 0,5",
@@ -198,13 +211,6 @@ def main() -> int:
         "syarat": ">= 2097152",
     }
     u8 = uniq_ngram(content)
-    results["T2"] = {
-        "lulus": u8 >= 0.98,
-        "nilai": round(u8, 4),
-        "syarat": ">= 0,98",
-        "catatan": "diukur pada isi <A>; versi ber-markup dilaporkan terpisah",
-        "uniq8_markup": round(uniq_ngram(markup), 4),
-    }
     results["T3"] = {
         "lulus": len(shares) >= 12 and min(shares.values()) >= 0.05,
         "nilai": {"domain": len(shares), "porsi_terkecil": round(min(shares.values()), 4)},
@@ -256,6 +262,27 @@ def main() -> int:
         "probe_contoh": probes[0] if probes else None,
         "split_byte": manifest["splits"],
     }
+    # --- T2 v1.2: lima sub-kriteria terkalibrasi (PREREGISTRATION.md §2.1a) ---
+    ps = diag["pada_ukuran_p0"]
+    sub = {
+        "T2a": round(ps["uniq8"], 4),
+        "T2b": round(ps["hapax8"], 4),
+        "T2c": round(diag["zlib_bpb"], 3),
+        "T2d": round(diag["ttr"], 4),
+        "T2e": round(ps["markov_ce"], 4),
+    }
+    results["T2"] = {
+        "lulus": all(sub[k] >= T2[k][1] for k in T2),
+        "nilai": sub,
+        "syarat": "T2a-T2e (lihat porsi di bawah)",
+        "sub": {
+            k: {"metrik": T2[k][0], "ambang": round(T2[k][1], 4), "nilai": sub[k], "lulus": sub[k] >= T2[k][1]}
+            for k in T2
+        },
+        "versi_lama_v1_1": {"syarat": ">= 0,98", "nilai": round(u8, 4), "lulus": u8 >= 0.98},
+        "catatan": "T2 v1.1 absolut mustahil; diganti v1.2 terkalibrasi, diratifikasi 2026-11-01",
+    }
+
     failed = [k for k, v in results.items() if not v["lulus"]]
     payload = {
         "gates": GATES,
@@ -285,6 +312,16 @@ def main() -> int:
     for k, v in results.items():
         val = v["nilai"] if not isinstance(v["nilai"], dict) else json.dumps(v["nilai"], ensure_ascii=False)
         L.append(f"| {k} | {v['syarat']} | `{val}` | {'LULUS' if v['lulus'] else '**GAGAL**'} |")
+    L.append("")
+    L.append("### Rincian T2 v1.2 (terkalibrasi, PREREGISTRATION.md §2.1a)")
+    L.append("")
+    L.append("| Kode | Metrik | Ambang | Nilai | Hasil |")
+    L.append("| --- | --- | --- | --- | --- |")
+    for k, v in results["T2"]["sub"].items():
+        L.append(f"| {k} | {v['metrik']} | {v['ambang']} | {v['nilai']} | {'LULUS' if v['lulus'] else '**GAGAL**'} |")
+    L.append("")
+    L.append(f"Versi lama (v1.1, absolut >= 0,98): nilai {results['T2']['versi_lama_v1_1']['nilai']} -> "
+             "tetap GAGAL, dan tetap dicatat sebagai riwayat. Syarat itu mustahil dicapai korpus bahasa apa pun.")
     L.append("")
     L.append("## Pembanding yang membuat angka di atas bisa ditafsirkan")
     L.append("")

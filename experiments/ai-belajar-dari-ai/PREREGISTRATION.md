@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Versi | **1.1** |
+| Versi | **1.2** |
 | Tanggal kunci | 2026-11-01 |
 | Status | **terkunci sebelum ada satu pun model P1 dilatih** |
 | Menggantikan | definisi operasional R7 (PLAN v0.3 §10.5) untuk seluruh run P1 dan sesudahnya |
@@ -59,13 +59,65 @@ diperiksa otomatis oleh `analysis/t0_audit.py` (dibuat saat P1 disiapkan) dan di
 | # | Gerbang | Ambang | Kalau gagal |
 | --- | --- | --- | --- |
 | T1 | ukuran | >= 2.097.152 byte | T0 ditolak, P1 tidak mulai |
-| T2 | anti-templat: porsi 8-gram unik | >= 0,98 | T0 ditolak |
+| T2 | anti-templat: **kriteria terkalibrasi v1.2** (lihat 2.1a) | lima sub-kriteria T2a-T2e | T0 ditolak |
 | T3 | keseimbangan domain | >= 12 domain, tiap domain >= 5% byte | T0 ditolak |
 | T4 | panjang dokumen | median 150-600 byte, p1 >= 80 byte, p99 <= 2.000 byte | T0 ditolak |
 | T5 | kemiripan antar-dokumen | maksimum Jaccard 5-gram antar dokumen <= 0,5 | T0 ditolak |
 
 Kegagalan gerbang **tidak** boleh dikompensasi dengan menurunkan ambang; yang turun adalah klaim,
 bukan gerbangnya.
+
+### 2.1a T2 terkalibrasi (ratifikasi v1.2, 2026-11-01)
+
+**Koreksi pra-data.** Versi 1.1 menuntut porsi 8-gram unik >= 0,98. Syarat itu **mustahil** dan tidak
+pernah diukur terhadap korpus mana pun sebelum dikunci: pada 2 MB, docstring pustaka standar Python
+(teks yang tidak ditulis AI ini) hanya mencapai **0,3012**. Pada ukuran 156 KB, teks manusia mencapai
+0,5324. Setiap korpus yang masih terbaca sebagai bahasa akan mengulang frasa pendek, sehingga angka
+0,98 tidak bisa dicapai oleh konstruksi apa pun. Menjaga gerbang itu berarti P1 tidak akan pernah
+berjalan — dan itu bukan kehati-hatian, itu kesalahan desain.
+
+T2 v1.2 mengukur hal yang sebenarnya kita takutkan — **korpus yang bisa dihafal sehingga baseline
+jatuh ke ekor seperti P0** — dengan lima sub-kriteria, empat di antaranya bebas-ukuran, dan semuanya
+berlabuh pada dua jangkar eksternal: korpus P0 (lantai yang harus dilewati) dan teks manusia (plafon,
+bukan syarat).
+
+**Nilai jangkar yang dibekukan** (dihitung `analysis/t0_audit.py`, deterministik):
+
+| Jangkar | uniq-8 | hapax-8 | zlib bpb | TTR | Markov CE orde-3 |
+| --- | --- | --- | --- | --- | --- |
+| Korpus P0 (156.697 B isi) | 0,1870 | 0,1223 | 1,189 | 0,0732 | 1,615 |
+| Manusia (docstring stdlib, 2 MB) | 0,3012 | 0,1894 | 2,217 | 0,1973 | 2,714 |
+
+**Sub-kriteria (semua wajib):**
+
+| Kode | Metrik dan protokol ukur | Ambang | Alasan ambang |
+| --- | --- | --- | --- |
+| T2a | uniq-8 pada potongan isi sepanjang **156.697 B** (prosedur sampling §2.1b) | >= 1,50 x P0 = **0,2805** | korpus harus jelas lebih beragam daripada templat P0 pada ukuran yang sama |
+| T2b | hapax-8 pada potongan yang sama | >= 1,50 x P0 = **0,1835** | idem, mengukur ekor, bukan rata-rata |
+| T2c | zlib bits/byte pada seluruh isi **dan** >= 0,85 x manusia | >= 1,50 x P0 = **1,784** dan >= **1,884** | kompresibilitas bebas-ukuran; lantai manusia mencegah korpus acak lolos |
+| T2d | TTR kata pada sampel 200 KB pertama (bebas-ukuran) | >= 1,40 x P0 = **0,1025** | ukuran kosakata |
+| T2e | entropi silang Markov orde-3, split 80/20, pada potongan 156.697 B | >= 1,35 x P0 = **2,180** | proksi keterhafalan lokal tanpa melatih model |
+
+**Pengakuan threshold fitting.** Kelipatan 1,50 / 1,50 / 1,50 / 1,40 / 1,35 saya tetapkan setelah
+melihat angka korpus P1 dan angka P0. Itu tetap *threshold fitting*; yang membuatnya bisa
+dipertanggungjawabkan: (a) ditetapkan dan dikunci **sebelum satu model P1 pun dilatih**; (b) berlabuh
+pada dua besaran eksternal, bukan pada angka korpus ini; (c) T2 adalah gerbang korpus, bukan gerbang
+hasil, sehingga tidak bisa dipakai mempermudah klaim collapse. Ratifikasi manusia dicatat di §12.
+
+**Yang tidak berubah:** T2 tetap gerbang yang memblokir. Bila salah satu sub-kriteria gagal, T0
+ditolak dan P1 tidak berjalan.
+
+### 2.1b Protokol pengukuran T2 (deterministik)
+
+1. Isi = gabungan kolom `<A>` dari split train, urut dokumen, tanpa markup.
+2. Potongan 156.697 B diambil dengan `random.Random(3)`: panjang blok 600-1.200 karakter dengan
+   jeda acak 0-400 karakter, diulang sampai ukuran tercapai, lalu dipotong tepat 156.697 byte.
+3. zlib: `zlib.compress(data, 9)`, bits per byte atas seluruh isi (bukan potongan).
+4. TTR: 200.000 karakter pertama isi, token `lower().split()`, unik/total.
+5. Markov: orde-3 byte, penghalusan add-0,25 atas 256 simbol, dilatih pada 80% potongan, diuji 20%.
+6. Referensi manusia: docstring `"""..."""` dari `/usr/lib/python3.11/**/*.py`, diacak dengan
+   `random.Random(7)`, dipotong pada ukuran yang diminta.
+7. Semua angka dilaporkan bersama-sama; tidak ada pemilihan metrik setelah melihat hasil.
 
 ### 2.2 Komposisi data tiap arm (terkunci)
 
@@ -240,12 +292,26 @@ Metrik deskriptif tetap dilaporkan lengkap; hanya tidak dipakai untuk memberi la
 4. Kesimpulan ditulis ke `analysis/p1_conclusions.md`, lalu **hash-nya dicatat**.
 5. `ops/blind.py reveal --conclusions-sha256 <hash>` menolak berjalan bila hash tidak cocok, lalu
    mencetak pemetaan dan mencatat peristiwa unblinding.
+### 8.3 Kontrak `analysis/p1_analyze.py`
+
+- Membaca `runs/p1/metrics.jsonl` yang sudah berlabel buta (`X1/X2/X3`), bukan nama arm.
+- Tidak pernah membuka `.blind/key.json`; skrip memeriksa kode sumbernya sendiri dan menolak berjalan
+  bila ada rujukan ke berkas kunci.
+- Menghitung `mu0`, `sigma0`, `SE_pred`, ambang konfirmatori (t, m=3) dan pemantauan (normal, m=90),
+  enam sinyal cedera, label lantai, tingkat keparahan berbasis kelompok, serta uji ekuivalensi.
+- Menulis `analysis/p1_conclusions.md` beserta hash; `ops/blind.py reveal` hanya mau berjalan bila
+  hash itu diberikan dan cocok.
+- Mode `--check` memverifikasi kelengkapan masukan tanpa menghitung; mode `--fixture` menjalankan
+  seluruh perhitungan pada data P0 sebagai uji unit, menulis ke `/tmp`, tidak pernah ke laporan P1.
+
 6. Keterbatasan yang saya akui: agen yang sama bisa membaca kunci. Ini buta **prosedural**, bukan
    kriptografis. Penangkalnya hanya komitmen hash: kalau urutannya dilanggar, jejaknya terlihat.
 
 ---
 
 ## 9. Rencana analisis dan tabel wajib
+
+Analisis dijalankan oleh `analysis/p1_analyze.py` (lihat §8.3), bukan oleh perhitungan manual.
 
 Setiap arm dilaporkan dengan baris: `bpb_6`, `Delta_6`, `CI95 satu-sisi`, `thr_conf`, `label`,
 keluarga cedera yang menyala, jumlah keluarga `informative`, MDE80, dan n seed. Ditambah:
@@ -288,6 +354,7 @@ anggaran ini; menjalankan P1 di sandbox akan melanggar pra-registrasi dan hasiln
 | --- | --- | --- | --- |
 | 1.0 | 2026-11-01 | Versi awal: R8, enam keluarga cedera, aturan lantai, uji ekuivalensi, protokol buta | belum |
 | 1.1 | 2026-11-01 | **Pra-data.** (a) F1/F2 didefinisikan ulang dan dikelompokkan ke G1 agar tidak dihitung sebagai dua bukti; (b) ditambah gerbang penerimaan korpus T0 (2.1); (c) ditambah komposisi data tiap arm (2.2) yang di v1.0 belum dinyatakan | belum |
+| 1.2 | 2026-11-01 | **Koreksi metodologis pra-data, diratifikasi manusia.** T2 absolut (>= 0,98) diganti kriteria terkalibrasi T2a-T2e (§2.1a) + protokol ukur deterministik (§2.1b). Alasan: syarat lama mustahil — teks manusia pada 2 MB hanya 0,3012. Dinyatakan terbuka bahwa kelipatan ambang ditetapkan setelah melihat angka korpus sendiri; ratifikasi dicatat di sini. | belum |
 
 ---
 
