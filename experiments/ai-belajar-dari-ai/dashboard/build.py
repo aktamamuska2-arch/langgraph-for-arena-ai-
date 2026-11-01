@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import html
+import time
 import json
 import re
 from datetime import datetime, timezone
@@ -27,6 +28,8 @@ DASH = ROOT / "dashboard"
 PLAN = ROOT / "PLAN.md"
 AUDIT = ROOT / "docs" / "self-audit-v0.2.md"
 POLICY = ROOT / "ops" / "policy.v1.json"
+REPORT = ROOT / "REPORT-P0.md"
+P0_METRICS = ROOT / "runs" / "p0" / "metrics.jsonl"
 STATUS = DASH / "status.json"
 TEMPLATE = DASH / "template.html"
 STYLE = DASH / "assets" / "style.css"
@@ -207,13 +210,18 @@ def md_to_html(md: str, demote: int = 1) -> tuple[str, list[dict]]:
 # --------------------------------------------------------------------------
 # inventaris berkas
 # --------------------------------------------------------------------------
+EXCLUDE_DIRS = {"data", "runs", "checkpoints", "__pycache__", ".git", ".venv"}
+
+
 def inventory() -> list[dict]:
     items = []
     for path in sorted(ROOT.rglob("*")):
         if not path.is_file():
             continue
         rel = path.relative_to(ROOT)
-        if path.name == "index.html" or "__pycache__" in rel.parts or path.name.startswith(".DS"):
+        if path.name == "index.html" or path.name.startswith(".DS"):
+            continue
+        if EXCLUDE_DIRS & set(rel.parts):
             continue
         size = path.stat().st_size
         binary = path.suffix not in TEXT_SUFFIXES
@@ -354,6 +362,35 @@ def main() -> None:
         for l in status["literature"]
     )
 
+    # --- ringkasan artefak hasil run (tidak di-inline agar halaman tetap ringan)
+    art_rows = []
+    for sub in ("runs", "data", "checkpoints"):
+        base = ROOT / sub
+        if not base.exists():
+            continue
+        fs = [f for f in base.rglob("*") if f.is_file()]
+        if not fs:
+            continue
+        tot = sum(f.stat().st_size for f in fs)
+        newest = max(f.stat().st_mtime for f in fs)
+        art_rows.append(
+            "<tr>"
+            f'<td class="mono small">{esc(sub)}/</td>'
+            f'<td class="small mono">{len(fs)}</td>'
+            f'<td class="small mono">{human_bytes(tot)}</td>'
+            f'<td class="small mono">{time.strftime("%Y-%m-%d %H:%M", time.localtime(newest))}</td>'
+            "</tr>"
+        )
+    artifacts_html = ""
+    if art_rows:
+        artifacts_html = (
+            '<p class="small muted">Artefak hasil run sengaja <strong>tidak</strong> di-inline ke halaman ini '
+            "(ukurannya puluhan MB). Yang ditampilkan hanya jumlah berkas, total byte, dan waktu modifikasi "
+            "terakhir; isinya bisa kamu buka langsung dari disk.</p>"
+            "<table><thead><tr><th>Direktori</th><th>Berkas</th><th>Total</th><th>Terakhir diubah</th></tr></thead>"
+            "<tbody>" + "".join(art_rows) + "</tbody></table>"
+        )
+
     # --- inventaris berkas + penampil isi
     file_rows = []
     viewers = []
@@ -374,7 +411,10 @@ def main() -> None:
                 f'<pre><code>{html.escape(f["content"], quote=False)}</code></pre></details>'
             )
     files_html = (
-        "<table><thead><tr><th>Berkas</th><th>Ukuran</th><th>SHA-256</th><th>Isi</th></tr></thead><tbody>"
+        artifacts_html
+        + '<p class="small muted">Berkas sumber di bawah ini di-inline seluruhnya (kecuali biner dan berkas '
+        + "di atas " + human_bytes(MAX_INLINE_BYTES) + ").</p>"
+        + "<table><thead><tr><th>Berkas</th><th>Ukuran</th><th>SHA-256</th><th>Isi</th></tr></thead><tbody>"
         + "".join(file_rows)
         + "</tbody></table>"
     )
@@ -386,6 +426,31 @@ def main() -> None:
         for item in plan_toc
         if item["level"] <= 3
     )
+
+    # --- angka ringkas P0 (dibaca dari metrik mentah, bukan dari status.json)
+    p0 = {"models": "-", "mu": "-", "sigma": "-", "thr": "-", "delta": "-", "tokens": "-"}
+    if P0_METRICS.exists():
+        import json as _json
+        import statistics as _st
+        rows = [_json.loads(l) for l in P0_METRICS.read_text(encoding="utf-8").splitlines() if l.strip()]
+        base = [r for r in rows if r["arm"] == "baseline"]
+        chains = [r for r in rows if r["arm"] != "baseline"]
+        mu = _st.mean(r["eval"]["anchor_bpb"] for r in base)
+        sg = _st.stdev([r["eval"]["anchor_bpb"] for r in base])
+        worst = max(chains, key=lambda r: r["gate"]["delta_bpb"])
+        p0 = {
+            "models": str(len(rows)),
+            "mu": f"{mu:.4f}",
+            "sigma": f"{sg:.4f}",
+            "thr": f"{worst['gate']['threshold_bpb']:.4f}",
+            "delta": f"{worst['gate']['delta_bpb']:+.4f}",
+            "tokens": f"{sum(r.get('tokens_generated', 0) for r in chains):,}".replace(",", "."),
+        }
+
+    # --- laporan P0
+    report_html, report_toc = ("", [])
+    if REPORT.exists():
+        report_html, report_toc = md_to_html(REPORT.read_text(encoding="utf-8"), demote=1)
 
     # --- audit mandiri + kebijakan kegagalan
     audit_html, audit_toc = ("", [])
@@ -454,6 +519,17 @@ def main() -> None:
         "{{TOTAL_BYTES}}": human_bytes(sum(f["bytes"] for f in files)),
         "{{HEADLINE}}": esc(meta["headline"]),
         "{{READ_ME_FIRST}}": esc(meta["read_me_first"]),
+        "{{P0_MODELS}}": p0["models"],
+        "{{P0_MU}}": p0["mu"],
+        "{{P0_SIGMA}}": p0["sigma"],
+        "{{P0_THR}}": p0["thr"],
+        "{{P0_DELTA}}": p0["delta"],
+        "{{P0_TOKENS}}": p0["tokens"],
+        "{{REPORT_HTML}}": report_html,
+        "{{REPORT_TOC}}": "".join(
+            f'<a class="toc-l{item["level"]}" href="#{item["anchor"]}">{esc(item["text"])}</a>'
+            for item in report_toc if item["level"] <= 3
+        ),
         "{{AUDIT_HTML}}": audit_html,
         "{{AUDIT_TOC}}": "".join(
             f'<a class="toc-l{item["level"]}" href="#{item["anchor"]}">{esc(item["text"])}</a>'

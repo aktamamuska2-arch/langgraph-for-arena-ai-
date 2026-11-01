@@ -559,6 +559,38 @@ Aturan futilitas (pra-registrasi): arm dihentikan bila batas atas CI efek < MDE8
 
 ---
 
+### 10.7 Kandidat R8 — lahir dari data P0, belum diratifikasi
+
+Pilot P0 (lihat §19, 2026-11-01) menjalankan R7 apa adanya, tanpa mengubah satu parameter pun
+setelah data terlihat. Hasilnya: **12 dari 12** model rantai melewati ambang (hingga 29,6x ambang,
+bpb naik dari 0,48 ke 1,93), tetapi **0** ditandai `collapse`. Semuanya berhenti di `watch`.
+
+Penyebabnya struktural, bukan kebetulan:
+
+| Sinyal cedera sekunder (§10.5) | Kondisi di P0 | Akibat |
+| --- | --- | --- |
+| `arith_acc` turun >= 10pp | Baseline 0,00 (3 dari 4 seed) | Mustahil menyala: tidak bisa turun dari lantai |
+| `distinct2` turun >= 25% | Justru **naik** 0,910 -> 0,949 pada teks rusak | Gibberish byte-level punya lebih banyak bigram unik |
+| `style_div` turun | Datar 0,94-0,96 | TF-IDF char-3gram tidak menangkap kerusakan sintaks |
+| `repetition_rate` naik | 0,00 di semua model | Model 0,48 jt gagal bahkan untuk mengulang |
+
+Artinya: **aturan R7 + corroboration under-call tepat di rezim yang ingin kita deteksi.** Ini versi
+terbalik dari "collapse semu": kegagalan deteksi yang menyamar sebagai hasil negatif.
+
+Kandidat R8 di bawah ini **tidak** dipakai untuk menilai ulang P0 (itu akan menjadi penyesuaian
+setelah melihat data). R8 harus masuk `PREREGISTRATION.md` dan dikunci sebelum P1.
+
+1. **Sinyal cedera diperluas:** kenaikan `degenerate_rate` >= 15pp, kenaikan porsi dokumen
+   `truncated` >= 20pp, dan penurunan `format_compliance` (dokumen berakhir `<E>`) >= 20pp.
+2. **Aturan sadar-lantai:** metrik sekunder yang sudah di lantai pada baseline (mis. `arith_acc` = 0,00)
+   atau yang arahnya tidak informatif dalam rezim ini dikeluarkan dari syarat corroboration secara
+   eksplisit — bukan dihitung sebagai "tidak ada cedera".
+3. **Ambang sampel minimum:** `arith_acc` minimal 40 item (granularitas 2,5pp), `degenerate_rate`
+   minimal 100 dokumen (granularitas 1pp). Di bawah itu, metrik dilaporkan sebagai *tidak
+   informatif*, bukan sebagai nol.
+4. **R7 tetap metrik utama.** R8 hanya memperbaiki syarat corroboration, tidak mengubah ambang
+   Bonferroni + selang prediksi + lantai 0,03.
+
 ## 11. Pra-registrasi & keputusan
 
 Dikunci sebagai `PREREGISTRATION.md` **sebelum** run Tier 1 (commit terpisah), berisi minimal:
@@ -751,6 +783,24 @@ Default-ku di kolom kanan; kalau tidak dijawab, aku pakai default dan mencatatny
 ---
 
 ## 19. Riwayat versi
+
+### v0.3.1 — 2026-11-01 (hasil Pilot P0)
+
+Pilot P0 dijalankan di sandbox, bukan sekadar direncanakan: 16 model, 17 node, 749.133 byte sintetis,
+22 menit 23 detik pada 2 vCPU/3 GB tanpa GPU. Laporan lengkap: `REPORT-P0.md`; metrik mentah:
+`runs/p0/metrics.jsonl`; kode: `src/` (1.419 baris).
+
+| # | Hasil P0 | Keputusan | Alasan | Bagian |
+| --- | --- | --- | --- | --- |
+| 10 | Pipeline end-to-end terbukti berjalan dan bisa di-resume | Profil P0 dianggap lolos gate mekanisme; lanjut ke P1 | Ini satu-satunya klaim kuat yang boleh ditarik dari P0 | §20 |
+| 11 | sigma0 pertama terukur: 0,0126 bpb (mu0 = 0,4848; ambang R7 = 0,0488) | Angka ini jadi basis perencanaan P1, bukan hasil ilmiah | CV 2,6% antar-seed; hanya 4 seed | §10.5 |
+| 12 | R7 + corroboration gagal menandai collapse (0/12) meski bpb naik 29,6x ambang | Kandidat **R8** ditulis di §10.7 dan harus dipraregistrasi sebelum P1 | Aturan tidak boleh diubah setelah melihat data; cacat dicatat, bukan ditambal | §10.7 |
+| 13 | Format bertahan lebih lama dari isi (48-54% dokumen kehilangan penutup, 0% gagal filter) | Filter P1 wajib memisahkan `truncated` dari `rejected` | Tanpa pemisahan itu, erosi isi terlihat seperti keberhasilan format | §7 |
+| 14 | Loss pada korpus sendiri turun (0,96 -> 0,40) sementara anchor bpb naik (1,00 -> 2,03) | Evaluasi P1 tetap hanya dari anchor guru yang dibekukan | Loss training adalah ukuran menipu diri | §10.1 |
+
+Deviasi implementasi P0 dari spesifikasi (byte-level 256 alih-alih BPE-8.192, posisi dipelajari
+alih-alih RoPE, LayerNorm/GELU alih-alih RMSNorm/SwiGLU, 481.344 parameter, korpus 200 KB, 600 langkah,
+orkestrasi state machine alih-alih LangGraph) dicatat lengkap di `REPORT-P0.md` §"Deviasi dari PLAN".
 
 ### v0.3 — 2026-11-01
 

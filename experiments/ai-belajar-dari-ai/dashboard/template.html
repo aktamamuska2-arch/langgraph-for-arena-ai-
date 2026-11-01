@@ -33,8 +33,9 @@
       <a href="#keputusan"><span class="n">07</span>Keputusan terbuka</a>
       <a href="#log"><span class="n">08</span>Riwayat</a>
       <a href="#berkas"><span class="n">09</span>Inventaris berkas</a>
-      <a href="#audit"><span class="n">10</span>Audit mandiri &amp; kegagalan</a>
-      <a href="#mulai"><span class="n">11</span>Verifikasi sendiri</a>
+      <a href="#hasil"><span class="n">10</span>Hasil P0</a>
+      <a href="#audit"><span class="n">11</span>Audit mandiri &amp; kegagalan</a>
+      <a href="#mulai"><span class="n">12</span>Verifikasi sendiri</a>
     </nav>
     <div class="side-meta">
       <div><b>root</b><br>{{ROOT_ABS}}</div>
@@ -340,8 +341,31 @@ COLLAPSE bila:
     </section>
 
     <!-- ============================================================ -->
+    <section id="hasil">
+      <h2><span class="idx">10</span>Hasil P0 — pilot di sandbox</h2>
+      <p class="sub">
+        Pilot P0 dijalankan pada 2 vCPU / 3 GB tanpa GPU: 1.880 dokumen T0 (199.938 byte), 4 seed baseline,
+        2 arm × 2 seed × 3 generasi, seluruhnya tercatat di <code>runs/p0/metrics.jsonl</code>.
+        Status klaim: <strong>bukti mekanisme</strong>, bukan temuan ilmiah — 2 seed dan 3 generasi tidak punya
+        daya statistik untuk menguji hipotesis collapse.
+      </p>
+
+      <div class="stats">
+        <div class="stat ok"><div class="stat-label">Model terlatih</div><div class="stat-value">{{P0_MODELS}}</div><div class="stat-sub">4 baseline + rantai arm</div></div>
+        <div class="stat ok"><div class="stat-label">σ₀ terukur</div><div class="stat-value">{{P0_SIGMA}}</div><div class="stat-sub">bpb antar-seed M0 (4 seed)</div></div>
+        <div class="stat zero"><div class="stat-label">μ₀ anchor</div><div class="stat-value">{{P0_MU}}</div><div class="stat-sub">bpb pada test anchor</div></div>
+        <div class="stat zero"><div class="stat-label">Ambang R7</div><div class="stat-value">{{P0_THR}}</div><div class="stat-sub">bpb; Bonferroni + selang prediksi</div></div>
+        <div class="stat zero"><div class="stat-label">Δ terbesar (arm A)</div><div class="stat-value">{{P0_DELTA}}</div><div class="stat-sub">bpb, generasi 3</div></div>
+        <div class="stat zero"><div class="stat-label">Token sintetis</div><div class="stat-value">{{P0_TOKENS}}</div><div class="stat-sub">byte dihasilkan model siswa</div></div>
+      </div>
+
+      <nav class="plantoc" aria-label="Daftar isi laporan P0">{{REPORT_TOC}}</nav>
+      <article class="prose">{{REPORT_HTML}}</article>
+    </section>
+
+    <!-- ============================================================ -->
     <section id="audit">
-      <h2><span class="idx">10</span>Audit mandiri &amp; protokol kegagalan</h2>
+      <h2><span class="idx">11</span>Audit mandiri &amp; protokol kegagalan</h2>
       <p class="sub">
         Audit ini ditulis oleh AI yang sama yang merancang sistem — jadi bobotnya lebih rendah daripada tinjauan pihak ketiga,
         dan itu dinyatakan di dalam dokumennya sendiri. Yang membuatnya berguna bukan retorikanya, melainkan angka yang bisa
@@ -372,7 +396,7 @@ COLLAPSE bila:
 
     <!-- ============================================================ -->
     <section id="mulai">
-      <h2><span class="idx">11</span>Verifikasi sendiri</h2>
+      <h2><span class="idx">12</span>Verifikasi sendiri</h2>
       <p class="sub">Tiga hal yang bisa kamu lakukan tanpa membuka editor kode: membangun ulang halaman ini, menjalankan server lokal, dan mengecek klaim dengan perintah shell.</p>
 
       <h3>Bangun ulang halaman</h3>

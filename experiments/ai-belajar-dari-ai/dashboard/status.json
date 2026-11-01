@@ -1,21 +1,21 @@
 {
   "meta": {
     "project": "AI Belajar dari AI — Dashboard Transparansi",
-    "headline": "Model bahasa yang dilatih dari nol dari data yang seluruhnya dihasilkan AI. Rencana v0.3 setelah audit mandiri: aturan deteksi collapse dikalibrasi ulang (FWER 5%), eksekusi dibagi ke profil P0–P3 karena sandbox tidak punya GPU, dan kebijakan kegagalan 13 mode yang bisa di-lint. Masih tahap rencana: 0 model dilatih.",
+    "headline": "Model bahasa dari nol, data seluruhnya dari AI, dieksperimen sebagai risiko (bukan produk). Status 1 Nov 2026: Pilot P0 sudah BENAR-BENAR DIJALANKAN di sandbox — 16 model 0,48 jt parameter, 17 node pipeline, 749.133 byte teks sintetis, 22 menit 23 detik. sigma0 pertama terukur (0,0126 bpb). Hasil terpenting justru kritik terhadap aturan saya sendiri: degradasi 3x lipat terdeteksi oleh metrik utama tetapi TIDAK ditandai 'collapse' oleh gate, karena sinyal cedera sekunder mati di lantai.",
     "read_me_first": "Dashboard ini dibuat oleh AI yang sama yang menulis rencananya. Artinya ini bukan laporan independen. Karena itu setiap angka di sini bisa kamu cocokkan dengan berkas aslinya: hash SHA-256 tiap berkas tercantum, inventaris berkas dihitung langsung dari disk saat dashboard dibangun, dan setiap klaim punya perintah verifikasinya sendiri. Kalau ada yang tidak cocok, AI-nya yang salah, bukan berkasnya.",
-    "plan_version": "0.3",
-    "plan_status": "draft rencana — dinamis",
+    "plan_version": "0.3.1",
+    "plan_status": "rencana v0.3 + hasil pilot P0 (bukti mekanisme, bukan temuan)",
     "branch": "arena/43651650-langgraph-for-arena-ai",
     "updated": "2026-11-01"
   },
   "progress": {
     "plan_pct": 100,
-    "implementation_pct": 0,
-    "models_trained": 0,
-    "tokens_generated": 0,
-    "runs_completed": 0,
-    "checkpoints": 0,
-    "lines_of_experiment_code": 0
+    "implementation_pct": 30,
+    "models_trained": 16,
+    "tokens_generated": 749133,
+    "runs_completed": 1,
+    "checkpoints": 16,
+    "lines_of_experiment_code": 1419
   },
   "phases": [
     {
@@ -43,9 +43,17 @@
       "evidence": "analysis/calibration.py, ops/policy_lint.py"
     },
     {
+      "id": "P0.8",
+      "name": "Pilot P0 (eksekusi nyata pertama)",
+      "desc": "Model XS 0,48 jt parameter (byte-level, konteks 96), T0 200 KB dari guru template, 4 seed baseline, 2 arm (A replace, B1 accumulate-proportional) x 2 seed x 3 generasi, 600 langkah/model. Menghasilkan sigma0 pertama dan membuktikan rantai 17 node berjalan end-to-end.",
+      "status": "selesai",
+      "output": "16 model, 16 checkpoint, 749.133 byte sintetis, sigma0 = 0,0126 bpb, ambang R7 = 0,0488 bpb. Semua 12 titik rantai melewati ambang, 0 ditandai collapse oleh gate (cacat aturan, lihat catatan bias).",
+      "evidence": "runs/p0/metrics.jsonl, REPORT-P0.md, analysis/p0_metrics.csv, checkpoints/p0"
+    },
+    {
       "id": "P1",
-      "name": "Pilot mini (1 hari)",
-      "desc": "200 ribu token T0, model 2 juta parameter, 3 generasi, 1 arm, 1 seed. Sekaligus mengukur throughput generasi dan menjadikannya gate anggaran.",
+      "name": "P1 Pilot diperluas (belum dijalankan)",
+      "desc": "Baseline >= 5 seed, 3 arm (A, B1, kontrol tanpa self-training) x 5 seed x 6 generasi, korpus guru non-templat >= 2 MB, evaluasi 40+ item aritmetika, aturan R8 dipraregistrasi lebih dulu. Menunggu keputusanmu soal executor.",
       "status": "belum-mulai",
       "output": "Grafik pertama: kualitas vs generasi (skala mini)",
       "evidence": "belum ada"
@@ -141,48 +149,6 @@
       "status": "belum-mulai"
     },
     {
-      "path": "src/tokenizer.py",
-      "purpose": "Latih BPE 8.192 vocab hanya pada T0; simpan hash vocab.",
-      "phase": "P3",
-      "status": "belum-mulai"
-    },
-    {
-      "path": "src/generate.py",
-      "purpose": "Generator T0 (AI guru) dan T1..Tn (model siswa), sampling dikunci.",
-      "phase": "P3",
-      "status": "belum-mulai"
-    },
-    {
-      "path": "src/validate.py",
-      "purpose": "Normalisasi, dedup MinHash, filter kualitas, checker deterministik, canary.",
-      "phase": "P3",
-      "status": "belum-mulai"
-    },
-    {
-      "path": "src/model.py",
-      "purpose": "GPT decoder-only dari nol (RMSNorm, RoPE, SwiGLU), ±600 baris.",
-      "phase": "P3",
-      "status": "belum-mulai"
-    },
-    {
-      "path": "src/train.py",
-      "purpose": "Training loop manual, anggaran token tetap, logging JSONL + TensorBoard.",
-      "phase": "P3",
-      "status": "belum-mulai"
-    },
-    {
-      "path": "src/evaluate.py",
-      "purpose": "Metrik A–D: anchor ppl/KL, diversitas, akurasi terverifikasi, memorisasi.",
-      "phase": "P3",
-      "status": "belum-mulai"
-    },
-    {
-      "path": "src/orchestrate.py",
-      "purpose": "Graf LangGraph: plan → generate → validate → freeze → train → eval → gate (SQLite checkpointer).",
-      "phase": "P3",
-      "status": "belum-mulai"
-    },
-    {
       "path": "configs/s.yaml",
       "purpose": "Konfigurasi model S (8 jt parameter) — dikunci untuk semua arm.",
       "phase": "P3",
@@ -228,18 +194,6 @@
       "path": "REPRODUCE.md",
       "purpose": "Satu halaman: cara menjalankan ulang dari nol, termasuk versi paket.",
       "phase": "P6",
-      "status": "belum-mulai"
-    },
-    {
-      "path": "src/critic.py",
-      "purpose": "Critic deterministik (repetisi, fertilitas, format, checker) + anggaran regenerasi 10%.",
-      "phase": "P3",
-      "status": "belum-mulai"
-    },
-    {
-      "path": "src/audit.py",
-      "purpose": "Audit campuran (mix_tvd, lex_tvd), fertilitas, dan sensitivitas tokenizer A1–A3.",
-      "phase": "P3",
       "status": "belum-mulai"
     },
     {
@@ -300,6 +254,84 @@
       "path": "ops/policy_lint.py",
       "purpose": "Menolak kebijakan yang tidak lengkap atau bertentangan.",
       "phase": "P0.7",
+      "status": "selesai"
+    },
+    {
+      "path": "src/config.py",
+      "purpose": "Seluruh konstanta P0 (profil XS, seed, ambang, ukuran korpus) di satu tempat.",
+      "phase": "P0.8",
+      "status": "selesai"
+    },
+    {
+      "path": "src/model.py",
+      "purpose": "TinyGPT XS: pre-LN, MHA kausal, weight tying, sampling suhu/top-p. 481.344 parameter.",
+      "phase": "P0.8",
+      "status": "selesai"
+    },
+    {
+      "path": "src/common.py",
+      "purpose": "Path artefak, sha256, IO jsonl, penjadwal RNG deterministik.",
+      "phase": "P0.8",
+      "status": "selesai"
+    },
+    {
+      "path": "src/corpus.py",
+      "purpose": "Korpus guru T0 (template satu-baris, 6 domain) + split train/valid/test berbasis hash.",
+      "phase": "P0.8",
+      "status": "selesai"
+    },
+    {
+      "path": "src/train.py",
+      "purpose": "Training loop dengan warmup + cosine decay, 600 langkah, seed eksplisit.",
+      "phase": "P0.8",
+      "status": "selesai"
+    },
+    {
+      "path": "src/generate.py",
+      "purpose": "Generasi batch dengan padding kiri, berhenti di penanda <E>.",
+      "phase": "P0.8",
+      "status": "selesai"
+    },
+    {
+      "path": "src/evaluate.py",
+      "purpose": "Evaluasi anchor BPB, akurasi aritmetika, distinct-2, repetisi, divergensi gaya.",
+      "phase": "P0.8",
+      "status": "selesai"
+    },
+    {
+      "path": "src/validate.py",
+      "purpose": "Filter dokumen (lenient, menghitung truncated) + pencampuran arm B1 dengan TVD.",
+      "phase": "P0.8",
+      "status": "selesai"
+    },
+    {
+      "path": "src/gate.py",
+      "purpose": "Aturan R7: ambang Bonferroni + selang prediksi + lantai 0,03, plus syarat cedera sekunder.",
+      "phase": "P0.8",
+      "status": "selesai"
+    },
+    {
+      "path": "src/orchestrate.py",
+      "purpose": "State machine 17 node yang bisa di-resume; menulis state, metrik, checkpoint.",
+      "phase": "P0.8",
+      "status": "selesai"
+    },
+    {
+      "path": "src/report_p0.py",
+      "purpose": "Membangun REPORT-P0.md dan analysis/p0_metrics.csv dari metrik mentah.",
+      "phase": "P0.8",
+      "status": "selesai"
+    },
+    {
+      "path": "tests/smoke_p0.py",
+      "purpose": "Uji asap skala mini sebelum menjalankan P0 penuh.",
+      "phase": "P0.8",
+      "status": "selesai"
+    },
+    {
+      "path": "REPORT-P0.md",
+      "purpose": "Laporan hasil P0: tabel, temuan, deviasi, dan klaim yang tidak didukung.",
+      "phase": "P0.8",
       "status": "selesai"
     }
   ],
@@ -455,7 +487,7 @@
       "id": "D8",
       "question": "Profil eksekusi mana yang dijalankan?",
       "impact": "Menentukan apakah kita hanya membuktikan pipeline (P0), mendapat pratinjau (P1), atau klaim utama (P2 di GPU eksternal).",
-      "status": "menunggu jawabanmu",
+      "status": "diputuskan: (c) P0 di sandbox -> P1 -> P2 lewat executor offline",
       "options": [
         {
           "id": "a",
@@ -476,7 +508,7 @@
       "id": "D9",
       "question": "Analisis dijalankan buta?",
       "impact": "Label arm diacak sampai kesimpulan ditulis, lalu dibuka. Mengurangi bias narasi penulis.",
-      "status": "menunggu jawabanmu",
+      "status": "diputuskan: (a) analisis buta, label arm dikacaukan sampai kesimpulan ditulis",
       "options": [
         {
           "id": "a",
@@ -550,35 +582,49 @@
       "title": "PLAN.md v0.1",
       "detail": "Rencana awal: 18 bagian, 6 arm eksperimen, 4 keluarga metrik, definisi operasional collapse, pra-registrasi, risiko, batasan.",
       "evidence": "PLAN.md (544 baris)"
+    },
+    {
+      "date": "2026-11-01",
+      "title": "Pilot P0 dijalankan (eksekusi nyata pertama)",
+      "detail": "16 model dilatih, 17 node selesai, 749.133 byte sintetis, 22 menit 23 detik di 2 vCPU tanpa GPU. sigma0 = 0,0126 bpb; ambang R7 = 0,0488 bpb. Arm A naik ke 1,93 bpb (+1,44) pada generasi 3, arm B1 ke 0,92 bpb (+0,43). Tidak ada titik yang ditandai 'collapse' oleh gate karena sinyal cedera sekunder tidak pernah menyala — cacat aturan yang ditemukan oleh data, bukan oleh teori. Deviasi dari PLAN (byte-level, posisi dipelajari, 600 langkah, filter lenient) dicatat di REPORT-P0.md.",
+      "evidence": "REPORT-P0.md, runs/p0/metrics.jsonl, analysis/p0_metrics.csv"
     }
   ],
   "claims": [
     {
-      "claim": "Belum ada kode eksperimen yang ditulis.",
-      "verify": "find experiments/ai-belajar-dari-ai -type f | sort"
+      "claim": "Ada 1.419 baris kode eksperimen di 11 modul src/ (dihitung saat dashboard dibangun).",
+      "verify": "wc -l experiments/ai-belajar-dari-ai/src/*.py"
     },
     {
-      "claim": "Belum ada model dilatih / checkpoint dibuat.",
-      "verify": "ls experiments/ai-belajar-dari-ai/checkpoints 2>/dev/null || echo 'tidak ada direktori checkpoints'"
+      "claim": "Pilot P0 benar-benar dijalankan: 16 checkpoint 0,48 jt parameter ada di disk.",
+      "verify": "ls -la experiments/ai-belajar-dari-ai/checkpoints/p0 | head"
+    },
+    {
+      "claim": "Setiap angka di laporan P0 bisa dilacak ke satu baris metrik mentah.",
+      "verify": "wc -l experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl && head -1 experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl"
+    },
+    {
+      "claim": "Laporan P0 dibangun dari metrik mentah, bukan ditulis tangan.",
+      "verify": "python3 experiments/ai-belajar-dari-ai/src/report_p0.py && sha256sum experiments/ai-belajar-dari-ai/REPORT-P0.md"
+    },
+    {
+      "claim": "Tidak ada titik rantai yang ditandai collapse oleh gate — bisa diperiksa langsung.",
+      "verify": "grep -o '\"status\": \"[a-z]*\"' experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl | sort | uniq -c"
     },
     {
       "claim": "Dashboard ini dibangun dari berkas sumber, bukan ditulis tangan.",
       "verify": "python3 experiments/ai-belajar-dari-ai/dashboard/build.py && sha256sum experiments/ai-belajar-dari-ai/dashboard/index.html"
     },
     {
-      "claim": "Isi tiap berkas di halaman ini sama dengan isi di disk (hash ikut ditampilkan).",
-      "verify": "sha256sum experiments/ai-belajar-dari-ai/PLAN.md experiments/ai-belajar-dari-ai/dashboard/status.json"
-    },
-    {
       "claim": "Tidak ada dependensi eksternal / CDN di dashboard.",
       "verify": "grep -nE 'https?://' experiments/ai-belajar-dari-ai/dashboard/index.html | grep -vE 'arxiv|nature|doi' | head"
-    },
-    {
-      "claim": "Klaim angka di tabel progres berasal dari status.json, yang bisa kamu baca sendiri.",
-      "verify": "cat experiments/ai-belajar-dari-ai/dashboard/status.json"
     }
   ],
   "bias_notes": [
+    {
+      "title": "Gate saya sendiri gagal: 12 dari 12 titik melewati ambang, 0 ditandai collapse",
+      "detail": "P0 memperlihatkan cacat yang tidak terlihat di atas kertas. bpb naik sampai +1,44 (29x ambang), tetapi status gate tetap 'watch' karena syarat cedera sekunder tidak pernah terpenuhi: arith_acc sudah 0,00 di baseline (mustahil turun 10pp), distinct2 justru naik pada teks rusak, style_div datar, repetisi nol. Aku TIDAK mengubah aturan setelah melihat data; kandidat R8 (sinyal degenerate/truncated + aturan sadar-lantai) harus dipraregistrasi sebelum P1. Ini contoh persis 'collapse semu' versi terbalik: kegagalan deteksi yang menyamar sebagai hasil negatif."
+    },
     {
       "title": "Collapse semu: kegagalan desain yang menyamar sebagai temuan",
       "detail": "Risiko terbesar eksperimen ini bukan gagal menemukan apa pun, melainkan menemukan degradasi yang sebenarnya disebabkan artefak: tokenizer yang memburuk, prompt yang diulang, sampel yang bergeser, ambang yang terlalu ketat, atau guru yang berubah gaya antar batch. v0.2 menambahkan audit untuk masing-masing; setiap audit punya ambang tindakan yang dinyatakan di muka, sehingga 'temuan' tidak bisa lahir dari bug yang tidak diperiksa."
