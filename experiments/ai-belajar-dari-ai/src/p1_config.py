@@ -35,6 +35,7 @@ TEMPERATURE = 0.9
 TOP_P = 0.95
 GEN_MAX_NEW = 240
 GEN_BATCH = 64
+GEN_PROMPT_LEN = 96      # semua prompt generasi dipaksa sepanjang ini -> satu bucket batch
 GEN_MIN_DOC = 40      # dokumen lebih pendek dibuang sebelum dipakai melatih
 
 # evaluasi (PREREG §6.2: >= 100 dokumen, >= 40 item aritmetika)

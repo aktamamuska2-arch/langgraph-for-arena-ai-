@@ -96,6 +96,30 @@ def write_syn(path: Path, texts: list[str]) -> None:
     tmp.replace(path)  # atomik: tidak ada keadaan setengah jadi
 
 
+def gen_prompt(doc: dict, length: int = P.GEN_PROMPT_LEN) -> bytes:
+    """Prompt generasi dengan panjang TETAP (satu bucket -> batch penuh).
+
+    Alasan: cache K/V tidak bisa menangani padding, sehingga `generate_batch`
+    mengelompokkan prompt menurut panjang persis. Prompt T0 hampir semuanya
+    panjangnya berbeda -> 49 bucket -> batch efektif ~15 -> laju 1.130 B/s
+    (terukur), bukan 4.500 B/s.
+
+    Dua kompromi, keduanya dinyatakan terbuka:
+      - prompt lebih pendek dari `length`: di-pad **spasi di depan**. Konteks yang
+        berbatasan langsung dengan titik generasi (`...</P><A>`) tetap utuh; yang
+        bergeser hanya posisi awal `<D>`, jauh dari tempat sampling.
+      - prompt lebih panjang: isi dipotong di tengah, penanda `<P>...</P><A>` dijaga.
+    """
+    head = f"<D>{doc['domain']}</D><P>".encode("utf-8")
+    tail = b"</P><A>"
+    body = doc["prompt"].encode("utf-8")
+    room = max(0, length - len(head) - len(tail))
+    p = head + body[:room] + tail
+    if len(p) < length:
+        p = b" " * (length - len(p)) + p
+    return p[:length] if len(p) > length else p
+
+
 def generate_syn(model: TinyGPT, docs: list[dict], n_bytes: int, tag: str, out_dir: Path) -> list[str]:
     """Hasilkan dokumen sintetis sampai >= n_bytes; simpan + kembalikan teksnya."""
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -113,7 +137,7 @@ def generate_syn(model: TinyGPT, docs: list[dict], n_bytes: int, tag: str, out_d
         batch = []
         while len(batch) < P.GEN_BATCH:
             d = docs[i % len(docs)]
-            batch.append(prompt_of(d))
+            batch.append(gen_prompt(d))
             i += 1
         outs = generate_batch(model, batch, max_new=P.GEN_MAX_NEW, temperature=P.TEMPERATURE,
                               top_p=P.TOP_P, stop_byte=None, stop_suffix=b"<E>", max_batch=P.GEN_BATCH)
@@ -128,7 +152,8 @@ def generate_syn(model: TinyGPT, docs: list[dict], n_bytes: int, tag: str, out_d
             log(f"    PERINGATAN: pengaman generasi aktif pada {total} byte")
             break
     write_syn(path, texts)
-    log(f"    sintetis {tag}: {len(texts)} dok, {total} byte, {time.perf_counter()-t0:.1f}s")
+    dt = time.perf_counter() - t0
+    log(f"    sintetis {tag}: {len(texts)} dok, {total} byte, {dt:.1f}s ({total/dt:.0f} B/s)")
     return texts
 
 
