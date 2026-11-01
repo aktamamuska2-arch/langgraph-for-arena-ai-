@@ -7,6 +7,10 @@
 #   make calibrate   hitung ulang FWER/power/MDE aturan collapse (±80 detik, tanpa dependensi)
 #   make prereg-verify  pastikan PREREGISTRATION.md tidak berubah sejak dikunci
 #   make blind-status   status protokol buta P1
+#   make corpus      bangun korpus guru T0 P1 (>= 2 MB) di data/p1/t0
+#   make audit       audit 5 gerbang korpus T0 (keluar != 0 bila ada yang gagal)
+#   make ui          antarmuka uji manusia di http://localhost:8010
+#   make ui-cli      versi terminal dari antarmuka uji
 #
 # Semua target hanya butuh python3 (tanpa paket eksternal).
 #
@@ -20,7 +24,7 @@ PY ?= python3
 PORT ?= 8000
 HERE := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: dashboard open verify policy calibrate prereg prereg-verify blind-status check clean
+.PHONY: dashboard open verify policy calibrate prereg prereg-verify blind-status corpus audit ui ui-cli check clean
 
 dashboard:
 	$(PY) $(HERE)dashboard/build.py
@@ -41,6 +45,18 @@ policy:
 
 calibrate:
 	$(PY) $(HERE)analysis/calibration.py
+
+corpus:
+	cd $(HERE) && $(PY) -m src.p1_corpus --build
+
+audit:
+	$(PY) $(HERE)analysis/t0_audit.py
+
+ui:
+	$(PY) $(HERE)tests/ui_inspect.py --port 8010 --bind 0.0.0.0
+
+ui-cli:
+	$(PY) $(HERE)tests/ui_inspect.py --cli
 
 prereg:
 	$(PY) $(HERE)ops/prereg_lock.py --lock

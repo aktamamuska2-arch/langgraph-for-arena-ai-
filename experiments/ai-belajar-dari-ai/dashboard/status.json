@@ -1,7 +1,7 @@
 {
   "meta": {
     "project": "AI Belajar dari AI — Dashboard Transparansi",
-    "headline": "Model bahasa dari nol, data seluruhnya dari AI, dieksperimen sebagai risiko. Status 1 Nov 2026: Pilot P0 dijalankan (16 model, 749.133 byte sintetis) dan gagal mendeteksi degradasi 29x ambang — cacat aturan yang ditemukan data, bukan teori. Sebagai jawabannya, aturan R8 + korpus P1 + protokol buta sekarang DIKUNCI di PREREGISTRATION.md v1.1 (sha256 e19796bf…) sebelum satu model P1 pun ada.",
+    "headline": "Model bahasa dari nol, data seluruhnya dari AI, diuji sebagai risiko. Status 1 Nov 2026: P0 dijalankan (16 model) dan gate-nya gagal mendeteksi degradasi 29x ambang; R8 lalu dikunci di PREREGISTRATION.md v1.1. Sekarang ada antarmuka uji manusia (make ui) supaya kamu bisa menilai model sendiri, dan korpus T0 P1 >= 2 MB yang lulus 4 dari 5 gerbang — gerbang T2 ternyata mustahil dan menunggu keputusanmu.",
     "read_me_first": "Dashboard ini dibuat oleh AI yang sama yang menulis rencananya. Artinya ini bukan laporan independen. Karena itu setiap angka di sini bisa kamu cocokkan dengan berkas aslinya: hash SHA-256 tiap berkas tercantum, inventaris berkas dihitung langsung dari disk saat dashboard dibangun, dan setiap klaim punya perintah verifikasinya sendiri. Kalau ada yang tidak cocok, AI-nya yang salah, bukan berkasnya.",
     "plan_version": "0.3.1",
     "plan_status": "rencana v0.3 + hasil pilot P0 (bukti mekanisme, bukan temuan)",
@@ -10,12 +10,12 @@
   },
   "progress": {
     "plan_pct": 100,
-    "implementation_pct": 30,
+    "implementation_pct": 38,
     "models_trained": 16,
     "tokens_generated": 749133,
     "runs_completed": 1,
     "checkpoints": 16,
-    "lines_of_experiment_code": 1419
+    "lines_of_experiment_code": 3493
   },
   "phases": [
     {
@@ -57,6 +57,22 @@
       "status": "selesai",
       "output": "PREREGISTRATION.md v1.1 (326 baris) + kunci hash + alat verifikasi + alat blinding",
       "evidence": "ops/prereg.lock.json, ops/prereg_lock.py, ops/blind.py, analysis/stats_r8.py"
+    },
+    {
+      "id": "P0.10",
+      "name": "Antarmuka uji manusia",
+      "desc": "Web lokal + mode terminal untuk memilih checkpoint (M0 sampai generasi mana pun), memberi prompt bebas, melihat teks mentah, dan menilai metrik cepat beserta status gate checkpoint itu.",
+      "status": "selesai",
+      "output": "tests/ui_inspect.py — `make ui` (port 8010) atau `make ui-cli`",
+      "evidence": "tests/ui_inspect.py, Makefile (target ui, ui-cli), PLAN §12.1"
+    },
+    {
+      "id": "P0.11",
+      "name": "Korpus T0 P1 + audit 5 gerbang",
+      "desc": "2,3 MB, 14 domain, 3.131 dokumen, anchor + 60 probe aritmetika. Audit: T1/T3/T4/T5 LULUS, T2 GAGAL — 0,13 padahal syarat 0,98, dan teks manusia pada ukuran sama hanya 0,30. Amandemen T2 (v1.2) diusulkan, menunggu ratifikasi.",
+      "status": "diblokir",
+      "output": "data/p1/t0 (2,3 MB), analysis/t0_audit_report.md, runs/p1/t0_audit.json",
+      "evidence": "src/p1_corpus.py, analysis/t0_audit.py, analysis/t0_manifest.json"
     },
     {
       "id": "P1",
@@ -341,6 +357,54 @@
       "purpose": "Laporan hasil P0: tabel, temuan, deviasi, dan klaim yang tidak didukung.",
       "phase": "P0.8",
       "status": "selesai"
+    },
+    {
+      "path": "tests/ui_inspect.py",
+      "purpose": "Antarmuka uji manusia: pilih checkpoint, prompt bebas, teks mentah, metrik + gate.",
+      "phase": "P0.10",
+      "status": "selesai"
+    },
+    {
+      "path": "src/p1_corpus.py",
+      "purpose": "Generator korpus guru T0 P1 (>= 2 MB, 14 domain, deterministik dari seed).",
+      "phase": "P0.11",
+      "status": "selesai"
+    },
+    {
+      "path": "analysis/t0_audit.py",
+      "purpose": "Audit 5 gerbang korpus + pembanding manusia/P0/entropi Markov.",
+      "phase": "P0.11",
+      "status": "selesai"
+    },
+    {
+      "path": "analysis/t0_audit_report.md",
+      "purpose": "Hasil audit korpus dan usulan amandemen T2 v1.2.",
+      "phase": "P0.11",
+      "status": "selesai"
+    },
+    {
+      "path": "analysis/t0_manifest.json",
+      "purpose": "Manifest + sha256 korpus T0 P1 (data mentah tidak masuk git).",
+      "phase": "P0.11",
+      "status": "selesai"
+    },
+    {
+      "path": "ops/prereg_lock.py",
+      "purpose": "Kunci + verifikasi hash pra-registrasi.",
+      "phase": "P0.9",
+      "status": "selesai"
+    },
+    {
+      "path": "ops/blind.py",
+      "purpose": "Protokol buta P1: seal, status, reveal setelah hash kesimpulan.",
+      "phase": "P0.9",
+      "status": "selesai"
+    },
+    {
+      "path": "analysis/stats_r8.py",
+      "purpose": "Kuantil-t dan ambang R8, dihitung tanpa scipy.",
+      "phase": "P0.9",
+      "status": "selesai"
     }
   ],
   "decisions": [
@@ -602,9 +666,27 @@
       "title": "Pra-registrasi R8 dikunci (v1.1)",
       "detail": "PREREGISTRATION.md v1.0 dikunci 03:42Z, diamandemen ke v1.1 03:43Z sebelum ada model P1: F1/F2 dipisah dan dikelompokkan agar tidak dihitung sebagai dua bukti (cacat P0 terulang), komposisi data tiap arm dinyatakan, dan lima gerbang penerimaan korpus T0 ditambahkan. Hash v1.1 = e19796bff06c9f2f3bd20f2401fdc719488bbe81fb7d93d1776a63a381566d9f, diverifikasi setiap `make check`.",
       "evidence": "PREREGISTRATION.md, ops/prereg.lock.json, ops/prereg_lock.py"
+    },
+    {
+      "date": "2026-11-01",
+      "title": "Antarmuka uji manusia + korpus T0 P1 + audit gerbang",
+      "detail": "tests/ui_inspect.py memungkinkan pengujian langsung: 16 checkpoint P0, prompt bebas, teks mentah, metrik keluarga R8, dan status gate. Korpus P1 dibangun: 2,3 MB, 14 domain, 3.131 dokumen, anchor + 60 probe. Audit: T1/T3/T4/T5 LULUS; T2 GAGAL (0,13 vs syarat 0,98) dan terbukti mustahil karena teks manusia pada 2 MB hanya 0,30. Amandemen v1.2 diusulkan, belum diratifikasi — P1 tetap terkunci.",
+      "evidence": "tests/ui_inspect.py, analysis/t0_audit_report.md, analysis/t0_manifest.json"
     }
   ],
   "claims": [
+    {
+      "claim": "Antarmuka uji bisa dijalankan siapa pun tanpa kode: 16 checkpoint, prompt bebas, teks mentah.",
+      "verify": "make -C experiments/ai-belajar-dari-ai ui"
+    },
+    {
+      "claim": "Korpus T0 P1 bisa dibangun ulang deterministik dari seed, dan hash-nya tercatat.",
+      "verify": "python3 -m src.p1_corpus --build && cat experiments/ai-belajar-dari-ai/analysis/t0_manifest.json"
+    },
+    {
+      "claim": "Audit gerbang bisa dijalankan ulang dan keluar dengan kode 1 selama T2 belum dibereskan.",
+      "verify": "make -C experiments/ai-belajar-dari-ai audit; echo \"exit=$?\""
+    },
     {
       "claim": "Pra-registrasi dikunci dan tidak berubah sejak dikunci (diverifikasi ulang saat build).",
       "verify": "make -C experiments/ai-belajar-dari-ai prereg-verify"
@@ -643,6 +725,10 @@
     }
   ],
   "bias_notes": [
+    {
+      "title": "Gerbang T2 yang saya tulis sendiri ternyata mustahil",
+      "detail": "T2 menuntut 98% 8-gram unik. Pada 2 MB, teks manusia (docstring pustaka standar) hanya mencapai 0,30 — angka 0,98 tidak mungkin dicapai oleh korpus mana pun yang masih terbaca sebagai bahasa. Kesalahan ini lolos karena pra-registrasi ditulis tanpa mengukur satu korpus pun. Usulan perbaikannya (v1.2) berlabuh pada P0 dan teks manusia, dan saya akui kelipatannya saya tetapkan setelah melihat angka korpus sendiri — itu threshold fitting yang harus kamu nilai, bukan saya."
+    },
     {
       "title": "Buta prosedural, bukan buta kriptografis",
       "detail": "Protokol D9 menyegel pemetaan arm->label dan meng-commit sha256-nya sebelum eksekusi. Tapi agen yang sama yang menulis analisis juga bisa membaca .blind/key.json. Itu tidak bisa dicegah di dalam satu proses; yang bisa dilakukan hanya membuat pelanggaran urutan terlihat (komitmen hash + hash kesimpulan sebelum reveal). Siapa pun yang membaca laporan P1 harus menganggap blind ini sebagai pengurang bias, bukan penghilang."

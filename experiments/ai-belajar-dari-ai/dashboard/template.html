@@ -364,6 +364,13 @@ COLLAPSE bila:
         <div class="stat-value">v{{PREREG_VERSION}}</div>
         <div class="stat-sub mono">sha256 {{PREREG_HASH}} · {{PREREG_STATE}}</div>
       </div>
+      <div class="stat zero" style="margin:18px 0">
+        <div class="stat-label">Uji modelnya sendiri, jangan percaya laporan ini</div>
+        <div class="stat-value mono" style="font-size:15px">make ui</div>
+        <div class="stat-sub">buka <code>http://localhost:8010</code> — pilih checkpoint M0..generasi terakhir,
+          ketik prompt sendiri, baca teks mentahnya, lihat metrik + status gate. Mode terminal: <code>make ui-cli</code></div>
+      </div>
+
       <p class="small">
         <code>PREREGISTRATION.md</code> dikunci dengan hash; hash di atas dihitung ulang setiap kali
         dashboard dibangun, jadi kalau berkasnya diubah diam-diam, halaman ini berubah sendiri.

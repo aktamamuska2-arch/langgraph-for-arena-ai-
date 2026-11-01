@@ -661,6 +661,29 @@ Grafik inti wajib:
 
 ---
 
+## 12.1 Antarmuka uji manusia (wajib sebelum P1)
+
+Model yang tidak bisa kamu uji sendiri adalah model yang hanya bisa kamu percayai. Karena itu
+sebelum rantai P1 berjalan, ada antarmuka lokal yang membiarkan manusia menguji model secara
+langsung, bukan membaca ringkasan buatan saya.
+
+| Aspek | Isi |
+| --- | --- |
+| Perintah | `make ui` (web lokal `http://localhost:8010`), `make ui-cli` (terminal) |
+| Berkas | `tests/ui_inspect.py` |
+| Pilih model | semua checkpoint di `checkpoints/p0` dan `checkpoints/p1`, dari M0 baseline sampai generasi mana pun |
+| Prompt | bebas, dengan pilihan domain, suhu, top-p, panjang, dan jumlah sampel |
+| Keluaran | teks mentah apa adanya (bukan versi dibersihkan, bukan ringkasan) |
+| Metrik | degenerate/`<A>`/`<E>`, TTR, distinct-2, repetisi 8-gram, kompresi zlib, panjang byte |
+| Gate | status gate checkpoint itu, dibaca dari `runs/*/metrics.jsonl` mentah |
+| Peringatan lantai | metrik yang baseline-nya di lantai ditandai "di lantai", bukan ditampilkan sebagai aman |
+| Dependensi | hanya torch (sudah dipakai pipeline) + pustaka standar; tanpa CDN, tanpa aset eksternal |
+| Keluaran jaringan | tidak ada; halaman dan API dilayani proses yang sama di mesin lokal |
+
+Batas yang saya akui: halaman ini menunjukkan **apa** yang dihasilkan model, bukan **mengapa**.
+Ia juga tidak menjalankan uji konfirmatori R8 — itu ada di `analysis/` dan hanya sah bila
+dijalankan pada korpus evaluasi penuh, bukan pada satu prompt.
+
 ## 13. Timeline 7 minggu
 
 | Minggu | Fokus | Luaran | Gate |
@@ -792,6 +815,18 @@ Default-ku di kolom kanan; kalau tidak dijawab, aku pakai default dan mencatatny
 ---
 
 ## 19. Riwayat versi
+
+### v0.5 — 2026-11-01 (antarmuka uji manusia + korpus T0 P1)
+
+| # | Perubahan | Alasan | Bukti |
+| --- | --- | --- | --- |
+| 19 | `tests/ui_inspect.py`: web lokal + mode CLI untuk memilih checkpoint, memberi prompt bebas, melihat teks mentah, dan menilai metrik cepat + status gate (§12.1) | Tanpa ini, satu-satunya cara memeriksa model adalah membaca laporan saya sendiri — persis bias yang ingin dihilangkan | `make ui` (port 8010), `make ui-cli` |
+| 20 | `src/p1_corpus.py`: korpus guru P1 >= 2 MB, 14 domain, dokumen 224-1.762 byte, split 96/2/2 + anchor + 60 probe aritmetika | P0 gagal karena korpus templat 200 KB menekan baseline ke ekor (bpb 0,48) | `analysis/t0_manifest.json`, `data/p1/t0/` |
+| 21 | `analysis/t0_audit.py`: lima gerbang T1-T5 + tiga pembanding (teks manusia, korpus P0, entropi Markov) | Gerbang tanpa kalibrasi tidak bisa ditafsirkan; T2 ternyata mustahil (teks manusia hanya 0,30 pada 2 MB) | `analysis/t0_audit_report.md`, `runs/p1/t0_audit.json` |
+| 22 | Usulan amandemen T2 (v1.2) **belum diratifikasi** | Mengubah gerbang terkunci tanpa persetujuanmu akan merusak seluruh gunanya | laporan audit bagian akhir |
+
+Status: P1 **tetap terkunci**. Dua syarat belum terpenuhi: T2 versi v1.1 gagal (dan mustahil),
+dan amandemen v1.2 belum diratifikasi.
 
 ### v0.4 — 2026-11-01 (pra-registrasi R8 dikunci)
 
