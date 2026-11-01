@@ -30,6 +30,8 @@ AUDIT = ROOT / "docs" / "self-audit-v0.2.md"
 POLICY = ROOT / "ops" / "policy.v1.json"
 REPORT = ROOT / "REPORT-P0.md"
 P0_METRICS = ROOT / "runs" / "p0" / "metrics.jsonl"
+PREREG = ROOT / "PREREGISTRATION.md"
+PREREG_LOCK = ROOT / "ops" / "prereg.lock.json"
 STATUS = DASH / "status.json"
 TEMPLATE = DASH / "template.html"
 STYLE = DASH / "assets" / "style.css"
@@ -362,6 +364,20 @@ def main() -> None:
         for l in status["literature"]
     )
 
+    # --- status pra-registrasi (dihitung ulang saat build, bukan diketik)
+    pr = {"version": "-", "hash": "-", "state": "belum dikunci", "class": "zero"}
+    if PREREG_LOCK.exists() and PREREG.exists():
+        import json as _json
+        rec = _json.loads(PREREG_LOCK.read_text(encoding="utf-8"))
+        live = sha256(PREREG)
+        ok = live == rec.get("sha256")
+        pr = {
+            "version": rec.get("version", "?"),
+            "hash": rec.get("sha256", "?")[:32] + "…",
+            "state": "cocok dengan kunci" if ok else "TIDAK COCOK dengan kunci",
+            "class": "ok" if ok else "zero",
+        }
+
     # --- ringkasan artefak hasil run (tidak di-inline agar halaman tetap ringan)
     art_rows = []
     for sub in ("runs", "data", "checkpoints"):
@@ -519,6 +535,10 @@ def main() -> None:
         "{{TOTAL_BYTES}}": human_bytes(sum(f["bytes"] for f in files)),
         "{{HEADLINE}}": esc(meta["headline"]),
         "{{READ_ME_FIRST}}": esc(meta["read_me_first"]),
+        "{{PREREG_VERSION}}": pr["version"],
+        "{{PREREG_HASH}}": pr["hash"],
+        "{{PREREG_STATE}}": pr["state"],
+        "{{PREREG_CLASS}}": pr["class"],
         "{{P0_MODELS}}": p0["models"],
         "{{P0_MU}}": p0["mu"],
         "{{P0_SIGMA}}": p0["sigma"],

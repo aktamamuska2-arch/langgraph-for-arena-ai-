@@ -1,0 +1,16 @@
+{
+  "file": "PREREGISTRATION.md",
+  "version": "1.1",
+  "sha256": "e19796bff06c9f2f3bd20f2401fdc719488bbe81fb7d93d1776a63a381566d9f",
+  "bytes": 17785,
+  "lines": 326,
+  "locked_at": "2026-11-01T03:43:01Z",
+  "history": [
+    {
+      "version": "1.0",
+      "sha256": "f8a0a939e19cc32bb73ff23804ddb5295c81a8046be8ea86277ae82cf9f9c67b",
+      "locked_at": "2026-11-01T03:42:42Z",
+      "superseded": "2026-11-01T03:43:01Z"
+    }
+  ]
+}

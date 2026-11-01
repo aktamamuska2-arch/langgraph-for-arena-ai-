@@ -559,7 +559,15 @@ Aturan futilitas (pra-registrasi): arm dihentikan bila batas atas CI efek < MDE8
 
 ---
 
-### 10.7 Kandidat R8 — lahir dari data P0, belum diratifikasi
+### 10.7 Aturan R8 — diratifikasi di `PREREGISTRATION.md` v1.1
+
+**Status 2026-11-01:** bukan kandidat lagi. R8 dikunci di `PREREGISTRATION.md` v1.1
+(sha256 `e19796bf…`, tercatat di `ops/prereg.lock.json`) sebelum satu model P1 pun dilatih.
+Isi terkunci: kuantil-t Student menggantikan normal, enam sinyal cedera dalam **empat kelompok
+independen** (G1 struktur, G2 keragaman, G3 distribusi, G4 kapabilitas), aturan sadar-lantai,
+ambang ukuran sampel (40 item aritmetika), keputusan tiga-nilai dengan uji ekuivalensi, dan
+protokol buta berkomitmen hash. Rinciannya di dokumen pra-registrasi; bagian di bawah adalah
+catatan asal-usulnya dan tidak boleh dipakai sebagai pengganti.
 
 Pilot P0 (lihat §19, 2026-11-01) menjalankan R7 apa adanya, tanpa mengubah satu parameter pun
 setelah data terlihat. Hasilnya: **12 dari 12** model rantai melewati ambang (hingga 29,6x ambang,
@@ -577,8 +585,9 @@ Penyebabnya struktural, bukan kebetulan:
 Artinya: **aturan R7 + corroboration under-call tepat di rezim yang ingin kita deteksi.** Ini versi
 terbalik dari "collapse semu": kegagalan deteksi yang menyamar sebagai hasil negatif.
 
-Kandidat R8 di bawah ini **tidak** dipakai untuk menilai ulang P0 (itu akan menjadi penyesuaian
-setelah melihat data). R8 harus masuk `PREREGISTRATION.md` dan dikunci sebelum P1.
+Daftar di bawah ini adalah **catatan asal-usul** R8, bukan aturan yang berlaku. Aturan yang berlaku
+hanya yang ada di `PREREGISTRATION.md` v1.1. Kandidat ini tidak pernah dipakai untuk menilai ulang
+P0 — itu akan menjadi penyesuaian setelah melihat data.
 
 1. **Sinyal cedera diperluas:** kenaikan `degenerate_rate` >= 15pp, kenaikan porsi dokumen
    `truncated` >= 20pp, dan penurunan `format_compliance` (dokumen berakhir `<E>`) >= 20pp.
@@ -600,7 +609,7 @@ Dikunci sebagai `PREREGISTRATION.md` **sebelum** run Tier 1 (commit terpisah), b
 | Metrik primer | `anchor_bpb` |
 | Metrik sekunder | `distinct-2`, `tail_coverage`, `code_pass@1`, `style_div`, `fact_probe_acc`, `extraction_rate` |
 | Baseline | 5 seed M0; μ₀, σ₀, MDE dilaporkan |
-| Ambang | **R7** (§10.5) + R1/R3 sebagai sensitivitas + `1,5×` PPL (sekunder) |
+| Ambang | **R8** (`PREREGISTRATION.md` v1.1, diratifikasi dari §10.7): kuantil-t Bonferroni + lantai + enam sinyal cedera berkelompok + uji ekuivalensi |
 | Uji tren | Jonckheere–Terpstra + regresi campuran (`gen` fixed, `seed` random) |
 | α | 0,05 **family-wise** atas 180 uji (Bonferroni); Holm untuk 6 metrik sekunder |
 | Daya | **MDE80 wajib dihitung dan ditulis sebelum run**; bila σ̂ M0 > 0,06, tambah seed baseline sampai MDE turun |
@@ -783,6 +792,23 @@ Default-ku di kolom kanan; kalau tidak dijawab, aku pakai default dan mencatatny
 ---
 
 ## 19. Riwayat versi
+
+### v0.4 — 2026-11-01 (pra-registrasi R8 dikunci)
+
+`PREREGISTRATION.md` v1.0 dikunci pukul 03:42Z, lalu **diamandemen ke v1.1 pukul 03:43Z sebelum
+satu model P1 pun dilatih**. Amandemen itu bukan kosmetik: saat mengaudit dokumen sendiri, aku
+menemukan cacat yang sama dengan P0 terulang di rancangan R8.
+
+| # | Temuan saat mengaudit v1.0 | Keputusan v1.1 | Alasan |
+| --- | --- | --- | --- |
+| 15 | F1 didefinisikan "tanpa `<A>` **atau** `<E>`" dan F2 "tanpa `<E>`" — keduanya tumpang tindih, bisa dihitung sebagai dua bukti independen | Sinyal dipisah (F1 = tanpa `<A>`, F2 = tanpa `<E>`) dan dikelompokkan ke G1; keparahan dihitung atas **kelompok**, bukan sinyal | Menghitung satu fenomena dua kali adalah persis kesalahan yang membuat P0 salah menilai |
+| 16 | v1.0 tidak menyatakan komposisi data tiap arm | Ditambah §2.2: A = 100% generasi terakhir, B1 = T0 + semua generasi dengan bobot sama per sumber, C = T0 saja | Tanpa ini "arm" hanya nama, bukan definisi |
+| 17 | v1.0 menerima T0 bila >= 2 MB | Ditambah §2.1: lima gerbang (ukuran, 8-gram unik >= 0,98, >= 12 domain, panjang, Jaccard <= 0,5) | P0 gagal justru karena korpus templat, dan ukuran saja tidak mendeteksi templat |
+| 18 | R7 menghitung kuantil-t di `src/gate.py` lalu **tidak memakainya** (memakai normal untuk σ̂ dari 4 seed) | R8 memakai kuantil-t eksplisit dengan df = n0-1 | Bug implementasi, bukan pilihan desain; dilaporkan apa adanya |
+
+Konsekuensi angka: ambang konfirmatori P1 lebih tebal daripada R7 (mis. σ₀ = 0,03 -> 0,1302 bpb
+dengan m = 3, df = 4). Itu harga jujur dari mengestimasi σ dari 5 seed, dan sudah dinyatakan di
+pra-registrasi sebelum data ada.
 
 ### v0.3.1 — 2026-11-01 (hasil Pilot P0)
 

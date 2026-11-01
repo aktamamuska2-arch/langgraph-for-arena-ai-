@@ -448,7 +448,7 @@ footer {
   <span class="spacer"></span>
   <span class="pill">plan <b>v0.3.1</b></span>
   <span class="pill">implementasi <b>30%</b></span>
-  <span class="pill warn">dibangun 2026-11-01 03:23 UTC</span>
+  <span class="pill warn">dibangun 2026-11-01 03:43 UTC</span>
 </header>
 
 <div class="shell">
@@ -471,9 +471,9 @@ footer {
     <div class="side-meta">
       <div><b>root</b><br>/home/user/langgraph-for-arena-ai-/experiments/ai-belajar-dari-ai</div>
       <div style="margin-top:8px"><b>branch</b><br>arena/43651650-langgraph-for-arena-ai</div>
-      <div style="margin-top:8px"><b>sha256 PLAN.md</b><br>552954096dc80a86df32ba81cd7cecbc3127ae78622097bdb11c5dae0dac2ad1</div>
-      <div style="margin-top:8px"><b>sha256 status.json</b><br>38cc97fe5568b3961cb2fd50e944b2f03f73ed51b2a0d4244cccf692039757f8</div>
-      <div style="margin-top:8px"><b>berkas</b> 29 · 283.0 KB</div>
+      <div style="margin-top:8px"><b>sha256 PLAN.md</b><br>11d5489c47d6a0141086f8943eac434968e91e975b90d18b37fbeebc2d59e620</div>
+      <div style="margin-top:8px"><b>sha256 status.json</b><br>0cc0da17d4014caa2c99a4a88ab9a7e3bda421baa062de69751cf160ad918497</div>
+      <div style="margin-top:8px"><b>berkas</b> 34 · 319.8 KB</div>
     </div>
   </aside>
 
@@ -481,7 +481,7 @@ footer {
     <div class="hero">
       <div class="eyebrow">eksperimen: model dari nol, data dari ai</div>
       <h1>AI Belajar dari AI</h1>
-      <p class="lede">Model bahasa dari nol, data seluruhnya dari AI, dieksperimen sebagai risiko (bukan produk). Status 1 Nov 2026: Pilot P0 sudah BENAR-BENAR DIJALANKAN di sandbox — 16 model 0,48 jt parameter, 17 node pipeline, 749.133 byte teks sintetis, 22 menit 23 detik. sigma0 pertama terukur (0,0126 bpb). Hasil terpenting justru kritik terhadap aturan saya sendiri: degradasi 3x lipat terdeteksi oleh metrik utama tetapi TIDAK ditandai &#x27;collapse&#x27; oleh gate, karena sinyal cedera sekunder mati di lantai.</p>
+      <p class="lede">Model bahasa dari nol, data seluruhnya dari AI, dieksperimen sebagai risiko. Status 1 Nov 2026: Pilot P0 dijalankan (16 model, 749.133 byte sintetis) dan gagal mendeteksi degradasi 29x ambang — cacat aturan yang ditemukan data, bukan teori. Sebagai jawabannya, aturan R8 + korpus P1 + protokol buta sekarang DIKUNCI di PREREGISTRATION.md v1.1 (sha256 e19796bf…) sebelum satu model P1 pun ada.</p>
       <div class="tags">
         <span class="pill">rencana <b>v0.3.1</b></span>
         <span class="pill">rencana v0.3 + hasil pilot P0 (bukti mekanisme, bukan temuan)</span>
@@ -506,7 +506,7 @@ footer {
 
       <h3>Fase pekerjaan</h3>
       <p class="small muted">Kolom “Bukti di repo” adalah tempat aku wajib menuliskan berkas yang bisa kamu buka. Kalau isinya “belum ada”, berarti memang belum ada.</p>
-      <table><thead><tr><th>Fase</th><th>Nama</th><th>Status</th><th>Luaran</th><th>Bukti di repo</th></tr></thead><tbody><tr><td class="mono">P0</td><td><strong>Rencana eksperimen</strong><div class="muted small">Dokumen desain: pertanyaan riset, arm, metrik, anggaran, risiko.</div></td><td><span class="badge badge-done">selesai</span></td><td class="small">PLAN.md v0.1 (18 bagian)</td><td class="small mono">PLAN.md</td></tr><tr><td class="mono">P0.5</td><td><strong>Dashboard transparansi</strong><div class="muted small">Halaman statis ini: rencana, status, peta kode, cara verifikasi.</div></td><td><span class="badge badge-done">selesai</span></td><td class="small">dashboard/index.html (dibangun dari PLAN.md + status.json)</td><td class="small mono">dashboard/build.py, dashboard/status.json</td></tr><tr><td class="mono">P0.7</td><td><strong>Audit mandiri &amp; kalibrasi statistik</strong><div class="muted small">Uji aturan deteksi sebelum ada model: FWER, power, MDE untuk 7 aturan. Hasil: aturan v0.2 memberi FWER 8,5–11,4% (bukan 0,3%); diganti R7.</div></td><td><span class="badge badge-done">selesai</span></td><td class="small">docs/self-audit-v0.2.md, analysis/calibration_results.md, ops/policy.v1.json</td><td class="small mono">analysis/calibration.py, ops/policy_lint.py</td></tr><tr><td class="mono">P0.8</td><td><strong>Pilot P0 (eksekusi nyata pertama)</strong><div class="muted small">Model XS 0,48 jt parameter (byte-level, konteks 96), T0 200 KB dari guru template, 4 seed baseline, 2 arm (A replace, B1 accumulate-proportional) x 2 seed x 3 generasi, 600 langkah/model. Menghasilkan sigma0 pertama dan membuktikan rantai 17 node berjalan end-to-end.</div></td><td><span class="badge badge-done">selesai</span></td><td class="small">16 model, 16 checkpoint, 749.133 byte sintetis, sigma0 = 0,0126 bpb, ambang R7 = 0,0488 bpb. Semua 12 titik rantai melewati ambang, 0 ditandai collapse oleh gate (cacat aturan, lihat catatan bias).</td><td class="small mono">runs/p0/metrics.jsonl, REPORT-P0.md, analysis/p0_metrics.csv, checkpoints/p0</td></tr><tr><td class="mono">P1</td><td><strong>P1 Pilot diperluas (belum dijalankan)</strong><div class="muted small">Baseline &gt;= 5 seed, 3 arm (A, B1, kontrol tanpa self-training) x 5 seed x 6 generasi, korpus guru non-templat &gt;= 2 MB, evaluasi 40+ item aritmetika, aturan R8 dipraregistrasi lebih dulu. Menunggu keputusanmu soal executor.</div></td><td><span class="badge badge-idle">belum mulai</span></td><td class="small">Grafik pertama: kualitas vs generasi (skala mini)</td><td class="small mono">belum ada</td></tr><tr><td class="mono">P2</td><td><strong>Korpus T0 skala penuh</strong><div class="muted small">±2,5 juta token, ±800 dokumen, reservoir 6.000 intent + 5 parafrase per intent, batch guru C2/C3 dibuat sekali dan dibekukan. (+ profil eksekusi P0–P3, §20)</div></td><td><span class="badge badge-idle">belum mulai</span></td><td class="small">Korpus T0 + manifest + tokenizer + test anchor beku</td><td class="small mono">belum ada</td></tr><tr><td class="mono">P3</td><td><strong>Harness training &amp; evaluasi</strong><div class="muted small">Training loop manual, evaluator (BPB + diversitas + gaya), critic deterministik, auditor campuran/tokenizer, orkestrasi LangGraph dengan routing &amp; fork, unit test anti-kebocoran.</div></td><td><span class="badge badge-idle">belum mulai</span></td><td class="small">make pilot hijau, M0 sehat</td><td class="small mono">belum ada</td></tr><tr><td class="mono">P4</td><td><strong>Pra-registrasi dikunci</strong><div class="muted small">Metrik utama (anchor_bpb), ambang σ + lantai absolut, uji statistik, tier &amp; seed ditetapkan sebelum run.</div></td><td><span class="badge badge-idle">belum mulai</span></td><td class="small">PREREGISTRATION.md</td><td class="small mono">belum ada</td></tr><tr><td class="mono">P5</td><td><strong>Sweep 13 arm / 32 chain</strong><div class="muted small">Tier 1 konfirmatori (A, A′, B1, C1, C2, D2, 3 seed), Tier 2 sekunder (B2, C3, D1, E, 2 seed), Tier 3 eksploratif (F, B3, G, 4 generasi). ±120 GPU-jam pada profil P2 (GPU eksternal), bukan di sandbox (terukur 1.067 jam CPU).</div></td><td><span class="badge badge-idle">belum mulai</span></td><td class="small">Kurva degenerasi lengkap</td><td class="small mono">belum ada</td></tr><tr><td class="mono">P6</td><td><strong>Analisis &amp; laporan</strong><div class="muted small">Uji tren, 8 grafik inti, laporan 8–12 halaman termasuk batasan.</div></td><td><span class="badge badge-idle">belum mulai</span></td><td class="small">REPORT.md + paper.pdf</td><td class="small mono">belum ada</td></tr></tbody></table>
+      <table><thead><tr><th>Fase</th><th>Nama</th><th>Status</th><th>Luaran</th><th>Bukti di repo</th></tr></thead><tbody><tr><td class="mono">P0</td><td><strong>Rencana eksperimen</strong><div class="muted small">Dokumen desain: pertanyaan riset, arm, metrik, anggaran, risiko.</div></td><td><span class="badge badge-done">selesai</span></td><td class="small">PLAN.md v0.1 (18 bagian)</td><td class="small mono">PLAN.md</td></tr><tr><td class="mono">P0.5</td><td><strong>Dashboard transparansi</strong><div class="muted small">Halaman statis ini: rencana, status, peta kode, cara verifikasi.</div></td><td><span class="badge badge-done">selesai</span></td><td class="small">dashboard/index.html (dibangun dari PLAN.md + status.json)</td><td class="small mono">dashboard/build.py, dashboard/status.json</td></tr><tr><td class="mono">P0.7</td><td><strong>Audit mandiri &amp; kalibrasi statistik</strong><div class="muted small">Uji aturan deteksi sebelum ada model: FWER, power, MDE untuk 7 aturan. Hasil: aturan v0.2 memberi FWER 8,5–11,4% (bukan 0,3%); diganti R7.</div></td><td><span class="badge badge-done">selesai</span></td><td class="small">docs/self-audit-v0.2.md, analysis/calibration_results.md, ops/policy.v1.json</td><td class="small mono">analysis/calibration.py, ops/policy_lint.py</td></tr><tr><td class="mono">P0.8</td><td><strong>Pilot P0 (eksekusi nyata pertama)</strong><div class="muted small">Model XS 0,48 jt parameter (byte-level, konteks 96), T0 200 KB dari guru template, 4 seed baseline, 2 arm (A replace, B1 accumulate-proportional) x 2 seed x 3 generasi, 600 langkah/model. Menghasilkan sigma0 pertama dan membuktikan rantai 17 node berjalan end-to-end.</div></td><td><span class="badge badge-done">selesai</span></td><td class="small">16 model, 16 checkpoint, 749.133 byte sintetis, sigma0 = 0,0126 bpb, ambang R7 = 0,0488 bpb. Semua 12 titik rantai melewati ambang, 0 ditandai collapse oleh gate (cacat aturan, lihat catatan bias).</td><td class="small mono">runs/p0/metrics.jsonl, REPORT-P0.md, analysis/p0_metrics.csv, checkpoints/p0</td></tr><tr><td class="mono">P0.9</td><td><strong>Pra-registrasi R8 dikunci</strong><div class="muted small">PREREGISTRATION.md v1.1 dikunci sebelum eksekusi P1: kuantil-t Student, enam sinyal cedera dalam empat kelompok independen, aturan sadar-lantai, ambang 40 item aritmetika, keputusan tiga-nilai dengan uji ekuivalensi, gerbang korpus T0 &gt;= 2 MB, baseline 5 seed, protokol buta berkomitmen hash.</div></td><td><span class="badge badge-done">selesai</span></td><td class="small">PREREGISTRATION.md v1.1 (326 baris) + kunci hash + alat verifikasi + alat blinding</td><td class="small mono">ops/prereg.lock.json, ops/prereg_lock.py, ops/blind.py, analysis/stats_r8.py</td></tr><tr><td class="mono">P1</td><td><strong>P1 Pilot diperluas (belum dijalankan)</strong><div class="muted small">Menunggu eksekusi di executor offline: baseline 5 seed, 3 arm (A, B1, C) x 5 seed x 6 generasi, T0 non-templat &gt;= 2 MB yang harus lulus 5 gerbang, evaluasi 40 item aritmetika, analisis buta. Aturan sudah dikunci; tidak ada parameter yang boleh berubah saat run.</div></td><td><span class="badge badge-idle">belum mulai</span></td><td class="small">Grafik pertama: kualitas vs generasi (skala mini)</td><td class="small mono">belum ada</td></tr><tr><td class="mono">P2</td><td><strong>Korpus T0 skala penuh</strong><div class="muted small">±2,5 juta token, ±800 dokumen, reservoir 6.000 intent + 5 parafrase per intent, batch guru C2/C3 dibuat sekali dan dibekukan. (+ profil eksekusi P0–P3, §20)</div></td><td><span class="badge badge-idle">belum mulai</span></td><td class="small">Korpus T0 + manifest + tokenizer + test anchor beku</td><td class="small mono">belum ada</td></tr><tr><td class="mono">P3</td><td><strong>Harness training &amp; evaluasi</strong><div class="muted small">Training loop manual, evaluator (BPB + diversitas + gaya), critic deterministik, auditor campuran/tokenizer, orkestrasi LangGraph dengan routing &amp; fork, unit test anti-kebocoran.</div></td><td><span class="badge badge-idle">belum mulai</span></td><td class="small">make pilot hijau, M0 sehat</td><td class="small mono">belum ada</td></tr><tr><td class="mono">P4</td><td><strong>Pra-registrasi dikunci</strong><div class="muted small">Metrik utama (anchor_bpb), ambang σ + lantai absolut, uji statistik, tier &amp; seed ditetapkan sebelum run.</div></td><td><span class="badge badge-idle">belum mulai</span></td><td class="small">PREREGISTRATION.md</td><td class="small mono">belum ada</td></tr><tr><td class="mono">P5</td><td><strong>Sweep 13 arm / 32 chain</strong><div class="muted small">Tier 1 konfirmatori (A, A′, B1, C1, C2, D2, 3 seed), Tier 2 sekunder (B2, C3, D1, E, 2 seed), Tier 3 eksploratif (F, B3, G, 4 generasi). ±120 GPU-jam pada profil P2 (GPU eksternal), bukan di sandbox (terukur 1.067 jam CPU).</div></td><td><span class="badge badge-idle">belum mulai</span></td><td class="small">Kurva degenerasi lengkap</td><td class="small mono">belum ada</td></tr><tr><td class="mono">P6</td><td><strong>Analisis &amp; laporan</strong><div class="muted small">Uji tren, 8 grafik inti, laporan 8–12 halaman termasuk batasan.</div></td><td><span class="badge badge-idle">belum mulai</span></td><td class="small">REPORT.md + paper.pdf</td><td class="small mono">belum ada</td></tr></tbody></table>
 
       <div class="grid2" style="margin-top:18px">
         <div class="card">
@@ -681,8 +681,8 @@ COLLAPSE bila:
     <section id="rencana">
       <h2><span class="idx">05</span>Rencana lengkap</h2>
       <p class="sub">
-        Isi <code>PLAN.md</code> versi 0.3.1, dirender apa adanya: 934 baris, ±10.308 kata.
-        sha256 <code class="hash">552954096dc80a86df32ba81cd7cecbc3127ae78622097bdb11c5dae0dac2ad1</code>.
+        Isi <code>PLAN.md</code> versi 0.3.1, dirender apa adanya: 960 baris, ±10.686 kata.
+        sha256 <code class="hash">11d5489c47d6a0141086f8943eac434968e91e975b90d18b37fbeebc2d59e620</code>.
         Rencana ini <strong>dinamis</strong> — versinya akan naik setiap kali desain berubah, dan setiap perubahan dicatat di <a href="#log">Riwayat</a>.
       </p>
 
@@ -1322,7 +1322,8 @@ WATCH (peringatan dini, untuk RQ2): thr/2 &lt;= Δ &lt; thr</code></pre>
 <li>Setiap evaluasi deterministik dijalankan 3× dengan seed berbeda; laporkan rata-rata ± 95% CI bootstrap.
 </li></ul>
 <hr>
-<h4 id="107-kandidat-r8-lahir-dari-data-p0-belum-diratifikasi">10.7 Kandidat R8 — lahir dari data P0, belum diratifikasi<a class="anchor" href="#107-kandidat-r8-lahir-dari-data-p0-belum-diratifikasi">#</a></h4>
+<h4 id="107-aturan-r8-diratifikasi-di-preregistrationmd-v11">10.7 Aturan R8 — diratifikasi di <code>PREREGISTRATION.md</code> v1.1<a class="anchor" href="#107-aturan-r8-diratifikasi-di-preregistrationmd-v11">#</a></h4>
+<p><strong>Status 2026-11-01:</strong> bukan kandidat lagi. R8 dikunci di <code>PREREGISTRATION.md</code> v1.1 (sha256 <code>e19796bf…</code>, tercatat di <code>ops/prereg.lock.json</code>) sebelum satu model P1 pun dilatih. Isi terkunci: kuantil-t Student menggantikan normal, enam sinyal cedera dalam <strong>empat kelompok independen</strong> (G1 struktur, G2 keragaman, G3 distribusi, G4 kapabilitas), aturan sadar-lantai, ambang ukuran sampel (40 item aritmetika), keputusan tiga-nilai dengan uji ekuivalensi, dan protokol buta berkomitmen hash. Rinciannya di dokumen pra-registrasi; bagian di bawah adalah catatan asal-usulnya dan tidak boleh dipakai sebagai pengganti.</p>
 <p>Pilot P0 (lihat §19, 2026-11-01) menjalankan R7 apa adanya, tanpa mengubah satu parameter pun setelah data terlihat. Hasilnya: <strong>12 dari 12</strong> model rantai melewati ambang (hingga 29,6x ambang, bpb naik dari 0,48 ke 1,93), tetapi <strong>0</strong> ditandai <code>collapse</code>. Semuanya berhenti di <code>watch</code>.</p>
 <p>Penyebabnya struktural, bukan kebetulan:</p>
 <table><thead><tr>
@@ -1336,7 +1337,7 @@ WATCH (peringatan dini, untuk RQ2): thr/2 &lt;= Δ &lt; thr</code></pre>
 <tr><td><code>repetition_rate</code> naik</td><td>0,00 di semua model</td><td>Model 0,48 jt gagal bahkan untuk mengulang</td></tr>
 </tbody></table>
 <p>Artinya: <strong>aturan R7 + corroboration under-call tepat di rezim yang ingin kita deteksi.</strong> Ini versi terbalik dari "collapse semu": kegagalan deteksi yang menyamar sebagai hasil negatif.</p>
-<p>Kandidat R8 di bawah ini <strong>tidak</strong> dipakai untuk menilai ulang P0 (itu akan menjadi penyesuaian setelah melihat data). R8 harus masuk <code>PREREGISTRATION.md</code> dan dikunci sebelum P1.</p>
+<p>Daftar di bawah ini adalah <strong>catatan asal-usul</strong> R8, bukan aturan yang berlaku. Aturan yang berlaku hanya yang ada di <code>PREREGISTRATION.md</code> v1.1. Kandidat ini tidak pernah dipakai untuk menilai ulang P0 — itu akan menjadi penyesuaian setelah melihat data.</p>
 <ol>
 <li><strong>Sinyal cedera diperluas:</strong> kenaikan <code>degenerate_rate</code> &gt;= 15pp, kenaikan porsi dokumen
 </li></ol>
@@ -1362,7 +1363,7 @@ WATCH (peringatan dini, untuk RQ2): thr/2 &lt;= Δ &lt; thr</code></pre>
 <tr><td>Metrik primer</td><td><code>anchor_bpb</code></td></tr>
 <tr><td>Metrik sekunder</td><td><code>distinct-2</code>, <code>tail_coverage</code>, <code>code_pass@1</code>, <code>style_div</code>, <code>fact_probe_acc</code>, <code>extraction_rate</code></td></tr>
 <tr><td>Baseline</td><td>5 seed M0; μ₀, σ₀, MDE dilaporkan</td></tr>
-<tr><td>Ambang</td><td><strong>R7</strong> (§10.5) + R1/R3 sebagai sensitivitas + <code>1,5×</code> PPL (sekunder)</td></tr>
+<tr><td>Ambang</td><td><strong>R8</strong> (<code>PREREGISTRATION.md</code> v1.1, diratifikasi dari §10.7): kuantil-t Bonferroni + lantai + enam sinyal cedera berkelompok + uji ekuivalensi</td></tr>
 <tr><td>Uji tren</td><td>Jonckheere–Terpstra + regresi campuran (<code>gen</code> fixed, <code>seed</code> random)</td></tr>
 <tr><td>α</td><td>0,05 <strong>family-wise</strong> atas 180 uji (Bonferroni); Holm untuk 6 metrik sekunder</td></tr>
 <tr><td>Daya</td><td><strong>MDE80 wajib dihitung dan ditulis sebelum run</strong>; bila σ̂ M0 &gt; 0,06, tambah seed baseline sampai MDE turun</td></tr>
@@ -1615,6 +1616,20 @@ WATCH (peringatan dini, untuk RQ2): thr/2 &lt;= Δ &lt; thr</code></pre>
 </li></ol>
 <hr>
 <h3 id="19-riwayat-versi">19. Riwayat versi<a class="anchor" href="#19-riwayat-versi">#</a></h3>
+<h4 id="v04-2026-11-01-pra-registrasi-r8-dikunci">v0.4 — 2026-11-01 (pra-registrasi R8 dikunci)<a class="anchor" href="#v04-2026-11-01-pra-registrasi-r8-dikunci">#</a></h4>
+<p><code>PREREGISTRATION.md</code> v1.0 dikunci pukul 03:42Z, lalu <strong>diamandemen ke v1.1 pukul 03:43Z sebelum satu model P1 pun dilatih</strong>. Amandemen itu bukan kosmetik: saat mengaudit dokumen sendiri, aku menemukan cacat yang sama dengan P0 terulang di rancangan R8.</p>
+<table><thead><tr>
+<th>#</th>
+<th>Temuan saat mengaudit v1.0</th>
+<th>Keputusan v1.1</th>
+<th>Alasan</th>
+</tr></thead><tbody>
+<tr><td>15</td><td>F1 didefinisikan "tanpa <code>&lt;A&gt;</code> <strong>atau</strong> <code>&lt;E&gt;</code>" dan F2 "tanpa <code>&lt;E&gt;</code>" — keduanya tumpang tindih, bisa dihitung sebagai dua bukti independen</td><td>Sinyal dipisah (F1 = tanpa <code>&lt;A&gt;</code>, F2 = tanpa <code>&lt;E&gt;</code>) dan dikelompokkan ke G1; keparahan dihitung atas <strong>kelompok</strong>, bukan sinyal</td><td>Menghitung satu fenomena dua kali adalah persis kesalahan yang membuat P0 salah menilai</td></tr>
+<tr><td>16</td><td>v1.0 tidak menyatakan komposisi data tiap arm</td><td>Ditambah §2.2: A = 100% generasi terakhir, B1 = T0 + semua generasi dengan bobot sama per sumber, C = T0 saja</td><td>Tanpa ini "arm" hanya nama, bukan definisi</td></tr>
+<tr><td>17</td><td>v1.0 menerima T0 bila &gt;= 2 MB</td><td>Ditambah §2.1: lima gerbang (ukuran, 8-gram unik &gt;= 0,98, &gt;= 12 domain, panjang, Jaccard &lt;= 0,5)</td><td>P0 gagal justru karena korpus templat, dan ukuran saja tidak mendeteksi templat</td></tr>
+<tr><td>18</td><td>R7 menghitung kuantil-t di <code>src/gate.py</code> lalu <strong>tidak memakainya</strong> (memakai normal untuk σ̂ dari 4 seed)</td><td>R8 memakai kuantil-t eksplisit dengan df = n0-1</td><td>Bug implementasi, bukan pilihan desain; dilaporkan apa adanya</td></tr>
+</tbody></table>
+<p>Konsekuensi angka: ambang konfirmatori P1 lebih tebal daripada R7 (mis. σ₀ = 0,03 -&gt; 0,1302 bpb dengan m = 3, df = 4). Itu harga jujur dari mengestimasi σ dari 5 seed, dan sudah dinyatakan di pra-registrasi sebelum data ada.</p>
 <h4 id="v031-2026-11-01-hasil-pilot-p0">v0.3.1 — 2026-11-01 (hasil Pilot P0)<a class="anchor" href="#v031-2026-11-01-hasil-pilot-p0">#</a></h4>
 <p>Pilot P0 dijalankan di sandbox, bukan sekadar direncanakan: 16 model, 17 node, 749.133 byte sintetis, 22 menit 23 detik pada 2 vCPU/3 GB tanpa GPU. Laporan lengkap: <code>REPORT-P0.md</code>; metrik mentah: <code>runs/p0/metrics.jsonl</code>; kode: <code>src/</code> (1.419 baris).</p>
 <table><thead><tr>
@@ -1789,13 +1804,13 @@ WATCH (peringatan dini, untuk RQ2): thr/2 &lt;= Δ &lt; thr</code></pre>
       <p class="sub">Bagian ini sengaja tidak menyenangkan bagi pembuatnya. Isinya hal-hal yang bisa membuat dashboard ini menyesatkan, plus cara memeriksanya sendiri.</p>
 
       <h3>Risiko bias yang aku akui</h3>
-      <ul class="tight"><li><strong>Gate saya sendiri gagal: 12 dari 12 titik melewati ambang, 0 ditandai collapse</strong><p class="small">P0 memperlihatkan cacat yang tidak terlihat di atas kertas. bpb naik sampai +1,44 (29x ambang), tetapi status gate tetap &#x27;watch&#x27; karena syarat cedera sekunder tidak pernah terpenuhi: arith_acc sudah 0,00 di baseline (mustahil turun 10pp), distinct2 justru naik pada teks rusak, style_div datar, repetisi nol. Aku TIDAK mengubah aturan setelah melihat data; kandidat R8 (sinyal degenerate/truncated + aturan sadar-lantai) harus dipraregistrasi sebelum P1. Ini contoh persis &#x27;collapse semu&#x27; versi terbalik: kegagalan deteksi yang menyamar sebagai hasil negatif.</p></li><li><strong>Collapse semu: kegagalan desain yang menyamar sebagai temuan</strong><p class="small">Risiko terbesar eksperimen ini bukan gagal menemukan apa pun, melainkan menemukan degradasi yang sebenarnya disebabkan artefak: tokenizer yang memburuk, prompt yang diulang, sampel yang bergeser, ambang yang terlalu ketat, atau guru yang berubah gaya antar batch. v0.2 menambahkan audit untuk masing-masing; setiap audit punya ambang tindakan yang dinyatakan di muka, sehingga &#x27;temuan&#x27; tidak bisa lahir dari bug yang tidak diperiksa.</p></li><li><strong>Dashboard ini dilaporkan oleh pihak yang dinilai</strong><p class="small">Aku menulis rencana, menulis kode status, dan membangun halaman ini. Kalau aku ingin terlihat bagus, aku bisa memilih metrik yang menguntungkan. Penangkalnya: angka progres hanya boleh berubah bersamaan dengan bukti berkas yang bisa kamu buka di bagian &#x27;Inventaris berkas&#x27;.</p></li><li><strong>Aku adalah sumber data pelatihan, jadi aku juga subjek eksperimen</strong><p class="small">Korpus T0 ditulis olehku. Artinya &#x27;kualitas asli&#x27; yang jadi pembanding adalah kualitas AI, bukan kualitas manusia atau dunia nyata. Model yang &#x27;kolaps&#x27; di sini mungkin masih benar secara faktual; yang hilang adalah keragaman, cakupan, dan detail. Ini ditulis di bagian batasan PLAN.md §15 dan tidak boleh dihapus dari laporan akhir.</p></li><li><strong>Metrik yang dipilih menentukan kesimpulan</strong><p class="small">Kalau hanya perplexity rata-rata yang dilaporkan, collapse bisa tampak tidak terjadi. Karena itu metrik utama dipasangkan: perplexity pada anchor DAN diversitas/akurasi terverifikasi. Definisi operasional &#x27;collapse&#x27; dikunci sebelum run penuh (PLAN.md §10.3, §11).</p></li><li><strong>Tiga seed bukan bukti statistik kuat</strong><p class="small">Cukup untuk melihat arah tren, tidak cukup untuk klaim efek kecil. Semua seed dilaporkan; kami tidak akan memilih seed yang paling dramatis.</p></li><li><strong>Tidak ada penilai manusia independen</strong><p class="small">Penilaian kualitas narasi tidak punya checker deterministik. Untuk domain itu, satu-satunya penilai adalah metrik otomatis dan aku sendiri — sumber bias yang harus disebutkan di laporan.</p></li></ul>
+      <ul class="tight"><li><strong>Buta prosedural, bukan buta kriptografis</strong><p class="small">Protokol D9 menyegel pemetaan arm-&gt;label dan meng-commit sha256-nya sebelum eksekusi. Tapi agen yang sama yang menulis analisis juga bisa membaca .blind/key.json. Itu tidak bisa dicegah di dalam satu proses; yang bisa dilakukan hanya membuat pelanggaran urutan terlihat (komitmen hash + hash kesimpulan sebelum reveal). Siapa pun yang membaca laporan P1 harus menganggap blind ini sebagai pengurang bias, bukan penghilang.</p></li><li><strong>Gate saya sendiri gagal: 12 dari 12 titik melewati ambang, 0 ditandai collapse</strong><p class="small">P0 memperlihatkan cacat yang tidak terlihat di atas kertas. bpb naik sampai +1,44 (29x ambang), tetapi status gate tetap &#x27;watch&#x27; karena syarat cedera sekunder tidak pernah terpenuhi: arith_acc sudah 0,00 di baseline (mustahil turun 10pp), distinct2 justru naik pada teks rusak, style_div datar, repetisi nol. Aku TIDAK mengubah aturan setelah melihat data; kandidat R8 (sinyal degenerate/truncated + aturan sadar-lantai) harus dipraregistrasi sebelum P1. Ini contoh persis &#x27;collapse semu&#x27; versi terbalik: kegagalan deteksi yang menyamar sebagai hasil negatif.</p></li><li><strong>Collapse semu: kegagalan desain yang menyamar sebagai temuan</strong><p class="small">Risiko terbesar eksperimen ini bukan gagal menemukan apa pun, melainkan menemukan degradasi yang sebenarnya disebabkan artefak: tokenizer yang memburuk, prompt yang diulang, sampel yang bergeser, ambang yang terlalu ketat, atau guru yang berubah gaya antar batch. v0.2 menambahkan audit untuk masing-masing; setiap audit punya ambang tindakan yang dinyatakan di muka, sehingga &#x27;temuan&#x27; tidak bisa lahir dari bug yang tidak diperiksa.</p></li><li><strong>Dashboard ini dilaporkan oleh pihak yang dinilai</strong><p class="small">Aku menulis rencana, menulis kode status, dan membangun halaman ini. Kalau aku ingin terlihat bagus, aku bisa memilih metrik yang menguntungkan. Penangkalnya: angka progres hanya boleh berubah bersamaan dengan bukti berkas yang bisa kamu buka di bagian &#x27;Inventaris berkas&#x27;.</p></li><li><strong>Aku adalah sumber data pelatihan, jadi aku juga subjek eksperimen</strong><p class="small">Korpus T0 ditulis olehku. Artinya &#x27;kualitas asli&#x27; yang jadi pembanding adalah kualitas AI, bukan kualitas manusia atau dunia nyata. Model yang &#x27;kolaps&#x27; di sini mungkin masih benar secara faktual; yang hilang adalah keragaman, cakupan, dan detail. Ini ditulis di bagian batasan PLAN.md §15 dan tidak boleh dihapus dari laporan akhir.</p></li><li><strong>Metrik yang dipilih menentukan kesimpulan</strong><p class="small">Kalau hanya perplexity rata-rata yang dilaporkan, collapse bisa tampak tidak terjadi. Karena itu metrik utama dipasangkan: perplexity pada anchor DAN diversitas/akurasi terverifikasi. Definisi operasional &#x27;collapse&#x27; dikunci sebelum run penuh (PLAN.md §10.3, §11).</p></li><li><strong>Tiga seed bukan bukti statistik kuat</strong><p class="small">Cukup untuk melihat arah tren, tidak cukup untuk klaim efek kecil. Semua seed dilaporkan; kami tidak akan memilih seed yang paling dramatis.</p></li><li><strong>Tidak ada penilai manusia independen</strong><p class="small">Penilaian kualitas narasi tidak punya checker deterministik. Untuk domain itu, satu-satunya penilai adalah metrik otomatis dan aku sendiri — sumber bias yang harus disebutkan di laporan.</p></li></ul>
 
       <h3>Klaim di halaman ini dan cara memverifikasinya</h3>
       <p class="small muted">Klik sel berisi perintah untuk menyalinnya. Semua dijalankan dari akar repo <code>/home/user/langgraph-for-arena-ai-</code>.</p>
       <table>
         <thead><tr><th>Klaim</th><th>Perintah verifikasi</th></tr></thead>
-        <tbody><tr><td class="small">Ada 1.419 baris kode eksperimen di 11 modul src/ (dihitung saat dashboard dibangun).</td><td class="small mono cmd" data-cmd="wc -l experiments/ai-belajar-dari-ai/src/*.py">wc -l experiments/ai-belajar-dari-ai/src/*.py</td></tr><tr><td class="small">Pilot P0 benar-benar dijalankan: 16 checkpoint 0,48 jt parameter ada di disk.</td><td class="small mono cmd" data-cmd="ls -la experiments/ai-belajar-dari-ai/checkpoints/p0 | head">ls -la experiments/ai-belajar-dari-ai/checkpoints/p0 | head</td></tr><tr><td class="small">Setiap angka di laporan P0 bisa dilacak ke satu baris metrik mentah.</td><td class="small mono cmd" data-cmd="wc -l experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl &amp;&amp; head -1 experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl">wc -l experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl &amp;&amp; head -1 experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl</td></tr><tr><td class="small">Laporan P0 dibangun dari metrik mentah, bukan ditulis tangan.</td><td class="small mono cmd" data-cmd="python3 experiments/ai-belajar-dari-ai/src/report_p0.py &amp;&amp; sha256sum experiments/ai-belajar-dari-ai/REPORT-P0.md">python3 experiments/ai-belajar-dari-ai/src/report_p0.py &amp;&amp; sha256sum experiments/ai-belajar-dari-ai/REPORT-P0.md</td></tr><tr><td class="small">Tidak ada titik rantai yang ditandai collapse oleh gate — bisa diperiksa langsung.</td><td class="small mono cmd" data-cmd="grep -o &#x27;&quot;status&quot;: &quot;[a-z]*&quot;&#x27; experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl | sort | uniq -c">grep -o &#x27;&quot;status&quot;: &quot;[a-z]*&quot;&#x27; experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl | sort | uniq -c</td></tr><tr><td class="small">Dashboard ini dibangun dari berkas sumber, bukan ditulis tangan.</td><td class="small mono cmd" data-cmd="python3 experiments/ai-belajar-dari-ai/dashboard/build.py &amp;&amp; sha256sum experiments/ai-belajar-dari-ai/dashboard/index.html">python3 experiments/ai-belajar-dari-ai/dashboard/build.py &amp;&amp; sha256sum experiments/ai-belajar-dari-ai/dashboard/index.html</td></tr><tr><td class="small">Tidak ada dependensi eksternal / CDN di dashboard.</td><td class="small mono cmd" data-cmd="grep -nE &#x27;https?://&#x27; experiments/ai-belajar-dari-ai/dashboard/index.html | grep -vE &#x27;arxiv|nature|doi&#x27; | head">grep -nE &#x27;https?://&#x27; experiments/ai-belajar-dari-ai/dashboard/index.html | grep -vE &#x27;arxiv|nature|doi&#x27; | head</td></tr></tbody>
+        <tbody><tr><td class="small">Pra-registrasi dikunci dan tidak berubah sejak dikunci (diverifikasi ulang saat build).</td><td class="small mono cmd" data-cmd="make -C experiments/ai-belajar-dari-ai prereg-verify">make -C experiments/ai-belajar-dari-ai prereg-verify</td></tr><tr><td class="small">Ambang R8 dihitung oleh kode, bukan diketik: jalankan ulang tabelnya.</td><td class="small mono cmd" data-cmd="python3 experiments/ai-belajar-dari-ai/analysis/stats_r8.py --table">python3 experiments/ai-belajar-dari-ai/analysis/stats_r8.py --table</td></tr><tr><td class="small">Ada 1.419 baris kode eksperimen di 11 modul src/ (dihitung saat dashboard dibangun).</td><td class="small mono cmd" data-cmd="wc -l experiments/ai-belajar-dari-ai/src/*.py">wc -l experiments/ai-belajar-dari-ai/src/*.py</td></tr><tr><td class="small">Pilot P0 benar-benar dijalankan: 16 checkpoint 0,48 jt parameter ada di disk.</td><td class="small mono cmd" data-cmd="ls -la experiments/ai-belajar-dari-ai/checkpoints/p0 | head">ls -la experiments/ai-belajar-dari-ai/checkpoints/p0 | head</td></tr><tr><td class="small">Setiap angka di laporan P0 bisa dilacak ke satu baris metrik mentah.</td><td class="small mono cmd" data-cmd="wc -l experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl &amp;&amp; head -1 experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl">wc -l experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl &amp;&amp; head -1 experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl</td></tr><tr><td class="small">Laporan P0 dibangun dari metrik mentah, bukan ditulis tangan.</td><td class="small mono cmd" data-cmd="python3 experiments/ai-belajar-dari-ai/src/report_p0.py &amp;&amp; sha256sum experiments/ai-belajar-dari-ai/REPORT-P0.md">python3 experiments/ai-belajar-dari-ai/src/report_p0.py &amp;&amp; sha256sum experiments/ai-belajar-dari-ai/REPORT-P0.md</td></tr><tr><td class="small">Tidak ada titik rantai yang ditandai collapse oleh gate — bisa diperiksa langsung.</td><td class="small mono cmd" data-cmd="grep -o &#x27;&quot;status&quot;: &quot;[a-z]*&quot;&#x27; experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl | sort | uniq -c">grep -o &#x27;&quot;status&quot;: &quot;[a-z]*&quot;&#x27; experiments/ai-belajar-dari-ai/runs/p0/metrics.jsonl | sort | uniq -c</td></tr><tr><td class="small">Dashboard ini dibangun dari berkas sumber, bukan ditulis tangan.</td><td class="small mono cmd" data-cmd="python3 experiments/ai-belajar-dari-ai/dashboard/build.py &amp;&amp; sha256sum experiments/ai-belajar-dari-ai/dashboard/index.html">python3 experiments/ai-belajar-dari-ai/dashboard/build.py &amp;&amp; sha256sum experiments/ai-belajar-dari-ai/dashboard/index.html</td></tr><tr><td class="small">Tidak ada dependensi eksternal / CDN di dashboard.</td><td class="small mono cmd" data-cmd="grep -nE &#x27;https?://&#x27; experiments/ai-belajar-dari-ai/dashboard/index.html | grep -vE &#x27;arxiv|nature|doi&#x27; | head">grep -nE &#x27;https?://&#x27; experiments/ai-belajar-dari-ai/dashboard/index.html | grep -vE &#x27;arxiv|nature|doi&#x27; | head</td></tr></tbody>
       </table>
 
       <h3>Siapa menilai apa</h3>
@@ -1836,23 +1851,23 @@ WATCH (peringatan dini, untuk RQ2): thr/2 &lt;= Δ &lt; thr</code></pre>
     <section id="log">
       <h2><span class="idx">08</span>Riwayat</h2>
       <p class="sub">Setiap perubahan rencana atau status dicatat di sini dengan bukti berkasnya. Riwayat terbaru di atas.</p>
-      <ul class='log'><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>PLAN.md v0.3 — ambang collapse diganti setelah kalibrasi</strong><p class="small">Simulasi menunjukkan aturan v0.2 (3σ̂ + lantai 0,10) memberi FWER studi 8,5% pada σ=0,06, dan 11,4% tanpa lantai — bukan 0,3%. Penyebab: variansi selisih σ²(1+1/5), σ̂ hanya 4 derajat bebas, dan 180 uji tanpa koreksi. Aturan primer diganti R7 (Bonferroni + selang prediksi, lantai 0,03); MDE80 (0,078–0,233 bpb) wajib dilaporkan.</p><p class="small mono muted">bukti: PLAN.md §10.5, §11, analysis/calibration_results.md</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>Sandbox diukur: studi penuh tidak mungkin di sini</strong><p class="small">2 vCPU, 3 GB RAM, tanpa GPU. Model S penuh ±5,6 jam/model; 192 model ≈ 1.067 jam CPU ≈ 44 hari. Eksekusi dibagi ke profil P0 (±30 menit, bukti pipeline), P1 (±5 jam), P2 (120 GPU-jam lewat offline executor dengan verifikasi hash saat ingest).</p><p class="small mono muted">bukti: PLAN.md §6.5, §20.1–20.2</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>Kebijakan kegagalan 13 mode + lint, dan audit mandiri</strong><p class="small">ops/policy.v1.json: 13 mode kegagalan, 8 aksi otonom, 7 aksi manusia, kill switch berotoritas manusia, fail-closed. ops/policy_lint.py menolak kebijakan yang bolong. docs/self-audit-v0.2.md memuat titik buta, bukti kalibrasi, dan hal-hal yang tidak bisa diselamatkan.</p><p class="small mono muted">bukti: ops/, docs/self-audit-v0.2.md</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>PLAN.md v0.2 — menutup tiga sumber collapse semu</strong><p class="small">Arm C dipecah C1/C2/C3 dan klaim &#x27;batas atas absolut&#x27; dicabut; metrik utama pindah ke anchor_bpb dengan audit tokenizer A1–A3; ambang collapse jadi Δ ≥ max(3σ₀, 0,10 bpb) dari 5 seed M0. Alasan tiap keputusan — termasuk lima usulan yang ditolak — ada di PLAN.md §19.</p><p class="small mono muted">bukti: PLAN.md §2.3, §5.2, §6.4, §10.5, §19</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>Arm diperluas 6 → 13, anggaran dinaikkan 100 → 120 GPU-jam</strong><p class="small">B dipecah B1/B2 + kontrol B3 (matched-unigram); A′ dan F menguji confound pengulangan prompt; G mengukur tradeoff critic AI. Seed bersarang dan pembagian tier supaya daya statistik tidak dibagi rata ke semua arm.</p><p class="small mono muted">bukti: PLAN.md §5.2–5.3, §6.5</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>Sampling campuran &amp; drift guru diformalkan</strong><p class="small">Vektor target per arm, sampler deterministik (dedup, cap 3 dokumen/prompt, kuota largest-remainder), serta audit mix_tvd/lex_tvd tiap generasi. Batch korpus guru dibuat sekali dan dibekukan untuk mencegah drift.</p><p class="small mono muted">bukti: PLAN.md §7.3, §4</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>LangGraph: dari checkpointer menjadi runtime bercabang</strong><p class="small">Routing kondisional (validate/critic/gate), critic dua lapis dengan anggaran 10%, fork/time-travel dari checkpoint, graph_sha disimpan bersama hasil. Model &amp; data tetap tidak bergantung pada framework.</p><p class="small mono muted">bukti: PLAN.md §8</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>PLAN.md: deliverable D10 (dashboard transparansi) ditambahkan</strong><p class="small">Rencana diperbarui agar mencantumkan dashboard ini sebagai artefak resmi (D10), supaya dokumen dan halaman tidak saling bertentangan.</p><p class="small mono muted">bukti: PLAN.md §12 (baris D10), Makefile (komentar target yang belum ada)</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>Dashboard transparansi v1</strong><p class="small">Halaman statis dibangun dari PLAN.md + status.json. Tanpa dependensi eksternal, tanpa CDN, bisa dibangun ulang dengan satu perintah.</p><p class="small mono muted">bukti: dashboard/build.py, dashboard/index.html</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>PLAN.md v0.1</strong><p class="small">Rencana awal: 18 bagian, 6 arm eksperimen, 4 keluarga metrik, definisi operasional collapse, pra-registrasi, risiko, batasan.</p><p class="small mono muted">bukti: PLAN.md (544 baris)</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>Pilot P0 dijalankan (eksekusi nyata pertama)</strong><p class="small">16 model dilatih, 17 node selesai, 749.133 byte sintetis, 22 menit 23 detik di 2 vCPU tanpa GPU. sigma0 = 0,0126 bpb; ambang R7 = 0,0488 bpb. Arm A naik ke 1,93 bpb (+1,44) pada generasi 3, arm B1 ke 0,92 bpb (+0,43). Tidak ada titik yang ditandai &#x27;collapse&#x27; oleh gate karena sinyal cedera sekunder tidak pernah menyala — cacat aturan yang ditemukan oleh data, bukan oleh teori. Deviasi dari PLAN (byte-level, posisi dipelajari, 600 langkah, filter lenient) dicatat di REPORT-P0.md.</p><p class="small mono muted">bukti: REPORT-P0.md, runs/p0/metrics.jsonl, analysis/p0_metrics.csv</p></div></li></ul>
+      <ul class='log'><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>PLAN.md v0.3 — ambang collapse diganti setelah kalibrasi</strong><p class="small">Simulasi menunjukkan aturan v0.2 (3σ̂ + lantai 0,10) memberi FWER studi 8,5% pada σ=0,06, dan 11,4% tanpa lantai — bukan 0,3%. Penyebab: variansi selisih σ²(1+1/5), σ̂ hanya 4 derajat bebas, dan 180 uji tanpa koreksi. Aturan primer diganti R7 (Bonferroni + selang prediksi, lantai 0,03); MDE80 (0,078–0,233 bpb) wajib dilaporkan.</p><p class="small mono muted">bukti: PLAN.md §10.5, §11, analysis/calibration_results.md</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>Sandbox diukur: studi penuh tidak mungkin di sini</strong><p class="small">2 vCPU, 3 GB RAM, tanpa GPU. Model S penuh ±5,6 jam/model; 192 model ≈ 1.067 jam CPU ≈ 44 hari. Eksekusi dibagi ke profil P0 (±30 menit, bukti pipeline), P1 (±5 jam), P2 (120 GPU-jam lewat offline executor dengan verifikasi hash saat ingest).</p><p class="small mono muted">bukti: PLAN.md §6.5, §20.1–20.2</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>Kebijakan kegagalan 13 mode + lint, dan audit mandiri</strong><p class="small">ops/policy.v1.json: 13 mode kegagalan, 8 aksi otonom, 7 aksi manusia, kill switch berotoritas manusia, fail-closed. ops/policy_lint.py menolak kebijakan yang bolong. docs/self-audit-v0.2.md memuat titik buta, bukti kalibrasi, dan hal-hal yang tidak bisa diselamatkan.</p><p class="small mono muted">bukti: ops/, docs/self-audit-v0.2.md</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>PLAN.md v0.2 — menutup tiga sumber collapse semu</strong><p class="small">Arm C dipecah C1/C2/C3 dan klaim &#x27;batas atas absolut&#x27; dicabut; metrik utama pindah ke anchor_bpb dengan audit tokenizer A1–A3; ambang collapse jadi Δ ≥ max(3σ₀, 0,10 bpb) dari 5 seed M0. Alasan tiap keputusan — termasuk lima usulan yang ditolak — ada di PLAN.md §19.</p><p class="small mono muted">bukti: PLAN.md §2.3, §5.2, §6.4, §10.5, §19</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>Arm diperluas 6 → 13, anggaran dinaikkan 100 → 120 GPU-jam</strong><p class="small">B dipecah B1/B2 + kontrol B3 (matched-unigram); A′ dan F menguji confound pengulangan prompt; G mengukur tradeoff critic AI. Seed bersarang dan pembagian tier supaya daya statistik tidak dibagi rata ke semua arm.</p><p class="small mono muted">bukti: PLAN.md §5.2–5.3, §6.5</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>Sampling campuran &amp; drift guru diformalkan</strong><p class="small">Vektor target per arm, sampler deterministik (dedup, cap 3 dokumen/prompt, kuota largest-remainder), serta audit mix_tvd/lex_tvd tiap generasi. Batch korpus guru dibuat sekali dan dibekukan untuk mencegah drift.</p><p class="small mono muted">bukti: PLAN.md §7.3, §4</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>LangGraph: dari checkpointer menjadi runtime bercabang</strong><p class="small">Routing kondisional (validate/critic/gate), critic dua lapis dengan anggaran 10%, fork/time-travel dari checkpoint, graph_sha disimpan bersama hasil. Model &amp; data tetap tidak bergantung pada framework.</p><p class="small mono muted">bukti: PLAN.md §8</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>PLAN.md: deliverable D10 (dashboard transparansi) ditambahkan</strong><p class="small">Rencana diperbarui agar mencantumkan dashboard ini sebagai artefak resmi (D10), supaya dokumen dan halaman tidak saling bertentangan.</p><p class="small mono muted">bukti: PLAN.md §12 (baris D10), Makefile (komentar target yang belum ada)</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>Dashboard transparansi v1</strong><p class="small">Halaman statis dibangun dari PLAN.md + status.json. Tanpa dependensi eksternal, tanpa CDN, bisa dibangun ulang dengan satu perintah.</p><p class="small mono muted">bukti: dashboard/build.py, dashboard/index.html</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>PLAN.md v0.1</strong><p class="small">Rencana awal: 18 bagian, 6 arm eksperimen, 4 keluarga metrik, definisi operasional collapse, pra-registrasi, risiko, batasan.</p><p class="small mono muted">bukti: PLAN.md (544 baris)</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>Pilot P0 dijalankan (eksekusi nyata pertama)</strong><p class="small">16 model dilatih, 17 node selesai, 749.133 byte sintetis, 22 menit 23 detik di 2 vCPU tanpa GPU. sigma0 = 0,0126 bpb; ambang R7 = 0,0488 bpb. Arm A naik ke 1,93 bpb (+1,44) pada generasi 3, arm B1 ke 0,92 bpb (+0,43). Tidak ada titik yang ditandai &#x27;collapse&#x27; oleh gate karena sinyal cedera sekunder tidak pernah menyala — cacat aturan yang ditemukan oleh data, bukan oleh teori. Deviasi dari PLAN (byte-level, posisi dipelajari, 600 langkah, filter lenient) dicatat di REPORT-P0.md.</p><p class="small mono muted">bukti: REPORT-P0.md, runs/p0/metrics.jsonl, analysis/p0_metrics.csv</p></div></li><li class="log-item"><time class="mono small">2026-11-01</time><div><strong>Pra-registrasi R8 dikunci (v1.1)</strong><p class="small">PREREGISTRATION.md v1.0 dikunci 03:42Z, diamandemen ke v1.1 03:43Z sebelum ada model P1: F1/F2 dipisah dan dikelompokkan agar tidak dihitung sebagai dua bukti (cacat P0 terulang), komposisi data tiap arm dinyatakan, dan lima gerbang penerimaan korpus T0 ditambahkan. Hash v1.1 = e19796bff06c9f2f3bd20f2401fdc719488bbe81fb7d93d1776a63a381566d9f, diverifikasi setiap `make check`.</p><p class="small mono muted">bukti: PREREGISTRATION.md, ops/prereg.lock.json, ops/prereg_lock.py</p></div></li></ul>
     </section>
 
     <!-- ============================================================ -->
     <section id="berkas">
       <h2><span class="idx">09</span>Inventaris berkas</h2>
       <p class="sub">
-        Dihitung langsung dari disk saat halaman ini dibangun: 29 berkas, total 283.0 KB.
+        Dihitung langsung dari disk saat halaman ini dibangun: 34 berkas, total 319.8 KB.
         Klik nama berkas untuk membaca isinya tanpa membuka editor. Hash ditampilkan supaya kamu bisa membandingkan dengan <code>sha256sum</code> di mesinmu.
       </p>
       <table>
         <thead><tr><th>Berkas</th><th>Ukuran</th><th>SHA-256</th><th>Isi</th></tr></thead>
-        <tbody><p class="small muted">Artefak hasil run sengaja <strong>tidak</strong> di-inline ke halaman ini (ukurannya puluhan MB). Yang ditampilkan hanya jumlah berkas, total byte, dan waktu modifikasi terakhir; isinya bisa kamu buka langsung dari disk.</p><table><thead><tr><th>Direktori</th><th>Berkas</th><th>Total</th><th>Terakhir diubah</th></tr></thead><tbody><tr><td class="mono small">runs/</td><td class="small mono">3</td><td class="small mono">28.7 KB</td><td class="small mono">2026-11-01 03:20</td></tr><tr><td class="mono small">data/</td><td class="small mono">18</td><td class="small mono">2.8 MB</td><td class="small mono">2026-11-01 03:20</td></tr><tr><td class="mono small">checkpoints/</td><td class="small mono">16</td><td class="small mono">29.7 MB</td><td class="small mono">2026-11-01 03:20</td></tr></tbody></table><p class="small muted">Berkas sumber di bawah ini di-inline seluruhnya (kecuali biner dan berkas di atas 390.6 KB).</p><table><thead><tr><th>Berkas</th><th>Ukuran</th><th>SHA-256</th><th>Isi</th></tr></thead><tbody><tr><td class="mono small">.gitignore</td><td class="small mono">74 B</td><td class="small mono hash">f6d6c01dffed3933…</td><td class="small">biner/terlalu besar</td></tr><tr><td class="mono small">Makefile</td><td class="small mono">1.5 KB</td><td class="small mono hash">85d7ab2ca52cbff1…</td><td class="small">biner/terlalu besar</td></tr><tr><td class="mono small">PLAN.md</td><td class="small mono">62.7 KB</td><td class="small mono hash">552954096dc80a86…</td><td class="small">teks</td></tr><tr><td class="mono small">REPORT-P0.md</td><td class="small mono">7.8 KB</td><td class="small mono hash">0da43f1ff6e0f4a0…</td><td class="small">teks</td></tr><tr><td class="mono small">analysis/calibration.py</td><td class="small mono">9.2 KB</td><td class="small mono hash">42cc716d0a126bdf…</td><td class="small">teks</td></tr><tr><td class="mono small">analysis/calibration_results.csv</td><td class="small mono">3.1 KB</td><td class="small mono hash">d48ee2afa5e9ae41…</td><td class="small">biner/terlalu besar</td></tr><tr><td class="mono small">analysis/calibration_results.md</td><td class="small mono">4.5 KB</td><td class="small mono hash">3bd80d16a4e2d98e…</td><td class="small">teks</td></tr><tr><td class="mono small">analysis/p0_metrics.csv</td><td class="small mono">1.2 KB</td><td class="small mono hash">b8b8ac23dba329df…</td><td class="small">biner/terlalu besar</td></tr><tr><td class="mono small">dashboard/assets/app.js</td><td class="small mono">4.8 KB</td><td class="small mono hash">b45fdb40b90fec12…</td><td class="small">teks</td></tr><tr><td class="mono small">dashboard/assets/style.css</td><td class="small mono">14.7 KB</td><td class="small mono hash">a77ddacf6b23c2fe…</td><td class="small">teks</td></tr><tr><td class="mono small">dashboard/build.py</td><td class="small mono">22.1 KB</td><td class="small mono hash">5f451241ab3d297e…</td><td class="small">teks</td></tr><tr><td class="mono small">dashboard/status.json</td><td class="small mono">28.7 KB</td><td class="small mono hash">38cc97fe5568b396…</td><td class="small">teks</td></tr><tr><td class="mono small">dashboard/template.html</td><td class="small mono">30.6 KB</td><td class="small mono hash">18832f0fd087d6f0…</td><td class="small">teks</td></tr><tr><td class="mono small">docs/self-audit-v0.2.md</td><td class="small mono">19.8 KB</td><td class="small mono hash">3d2b3094baf32797…</td><td class="small">teks</td></tr><tr><td class="mono small">ops/policy.v1.json</td><td class="small mono">12.3 KB</td><td class="small mono hash">28a8d1711bfe6601…</td><td class="small">teks</td></tr><tr><td class="mono small">ops/policy_lint.py</td><td class="small mono">5.0 KB</td><td class="small mono hash">7094a7ed06ca4ce4…</td><td class="small">teks</td></tr><tr><td class="mono small">src/__init__.py</td><td class="small mono">0 B</td><td class="small mono hash">e3b0c44298fc1c14…</td><td class="small">teks</td></tr><tr><td class="mono small">src/common.py</td><td class="small mono">1.4 KB</td><td class="small mono hash">f3c2b38828d3b83e…</td><td class="small">teks</td></tr><tr><td class="mono small">src/config.py</td><td class="small mono">777 B</td><td class="small mono hash">59d50b969493a0c0…</td><td class="small">teks</td></tr><tr><td class="mono small">src/corpus.py</td><td class="small mono">6.5 KB</td><td class="small mono hash">a59ee8d97db1580e…</td><td class="small">teks</td></tr><tr><td class="mono small">src/evaluate.py</td><td class="small mono">5.4 KB</td><td class="small mono hash">60104da8e05a67ed…</td><td class="small">teks</td></tr><tr><td class="mono small">src/gate.py</td><td class="small mono">1.8 KB</td><td class="small mono hash">e3aab2f6cb6629e8…</td><td class="small">teks</td></tr><tr><td class="mono small">src/generate.py</td><td class="small mono">3.2 KB</td><td class="small mono hash">050a3405faad92e4…</td><td class="small">teks</td></tr><tr><td class="mono small">src/model.py</td><td class="small mono">4.2 KB</td><td class="small mono hash">bd46673013a19892…</td><td class="small">teks</td></tr><tr><td class="mono small">src/orchestrate.py</td><td class="small mono">9.0 KB</td><td class="small mono hash">d852b989c17ab436…</td><td class="small">teks</td></tr><tr><td class="mono small">src/report_p0.py</td><td class="small mono">13.0 KB</td><td class="small mono hash">9fdcf3c670ff5579…</td><td class="small">teks</td></tr><tr><td class="mono small">src/train.py</td><td class="small mono">2.5 KB</td><td class="small mono hash">d615f4290afb0b58…</td><td class="small">teks</td></tr><tr><td class="mono small">src/validate.py</td><td class="small mono">5.1 KB</td><td class="small mono hash">13bb0000289f56b8…</td><td class="small">teks</td></tr><tr><td class="mono small">tests/smoke_p0.py</td><td class="small mono">1.9 KB</td><td class="small mono hash">9c047c0e4c2f7e19…</td><td class="small">teks</td></tr></tbody></table></tbody>
+        <tbody><p class="small muted">Artefak hasil run sengaja <strong>tidak</strong> di-inline ke halaman ini (ukurannya puluhan MB). Yang ditampilkan hanya jumlah berkas, total byte, dan waktu modifikasi terakhir; isinya bisa kamu buka langsung dari disk.</p><table><thead><tr><th>Direktori</th><th>Berkas</th><th>Total</th><th>Terakhir diubah</th></tr></thead><tbody><tr><td class="mono small">runs/</td><td class="small mono">3</td><td class="small mono">28.7 KB</td><td class="small mono">2026-11-01 03:20</td></tr><tr><td class="mono small">data/</td><td class="small mono">18</td><td class="small mono">2.8 MB</td><td class="small mono">2026-11-01 03:20</td></tr><tr><td class="mono small">checkpoints/</td><td class="small mono">16</td><td class="small mono">29.7 MB</td><td class="small mono">2026-11-01 03:20</td></tr></tbody></table><p class="small muted">Berkas sumber di bawah ini di-inline seluruhnya (kecuali biner dan berkas di atas 390.6 KB).</p><table><thead><tr><th>Berkas</th><th>Ukuran</th><th>SHA-256</th><th>Isi</th></tr></thead><tbody><tr><td class="mono small">.gitignore</td><td class="small mono">129 B</td><td class="small mono hash">5544d7792c2fc3fa…</td><td class="small">biner/terlalu besar</td></tr><tr><td class="mono small">Makefile</td><td class="small mono">1.9 KB</td><td class="small mono hash">d33ecd57e7bb40d1…</td><td class="small">biner/terlalu besar</td></tr><tr><td class="mono small">PLAN.md</td><td class="small mono">65.1 KB</td><td class="small mono hash">11d5489c47d6a014…</td><td class="small">teks</td></tr><tr><td class="mono small">PREREGISTRATION.md</td><td class="small mono">17.4 KB</td><td class="small mono hash">e19796bff06c9f2f…</td><td class="small">teks</td></tr><tr><td class="mono small">REPORT-P0.md</td><td class="small mono">7.8 KB</td><td class="small mono hash">0da43f1ff6e0f4a0…</td><td class="small">teks</td></tr><tr><td class="mono small">analysis/calibration.py</td><td class="small mono">9.2 KB</td><td class="small mono hash">42cc716d0a126bdf…</td><td class="small">teks</td></tr><tr><td class="mono small">analysis/calibration_results.csv</td><td class="small mono">3.1 KB</td><td class="small mono hash">d48ee2afa5e9ae41…</td><td class="small">biner/terlalu besar</td></tr><tr><td class="mono small">analysis/calibration_results.md</td><td class="small mono">4.5 KB</td><td class="small mono hash">3bd80d16a4e2d98e…</td><td class="small">teks</td></tr><tr><td class="mono small">analysis/p0_metrics.csv</td><td class="small mono">1.2 KB</td><td class="small mono hash">b8b8ac23dba329df…</td><td class="small">biner/terlalu besar</td></tr><tr><td class="mono small">analysis/stats_r8.py</td><td class="small mono">4.8 KB</td><td class="small mono hash">6275b22ed4910a38…</td><td class="small">teks</td></tr><tr><td class="mono small">dashboard/assets/app.js</td><td class="small mono">4.8 KB</td><td class="small mono hash">b45fdb40b90fec12…</td><td class="small">teks</td></tr><tr><td class="mono small">dashboard/assets/style.css</td><td class="small mono">14.7 KB</td><td class="small mono hash">a77ddacf6b23c2fe…</td><td class="small">teks</td></tr><tr><td class="mono small">dashboard/build.py</td><td class="small mono">22.9 KB</td><td class="small mono hash">a75bc8d50aa5cb27…</td><td class="small">teks</td></tr><tr><td class="mono small">dashboard/status.json</td><td class="small mono">30.6 KB</td><td class="small mono hash">0cc0da17d4014caa…</td><td class="small">teks</td></tr><tr><td class="mono small">dashboard/template.html</td><td class="small mono">31.2 KB</td><td class="small mono hash">88303777f9922ce9…</td><td class="small">teks</td></tr><tr><td class="mono small">docs/self-audit-v0.2.md</td><td class="small mono">19.8 KB</td><td class="small mono hash">3d2b3094baf32797…</td><td class="small">teks</td></tr><tr><td class="mono small">ops/blind.py</td><td class="small mono">4.2 KB</td><td class="small mono hash">2f3f8b4d6d3bde50…</td><td class="small">teks</td></tr><tr><td class="mono small">ops/policy.v1.json</td><td class="small mono">12.3 KB</td><td class="small mono hash">28a8d1711bfe6601…</td><td class="small">teks</td></tr><tr><td class="mono small">ops/policy_lint.py</td><td class="small mono">5.0 KB</td><td class="small mono hash">7094a7ed06ca4ce4…</td><td class="small">teks</td></tr><tr><td class="mono small">ops/prereg.lock.json</td><td class="small mono">434 B</td><td class="small mono hash">f45295f6cdb6b8b9…</td><td class="small">teks</td></tr><tr><td class="mono small">ops/prereg_lock.py</td><td class="small mono">3.8 KB</td><td class="small mono hash">60939bef504c1b6a…</td><td class="small">teks</td></tr><tr><td class="mono small">src/__init__.py</td><td class="small mono">0 B</td><td class="small mono hash">e3b0c44298fc1c14…</td><td class="small">teks</td></tr><tr><td class="mono small">src/common.py</td><td class="small mono">1.4 KB</td><td class="small mono hash">f3c2b38828d3b83e…</td><td class="small">teks</td></tr><tr><td class="mono small">src/config.py</td><td class="small mono">777 B</td><td class="small mono hash">59d50b969493a0c0…</td><td class="small">teks</td></tr><tr><td class="mono small">src/corpus.py</td><td class="small mono">6.5 KB</td><td class="small mono hash">a59ee8d97db1580e…</td><td class="small">teks</td></tr><tr><td class="mono small">src/evaluate.py</td><td class="small mono">5.4 KB</td><td class="small mono hash">60104da8e05a67ed…</td><td class="small">teks</td></tr><tr><td class="mono small">src/gate.py</td><td class="small mono">1.8 KB</td><td class="small mono hash">e3aab2f6cb6629e8…</td><td class="small">teks</td></tr><tr><td class="mono small">src/generate.py</td><td class="small mono">3.2 KB</td><td class="small mono hash">050a3405faad92e4…</td><td class="small">teks</td></tr><tr><td class="mono small">src/model.py</td><td class="small mono">4.2 KB</td><td class="small mono hash">bd46673013a19892…</td><td class="small">teks</td></tr><tr><td class="mono small">src/orchestrate.py</td><td class="small mono">9.0 KB</td><td class="small mono hash">d852b989c17ab436…</td><td class="small">teks</td></tr><tr><td class="mono small">src/report_p0.py</td><td class="small mono">13.0 KB</td><td class="small mono hash">9fdcf3c670ff5579…</td><td class="small">teks</td></tr><tr><td class="mono small">src/train.py</td><td class="small mono">2.5 KB</td><td class="small mono hash">d615f4290afb0b58…</td><td class="small">teks</td></tr><tr><td class="mono small">src/validate.py</td><td class="small mono">5.1 KB</td><td class="small mono hash">13bb0000289f56b8…</td><td class="small">teks</td></tr><tr><td class="mono small">tests/smoke_p0.py</td><td class="small mono">1.9 KB</td><td class="small mono hash">9c047c0e4c2f7e19…</td><td class="small">teks</td></tr></tbody></table></tbody>
       </table>
       <h3>Baca isinya di sini</h3>
       <p class="small muted">Termasuk kode pembangun halaman ini (<code>build.py</code>) dan data status mentahnya (<code>status.json</code>).</p>
-      <details class="viewer"><summary class="mono">PLAN.md <span class="muted small">· 62.7 KB · sha256 552954096dc8…</span></summary><pre><code># Rencana Eksperimen — "AI Belajar dari AI"
+      <details class="viewer"><summary class="mono">PLAN.md <span class="muted small">· 65.1 KB · sha256 11d5489c47d6…</span></summary><pre><code># Rencana Eksperimen — "AI Belajar dari AI"
 
 **Membangun model bahasa dari nol, dengan data pelatihan yang seluruhnya dihasilkan oleh AI, untuk mengukur risiko *model collapse* dan degenerasi lintas generasi.**
 
@@ -2413,7 +2428,15 @@ Aturan futilitas (pra-registrasi): arm dihentikan bila batas atas CI efek &lt; M
 
 ---
 
-### 10.7 Kandidat R8 — lahir dari data P0, belum diratifikasi
+### 10.7 Aturan R8 — diratifikasi di `PREREGISTRATION.md` v1.1
+
+**Status 2026-11-01:** bukan kandidat lagi. R8 dikunci di `PREREGISTRATION.md` v1.1
+(sha256 `e19796bf…`, tercatat di `ops/prereg.lock.json`) sebelum satu model P1 pun dilatih.
+Isi terkunci: kuantil-t Student menggantikan normal, enam sinyal cedera dalam **empat kelompok
+independen** (G1 struktur, G2 keragaman, G3 distribusi, G4 kapabilitas), aturan sadar-lantai,
+ambang ukuran sampel (40 item aritmetika), keputusan tiga-nilai dengan uji ekuivalensi, dan
+protokol buta berkomitmen hash. Rinciannya di dokumen pra-registrasi; bagian di bawah adalah
+catatan asal-usulnya dan tidak boleh dipakai sebagai pengganti.
 
 Pilot P0 (lihat §19, 2026-11-01) menjalankan R7 apa adanya, tanpa mengubah satu parameter pun
 setelah data terlihat. Hasilnya: **12 dari 12** model rantai melewati ambang (hingga 29,6x ambang,
@@ -2431,8 +2454,9 @@ Penyebabnya struktural, bukan kebetulan:
 Artinya: **aturan R7 + corroboration under-call tepat di rezim yang ingin kita deteksi.** Ini versi
 terbalik dari "collapse semu": kegagalan deteksi yang menyamar sebagai hasil negatif.
 
-Kandidat R8 di bawah ini **tidak** dipakai untuk menilai ulang P0 (itu akan menjadi penyesuaian
-setelah melihat data). R8 harus masuk `PREREGISTRATION.md` dan dikunci sebelum P1.
+Daftar di bawah ini adalah **catatan asal-usul** R8, bukan aturan yang berlaku. Aturan yang berlaku
+hanya yang ada di `PREREGISTRATION.md` v1.1. Kandidat ini tidak pernah dipakai untuk menilai ulang
+P0 — itu akan menjadi penyesuaian setelah melihat data.
 
 1. **Sinyal cedera diperluas:** kenaikan `degenerate_rate` &gt;= 15pp, kenaikan porsi dokumen
    `truncated` &gt;= 20pp, dan penurunan `format_compliance` (dokumen berakhir `&lt;E&gt;`) &gt;= 20pp.
@@ -2454,7 +2478,7 @@ Dikunci sebagai `PREREGISTRATION.md` **sebelum** run Tier 1 (commit terpisah), b
 | Metrik primer | `anchor_bpb` |
 | Metrik sekunder | `distinct-2`, `tail_coverage`, `code_pass@1`, `style_div`, `fact_probe_acc`, `extraction_rate` |
 | Baseline | 5 seed M0; μ₀, σ₀, MDE dilaporkan |
-| Ambang | **R7** (§10.5) + R1/R3 sebagai sensitivitas + `1,5×` PPL (sekunder) |
+| Ambang | **R8** (`PREREGISTRATION.md` v1.1, diratifikasi dari §10.7): kuantil-t Bonferroni + lantai + enam sinyal cedera berkelompok + uji ekuivalensi |
 | Uji tren | Jonckheere–Terpstra + regresi campuran (`gen` fixed, `seed` random) |
 | α | 0,05 **family-wise** atas 180 uji (Bonferroni); Holm untuk 6 metrik sekunder |
 | Daya | **MDE80 wajib dihitung dan ditulis sebelum run**; bila σ̂ M0 &gt; 0,06, tambah seed baseline sampai MDE turun |
@@ -2638,6 +2662,23 @@ Default-ku di kolom kanan; kalau tidak dijawab, aku pakai default dan mencatatny
 
 ## 19. Riwayat versi
 
+### v0.4 — 2026-11-01 (pra-registrasi R8 dikunci)
+
+`PREREGISTRATION.md` v1.0 dikunci pukul 03:42Z, lalu **diamandemen ke v1.1 pukul 03:43Z sebelum
+satu model P1 pun dilatih**. Amandemen itu bukan kosmetik: saat mengaudit dokumen sendiri, aku
+menemukan cacat yang sama dengan P0 terulang di rancangan R8.
+
+| # | Temuan saat mengaudit v1.0 | Keputusan v1.1 | Alasan |
+| --- | --- | --- | --- |
+| 15 | F1 didefinisikan "tanpa `&lt;A&gt;` **atau** `&lt;E&gt;`" dan F2 "tanpa `&lt;E&gt;`" — keduanya tumpang tindih, bisa dihitung sebagai dua bukti independen | Sinyal dipisah (F1 = tanpa `&lt;A&gt;`, F2 = tanpa `&lt;E&gt;`) dan dikelompokkan ke G1; keparahan dihitung atas **kelompok**, bukan sinyal | Menghitung satu fenomena dua kali adalah persis kesalahan yang membuat P0 salah menilai |
+| 16 | v1.0 tidak menyatakan komposisi data tiap arm | Ditambah §2.2: A = 100% generasi terakhir, B1 = T0 + semua generasi dengan bobot sama per sumber, C = T0 saja | Tanpa ini "arm" hanya nama, bukan definisi |
+| 17 | v1.0 menerima T0 bila &gt;= 2 MB | Ditambah §2.1: lima gerbang (ukuran, 8-gram unik &gt;= 0,98, &gt;= 12 domain, panjang, Jaccard &lt;= 0,5) | P0 gagal justru karena korpus templat, dan ukuran saja tidak mendeteksi templat |
+| 18 | R7 menghitung kuantil-t di `src/gate.py` lalu **tidak memakainya** (memakai normal untuk σ̂ dari 4 seed) | R8 memakai kuantil-t eksplisit dengan df = n0-1 | Bug implementasi, bukan pilihan desain; dilaporkan apa adanya |
+
+Konsekuensi angka: ambang konfirmatori P1 lebih tebal daripada R7 (mis. σ₀ = 0,03 -&gt; 0,1302 bpb
+dengan m = 3, df = 4). Itu harga jujur dari mengestimasi σ dari 5 seed, dan sudah dinyatakan di
+pra-registrasi sebelum data ada.
+
 ### v0.3.1 — 2026-11-01 (hasil Pilot P0)
 
 Pilot P0 dijalankan di sandbox, bukan sekadar direncanakan: 16 model, 17 node, 749.133 byte sintetis,
@@ -2786,6 +2827,332 @@ Pagar: hash kebijakan disimpan di setiap manifest run; perubahan menaikkan versi
 ### 20.7 Yang masih tidak bisa diselamatkan
 
 Skala (8 juta parameter), definisi kualitas (ditentukan penulis), tidak adanya data manusia, dan tidak adanya penilai independen. Semuanya dinyatakan di `docs/self-audit-v0.2.md` §7 dan wajib ikut ke laporan akhir.
+</code></pre></details><details class="viewer"><summary class="mono">PREREGISTRATION.md <span class="muted small">· 17.4 KB · sha256 e19796bff06c…</span></summary><pre><code># PREREGISTRATION.md — Pilot P1 (aturan R8)
+
+| | |
+| --- | --- |
+| Versi | **1.1** |
+| Tanggal kunci | 2026-11-01 |
+| Status | **terkunci sebelum ada satu pun model P1 dilatih** |
+| Menggantikan | definisi operasional R7 (PLAN v0.3 §10.5) untuk seluruh run P1 dan sesudahnya |
+| Hash dokumen | tercatat di `ops/prereg.lock.json` (dihitung oleh `ops/prereg_lock.py`) dan ditampilkan di dashboard |
+| Alat verifikasi | `make prereg-verify` (gagal bila berkas berubah tanpa versi baru) |
+| Angka tabel | dihasilkan `python3 analysis/stats_r8.py --table`, tidak diketik tangan |
+
+**Aturan amandemen.** Berkas ini tidak boleh diubah setelah hash dikunci. Perubahan apa pun wajib
+menjadi versi 1.1 dengan entri di tabel amandemen (bagian 12) yang menyebut: apa yang berubah,
+kapan, dan **apakah sudah ada model P1 yang dilatih saat perubahan dibuat**. Amandemen yang dibuat
+setelah model P1 pertama ada akan ditandai `post-data` dan seluruh klaim P1 otomatis turun menjadi
+`exploratory`.
+
+---
+
+## 1. Ruang lingkup dan batas klaim
+
+P1 menguji satu pertanyaan: **apakah melatih ulang model bahasa pada keluarannya sendiri
+menggeser distribasinya menjauh dari distribusi guru, dan apakah akumulasi data guru memperlambat
+pergeseran itu.**
+
+Yang boleh diklaim bila gate menyala: pergeseran pada model 2 juta parameter, korpus guru
+&gt;= 2 MB, rancangan 3 arm x 5 seed x 6 generasi ini.
+
+Yang **tidak** boleh diklaim, apa pun hasilnya: generalisasi ke skala lain, klaim sebab-akibat
+tentang mekanisme internal, klaim tentang data manusia, dan klaim "aman" tanpa uji ekuivalensi
+(bagian 5.3).
+
+---
+
+## 2. Rancangan P1 (terkunci)
+
+| Komponen | Nilai terkunci | Alasan |
+| --- | --- | --- |
+| Model | 2,0 jt parameter, byte-level 256, konteks 256, 6 lapis | Skala PLAN P1; cukup besar agar probe aritmetika tidak di lantai |
+| Korpus guru T0 | **&gt;= 2 MB**, non-templat, &gt;= 12 domain | P0 gagal karena korpus templat 200 KB menekan baseline ke ekor (bpb 0,48) |
+| Baseline M0 | **5 seed** (`101, 202, 303, 404, 505`), arsitektur sama | Redam derau σ̂ (df = 4) |
+| Arm | A (replace), B1 (accumulate), C (kontrol tanpa self-training) | C memberi distribusi-nol untuk kalibrasi sinyal cedera |
+| Seed rantai | 5 seed, bersarang dengan baseline | Pasangan seed mengontrol variasi inisialisasi |
+| Generasi | 6 per rantai | Cukup untuk tren; anggaran dihitung di bagian 10 |
+| Anggaran token | sama untuk semua model (epoch setara), bukan langkah tetap | Menyamakan biaya, bukan menyamakan jumlah update |
+| Suhu sampling | 0,9 top-p 0,95, tetap di semua generasi | Sampling tidak boleh ikut "memburuk" agar bukan confound |
+
+Arm C dilatih ulang dari T0 dengan seed berbeda tiap generasi dan **tidak pernah** melihat data
+sintetis. C adalah pembanding untuk menjawab: "apakah pergeseran ini khas self-training, atau
+hanya variasi training ulang?"
+
+### 2.1 Gerbang penerimaan korpus T0 (dicek sebelum baseline dilatih)
+
+T0 non-templat **tidak** diterima hanya karena ukurannya &gt;= 2 MB. Ia harus lulus lima gerbang ini,
+diperiksa otomatis oleh `analysis/t0_audit.py` (dibuat saat P1 disiapkan) dan dicatat di
+`runs/p1/t0_audit.json`:
+
+| # | Gerbang | Ambang | Kalau gagal |
+| --- | --- | --- | --- |
+| T1 | ukuran | &gt;= 2.097.152 byte | T0 ditolak, P1 tidak mulai |
+| T2 | anti-templat: porsi 8-gram unik | &gt;= 0,98 | T0 ditolak |
+| T3 | keseimbangan domain | &gt;= 12 domain, tiap domain &gt;= 5% byte | T0 ditolak |
+| T4 | panjang dokumen | median 150-600 byte, p1 &gt;= 80 byte, p99 &lt;= 2.000 byte | T0 ditolak |
+| T5 | kemiripan antar-dokumen | maksimum Jaccard 5-gram antar dokumen &lt;= 0,5 | T0 ditolak |
+
+Kegagalan gerbang **tidak** boleh dikompensasi dengan menurunkan ambang; yang turun adalah klaim,
+bukan gerbangnya.
+
+### 2.2 Komposisi data tiap arm (terkunci)
+
+- Ukuran keluaran sintetis per generasi: `N_syn = 0,30 * |T0|` byte (tetap untuk semua generasi).
+- **Arm A (replace):** korpus training generasi g = 100% keluaran model generasi g-1, diambil
+  `N_syn` byte, tanpa data guru.
+- **Arm B1 (accumulate):** korpus = T0 digabung seluruh keluaran generasi 1..g-1, dengan bobot
+  sampling **sama per sumber** (bukan per token). Konsekuensi yang saya nyatakan di muka: porsi guru
+  menyusut seiring g (1/g). Ini varian "accumulate" Gerstgrasser et al. dan **bukan** varian
+  "proporsi data nyata tetap" (Fu et al.); perbedaan itu dilaporkan, tidak diklaim sebagai hal yang sama.
+- **Arm C (kontrol):** selalu 100% T0; yang berubah hanya seed training.
+- Semua arm memakai anggaran token identik per model (epoch setara), bukan jumlah langkah tetap.
+
+---
+
+## 3. Estimand dan notasi
+
+- `bpb_g` = bits-per-byte model generasi ke-g pada **anchor test guru yang dibekukan** (tidak
+  pernah dipakai training, tidak pernah berubah antar generasi).
+- `mu0`, `sigma0` = rata-rata dan simpangan baku sampel `bpb` dari n0 = 5 model baseline.
+- `Delta_g = bpb_g - mu0`.
+- `SE_pred = sigma0 * sqrt(1 + 1/n0)` — galat baku prediktif satu model baru terhadap mean baseline.
+- `delta_min = 0,03` bpb (lantai kepraktisan, diwarisi dari R7).
+
+Metrik primer **hanya** `anchor_bpb`. Semua metrik lain bersifat deskriptif atau sebagai syarat
+corroboration; tidak ada yang boleh menggantikan metrik primer.
+
+---
+
+## 4. Protokol baseline (dijalankan sebelum arm)
+
+1. Latih n0 = 5 model M0 pada T0 dengan seed terkunci.
+2. Hitung `mu0`, `sigma0`, dan **MDE80** untuk aturan konfirmatori; tulis di `runs/p1/baseline.json`
+   sebelum rantai pertama dimulai.
+3. **Aturan eskalasi (pra-otorisasi, bukan p-hacking):** bila `sigma0 &gt; 0,030`, tambah 5 seed
+   baseline lagi (maksimum 15) dan hitung ulang. Dasar keputusan hanya σ̂, tidak pernah efek.
+4. Bila setelah 15 seed `sigma0` masih &gt; 0,030: P1 dinyatakan **underpowered**, tidak dijalankan,
+   dan naik ke P2 (model lebih besar). Ini keputusan yang ditulis di muka, bukan setelah melihat hasil.
+
+---
+
+## 5. Aturan keputusan R8
+
+R8 menggantikan R7. Tiga perubahan, semuanya **memperketat**, tidak melonggarkan:
+
+| # | Perubahan | Alasan |
+| --- | --- | --- |
+| 1 | Kuantil **t Student** (df = n0 - 1) menggantikan normal | σ̂ diestimasi dari 5 seed; memakai normal menyembunyikan ketidakpastian σ̂. Ini juga memperbaiki **bug nyata R7**: `src/gate.py` menghitung `t` lalu tidak pernah memakainya |
+| 2 | Sinyal cedera diperluas + aturan sadar-lantai | P0: 12/12 melewati ambang, 0 ditandai collapse, karena seluruh sinyal cedera mati di lantai |
+| 3 | Hasil **tiga-nilai** (collapse / stabil / inconclusive) dengan uji ekuivalensi | Mencegah "tidak terdeteksi" berubah menjadi "aman" — kegagalan deteksi yang menyamar sebagai hasil negatif |
+
+### 5.1 Uji konfirmatori (hanya ini yang boleh jadi klaim)
+
+Dijalankan pada generasi ke-6, satu uji per arm, m = 3, alpha family-wise = 0,05:
+
+```
+thr_conf = max( t(1 - 0,05/(2*3), df = n0-1) * SE_pred , delta_min )
+```
+
+dengan `t(0,991667, df=4) = 3,9608`. Keputusan per arm:
+
+- **collapse** bila `Delta_6 &gt;= thr_conf` **dan** syarat cedera (bagian 6) terpenuhi;
+- **stabil** bila batas atas CI satu-sisi 95% untuk `Delta_6` `&lt; delta_eq` (bagian 5.3);
+- **inconclusive** untuk semua kasus lain.
+
+### 5.2 Pemantauan berurutan (bukan klaim)
+
+Setiap titik (arm x seed x generasi) dipantau dengan m = 90 uji, memakai normal (z = 3,4524).
+Label pemantauan hanya untuk keselamatan/keputusan berhenti dan **wajib dilaporkan sebagai
+`screening`**, tidak pernah sebagai bukti. Alasannya: menghentikan arm lebih awal adalah keputusan
+operasional; menyimpulkan adalah hak uji konfirmatori.
+
+### 5.3 Uji ekuivalensi (anti "silence = safety")
+
+`delta_eq = max(0,03 ; 0,05 * mu0)`.
+
+"Stabil" hanya boleh ditulis bila seluruh CI satu-sisi 95% untuk `Delta_6` berada di bawah
+`delta_eq`. Bila CI memuat `delta_eq` tetapi tidak melewati `thr_conf`, hasilnya **inconclusive**,
+dan judul laporannya wajib memuat kata "inconclusive", bukan "tidak ada collapse".
+
+---
+
+## 6. Keluarga sinyal cedera (R8) dan aturan sadar-lantai
+
+Syarat corroboration R7 hanya punya dua sinyal; keduanya mati di P0. R8 memakai **enam sinyal yang
+dikelompokkan ke dalam empat kelompok independen**. Pengelompokan ini wajib: sinyal yang mengukur
+fenomena yang sama tidak boleh dihitung dua kali saat menentukan tingkat keparahan (bagian 6.3).
+
+| Kelompok | Sinyal | Definisi operasional | Ambang menyala | Catatan |
+| --- | --- | --- | --- | --- |
+| **G1 struktur** | F1 | porsi dokumen tanpa bagian jawaban `&lt;A&gt;` | naik **&gt;= 15pp** | dihitung atas &gt;= 100 dokumen |
+| **G1 struktur** | F2 | porsi dokumen tanpa penutup `&lt;E&gt;` (truncated) | naik **&gt;= 20pp** | F1 dan F2 **satu kelompok**: keduanya kegagalan struktur, korelasinya tinggi |
+| **G2 keragaman** | F3 | type-token ratio tingkat kata per dokumen | turun **&gt;= 20% relatif** atau **&gt;= 3 sigma_baseline** | `distinct-2` **dibuang**: di byte-level ia justru naik saat teks memburuk (P0: 0,910 -&gt; 0,949) |
+| **G2 keragaman** | F4 | porsi dokumen dengan Jaccard 5-gram &gt;= 0,8 terhadap dokumen lain | naik **&gt;= 5pp** | menangkap mode collapse yang lolos dari F3 |
+| **G3 distribusi** | F5 | entropi distribusi jawaban untuk prompt yang sama, 5 sampel | turun **&gt;= 30%** | probe langsung terhadap penyempitan distribusi |
+| **G4 kapabilitas** | F6 | akurasi 40 item dua-digit | turun **&gt;= 10pp** | hanya sah bila baseline &gt;= 25/40 (aturan lantai) |
+
+Catatan amandemen v1.1: versi 1.0 mendefinisikan F1 sebagai "tanpa `&lt;A&gt;` **atau** `&lt;E&gt;`" sehingga F1
+dan F2 tumpang tindih dan bisa dihitung sebagai dua keluarga independen. Itu kesalahan yang sama
+dengan P0 (menghitung satu fenomena dua kali). Sekarang F1 hanya `&lt;A&gt;`, F2 hanya `&lt;E&gt;`, dan keduanya
+berada di kelompok yang sama sehingga **tidak pernah** dihitung sebagai dua bukti.
+
+### 6.1 Aturan sadar-lantai (mekanis, bukan pertimbangan)
+
+Sebelum rantai dijalankan, setiap metrik sekunder diberi label otomatis dari baseline 5 model:
+
+| Label | Kondisi (dihitung otomatis) | Konsekuensi |
+| --- | --- | --- |
+| `at_floor` | mean baseline &lt;= 2/n_item (mis. arith 0/40) | **dikeluarkan** dari corroboration; dilaporkan sebagai "tidak diskriminatif" |
+| `uninformative` | SD_baseline &gt;= 0,5 * mean_baseline | dikeluarkan dari corroboration |
+| `informative` | selain di atas | dipakai untuk corroboration |
+
+Metrik yang dikeluarkan **tidak pernah** dihitung sebagai "tidak ada cedera". Ini persis kesalahan
+P0: `arith_acc` = 0,00 diperlakukan sebagai bukti ketiadaan cedera, padahal itu bukti probe tidak
+mampu mengukur.
+
+Bila jumlah keluarga `informative` &lt; 2, arm otomatis berlabel **inconclusive-harm** untuk seluruh
+generasi, dan P1 naik ke P2 tanpa klaim. Tidak ada penambahan sinyal ad-hoc setelah data terlihat.
+
+### 6.2 Ambang ukuran sampel (wajib, bukan saran)
+
+| Probe | Minimum P1 | Granularitas yang dihasilkan |
+| --- | --- | --- |
+| Aritmetika | **40 item** | 2,5pp |
+| Dokumen generasi per evaluasi | 100 dokumen | 1pp untuk F1/F2/F4 |
+| Prompt unik untuk F5 | 20 prompt x 5 sampel | — |
+| Anchor test | &gt;= 100 KB teks guru beku | — |
+
+### 6.3 Tingkat keparahan (mencegah label collapse yang murah)
+
+- `Delta_6 &gt;= 2 * thr_conf` -&gt; cukup **1 kelompok** cedera menyala.
+- `thr_conf &lt;= Delta_6 &lt; 2 * thr_conf` -&gt; wajib **2 kelompok berbeda** (G1-G4), bukan dua sinyal
+  dalam kelompok yang sama.
+- Tidak ada kelompok cedera -&gt; label `watch`, bukan `collapse`, dan wajib dilaporkan sebagai
+  "melewati ambang tanpa cedera terukur" (kejadian P0, dan itu **bukan** hasil negatif).
+
+### 6.4 Kalibrasi nol sinyal cedera (dijalankan sebelum rantai, setelah baseline)
+
+Memakai 5 model baseline + arm C, bangkitkan 1.000 replika bootstrap set evaluasi dan hitung laju
+salah-nyala tiap keluarga di bawah nol. Keluarga dengan laju salah-nyala &gt; 5% pada ambangnya
+dinaikkan ambangnya ke persentil 95 empiris, **dikunci sebelum rantai pertama**, dan dilaporkan.
+Tanpa langkah ini, menambah sinyal cedera hanya menambah jalan menuju kesimpulan keliru.
+
+---
+
+## 7. Metrik sekunder: status yang sudah ditetapkan di muka
+
+| Metrik | Status P1 | Alasan |
+| --- | --- | --- |
+| `anchor_bpb` | **primer** | satu-satunya uji inferensial |
+| `degenerate_rate`, `format_compliance` | corroboration (F1/F2) | paling sensitif di P0 |
+| `TTR` kata, `zlib bits/byte` | corroboration (F3) | pengganti `distinct-2` yang rusak di byte-level |
+| near-dup Jaccard | corroboration (F4) | deteksi mode collapse |
+| entropi jawaban | corroboration (F5) | probe penyempitan distribusi |
+| `arith_acc` (40 item) | corroboration (F6) **hanya bila baseline &gt;= 25/40** | selain itu `at_floor` |
+| `style_div` char-3gram | **deskriptif saja** | datar di P0 (0,94-0,96) walau teks rusak; tidak layak jadi syarat |
+| `distinct-2` | **dibuang** | arahnya salah di byte-level |
+| `repetition_rate` (P0) | diganti F4 | versi lama selalu 0,00 |
+
+Metrik deskriptif tetap dilaporkan lengkap; hanya tidak dipakai untuk memberi label.
+
+---
+
+## 8. Protokol buta (blinding)
+
+1. Sebelum model P1 pertama dilatih, `ops/blind.py seal` membuat pemetaan acak arm -&gt; label
+   `X1/X2/X3` memakai `secrets.token_hex(16)`, menyimpannya di `.blind/key.json` (**tidak masuk git**),
+   dan menulis komitmen `ops/blind_commitment.json` berisi `sha256(key)` + waktu + jumlah arm.
+2. Komitmen di-commit **sebelum** eksekusi. Semua nama berkas hasil memakai label buta.
+3. `analysis/p1_analyze.py` hanya boleh membaca label buta; berkas kunci tidak pernah dibuka oleh
+   jalur analisis (dijaga sebagai aturan keras + diperiksa `grep` di CI pra-analisis).
+4. Kesimpulan ditulis ke `analysis/p1_conclusions.md`, lalu **hash-nya dicatat**.
+5. `ops/blind.py reveal --conclusions-sha256 &lt;hash&gt;` menolak berjalan bila hash tidak cocok, lalu
+   mencetak pemetaan dan mencatat peristiwa unblinding.
+6. Keterbatasan yang saya akui: agen yang sama bisa membaca kunci. Ini buta **prosedural**, bukan
+   kriptografis. Penangkalnya hanya komitmen hash: kalau urutannya dilanggar, jejaknya terlihat.
+
+---
+
+## 9. Rencana analisis dan tabel wajib
+
+Setiap arm dilaporkan dengan baris: `bpb_6`, `Delta_6`, `CI95 satu-sisi`, `thr_conf`, `label`,
+keluarga cedera yang menyala, jumlah keluarga `informative`, MDE80, dan n seed. Ditambah:
+
+- semua seed, tanpa pemilihan, tanpa pembuangan run "gagal";
+- tren per generasi sebagai **deskriptif** (P1 tidak punya daya untuk uji tren inferensial);
+- tabel keluarga metrik yang `at_floor`/`uninformative` beserta alasannya;
+- pernyataan eksplisit bila hasil `inconclusive`.
+
+---
+
+## 10. Anggaran dan gate eksekusi
+
+95 model (5 baseline + 90 rantai) x 2 jt parameter. Proyeksi diukur dari satu model pertama:
+
+- bila proyeksi total &lt;= 36 jam: jalankan 6 generasi;
+- bila 36-72 jam: turunkan ke 4 generasi untuk **semua** arm (keputusan otomatis, sebelum hasil);
+- bila &gt; 72 jam: P1 dibatalkan dan naik ke P2, dilaporkan sebagai kegagalan anggaran, bukan hasil.
+
+Eksekusi P1 hanya di executor offline (keputusan D8 = c). Sandbox 2 vCPU/3 GB **tidak** memenuhi
+anggaran ini; menjalankan P1 di sandbox akan melanggar pra-registrasi dan hasilnya tidak sah.
+
+---
+
+## 11. Apa yang akan terjadi bila hasilnya buruk untuk hipotesis saya
+
+- Bila arm C juga bergeser sebesar arm A: kesimpulan "self-training menyebabkan pergeseran" **gugur**;
+  yang tersisa hanya "melatih ulang menyebabkan pergeseran". Itu akan ditulis sebagai kegagalan
+  desain, bukan diselamatkan dengan analisis tambahan.
+- Bila seluruh keluarga `informative` &lt; 2: P1 berakhir `inconclusive-harm`, dan biaya P1 diakui
+  sebagai biaya kalibrasi metrik.
+- Bila `Delta_6` besar tetapi semua keluarga cedera null: hasilnya `watch` + laporan eksplisit bahwa
+  bpb dan metrik permukaan tidak sepakat — bukan "collapse".
+
+---
+
+## 12. Tabel amandemen
+
+| Versi | Tanggal | Perubahan | Model P1 sudah dilatih? |
+| --- | --- | --- | --- |
+| 1.0 | 2026-11-01 | Versi awal: R8, enam keluarga cedera, aturan lantai, uji ekuivalensi, protokol buta | belum |
+| 1.1 | 2026-11-01 | **Pra-data.** (a) F1/F2 didefinisikan ulang dan dikelompokkan ke G1 agar tidak dihitung sebagai dua bukti; (b) ditambah gerbang penerimaan korpus T0 (2.1); (c) ditambah komposisi data tiap arm (2.2) yang di v1.0 belum dinyatakan | belum |
+
+---
+
+## 13. Angka terkunci (dihitung, bukan diketik)
+
+Nilai di bawah berasal dari `python3 analysis/stats_r8.py --table` dengan n0 = 5 (df = 4),
+`delta_min` = 0,03, alpha = 0,05, daya 80%. Ambang konfirmatori memakai m = 3; pemantauan m = 90.
+
+| sigma0 (bpb) | SE_pred | ambang konfirmatori (m=3) | ambang pemantauan (m=90) | MDE80 konfirmatori | `delta_eq` bila mu0 = 0,90 |
+| --- | --- | --- | --- | --- | --- |
+| 0,0050 | 0,0055 | 0,0300 | 0,0549 | 0,0263 | 0,0450 |
+| 0,0100 | 0,0110 | 0,0434 | 0,1099 | 0,0526 | 0,0450 |
+| 0,0126 | 0,0138 | 0,0547 | 0,1384 | 0,0663 | 0,0450 |
+| 0,0150 | 0,0164 | 0,0651 | 0,1648 | 0,0789 | 0,0450 |
+| 0,0200 | 0,0219 | 0,0868 | 0,2197 | 0,1052 | 0,0450 |
+| 0,0300 | 0,0329 | 0,1302 | 0,3296 | 0,1578 | 0,0450 |
+| 0,0400 | 0,0438 | 0,1736 | 0,4395 | 0,2104 | 0,0450 |
+| 0,0600 | 0,0657 | 0,2603 | 0,6592 | 0,3156 | 0,0450 |
+
+Baris `sigma0 = 0,0126` hanyalah **ilustrasi dari P0**, bukan nilai yang diharapkan di P1: korpus
+P1 &gt;= 2 MB non-templat diproyeksikan menaikkan `mu0` dan `sigma0` sekaligus.
+
+Catatan penting: tabel di atas memakai df = 4 dan kuantil ekstrem, sehingga ambang lebih tebal
+daripada R7. Ini harga jujur dari mengestimasi σ dari 5 seed. Bila `sigma0` P1 ternyata 0,03,
+ambang konfirmatori menjadi 0,1302 bpb — artinya hanya pergeseran &gt;= 14% dari `mu0` = 0,90 yang
+bisa disebut collapse. Bila itu terjadi, laporan wajib menyebut P1 **berdaya rendah untuk efek
+kecil**, dan ekuivalensi (bagian 5.3) menjadi satu-satunya cara mengklaim stabilitas.
+
+---
+
+## 14. Rujukan
+
+- PLAN.md v0.3.1 §10.5 (R7), §10.7 (kandidat R8), §11 (pra-registrasi), §19 (riwayat).
+- `REPORT-P0.md` (kegagalan R7 secara empiris), `runs/p0/metrics.jsonl` (data mentah).
+- `analysis/calibration_results.md` (FWER/power/MDE R1-R7).
+- `analysis/stats_r8.py` (sumber semua angka di bagian 13).
 </code></pre></details><details class="viewer"><summary class="mono">REPORT-P0.md <span class="muted small">· 7.8 KB · sha256 0da43f1ff6e0…</span></summary><pre><code># Laporan Pilot P0
 
 **Status: bukti mekanisme, bukan temuan ilmiah.**
@@ -3200,6 +3567,158 @@ Baseline 5 seed M0 · 10 arm · 6 generasi · konfirmasi &gt;= 2/3 seed.
 - Laporkan **R1** dan **R3** sebagai analisis sensitivitas, agar pembaca bisa melihat kesimpulan tidak bergantung pada satu pilihan ambang.
 - Tulis **MDE80** di pra-registrasi, sebelum run, dan bandingkan dengan ukuran efek yang dihipotesiskan.
 - Bila sigma M0 terukur &gt; 0,06, tambah seed baseline (murah) sampai MDE80 turun ke bawah efek terkecil yang kita pedulikan. Baseline lebih murah daripada salah menyimpulkan.
+</code></pre></details><details class="viewer"><summary class="mono">analysis/stats_r8.py <span class="muted small">· 4.8 KB · sha256 6275b22ed491…</span></summary><pre><code>#!/usr/bin/env python3
+"""Statistik untuk aturan R8 (pra-registrasi P1).
+
+Murni pustaka standar: distribusi t Student lewat fungsi beta tak-lengkap,
+dipakai untuk menetapkan ambang, MDE, dan batas ekuivalensi SEBELUM data P1 ada.
+
+Semua angka yang dipakai PREREGISTRATION.md dihasilkan oleh `--table`,
+sehingga dokumen pra-registrasi tidak memuat angka yang diketik tangan.
+"""
+from __future__ import annotations
+
+import argparse
+import math
+
+FLOOR_BPB = 0.03          # lantai kepraktisan (bpb absolut)
+ALPHA = 0.05              # family-wise
+POWER = 0.80
+QUANTILE_80 = 0.8416212335729143  # z_0.80
+
+
+# ---------------------------------------------------------------- beta &amp; t
+def _betacf(a: float, b: float, x: float) -&gt; float:
+    tiny = 1e-30
+    qab, qap, qam = a + b, a + 1.0, a - 1.0
+    c = 1.0
+    d = 1.0 - qab * x / qap
+    if abs(d) &lt; tiny:
+        d = tiny
+    d = 1.0 / d
+    h = d
+    for m in range(1, 300):
+        m2 = 2 * m
+        aa = m * (b - m) * x / ((qam + m2) * (a + m2))
+        d = 1.0 + aa * d
+        if abs(d) &lt; tiny:
+            d = tiny
+        c = 1.0 + aa / c
+        if abs(c) &lt; tiny:
+            c = tiny
+        d = 1.0 / d
+        h *= d * c
+        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2))
+        d = 1.0 + aa * d
+        if abs(d) &lt; tiny:
+            d = tiny
+        c = 1.0 + aa / c
+        if abs(c) &lt; tiny:
+            c = tiny
+        d = 1.0 / d
+        delta = d * c
+        h *= delta
+        if abs(delta - 1.0) &lt; 1e-14:
+            break
+    return h
+
+
+def betai(a: float, b: float, x: float) -&gt; float:
+    """I_x(a,b) ternormalisasi."""
+    if x &lt;= 0.0:
+        return 0.0
+    if x &gt;= 1.0:
+        return 1.0
+    lbeta = math.lgamma(a + b) - math.lgamma(a) - math.lgamma(b)
+    front = math.exp(lbeta + a * math.log(x) + b * math.log(1.0 - x))
+    if x &lt; (a + 1.0) / (a + b + 2.0):
+        return front * _betacf(a, b, x) / a
+    return 1.0 - front * _betacf(b, a, 1.0 - x) / b
+
+
+def t_cdf(t: float, df: int) -&gt; float:
+    x = df / (df + t * t)
+    p = 0.5 * betai(df / 2.0, 0.5, x)
+    return 1.0 - p if t &gt; 0 else p
+
+
+def t_ppf(p: float, df: int) -&gt; float:
+    """Kuantil t Student via bisection (presisi 1e-10)."""
+    lo, hi = -1e4, 1e4
+    for _ in range(200):
+        mid = (lo + hi) / 2
+        if t_cdf(mid, df) &lt; p:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
+# ---------------------------------------------------------------- aturan R8
+def se_predictive(sigma0: float, n0: int) -&gt; float:
+    """Galat baku prediktif satu model baru terhadap mean baseline n0 seed."""
+    return sigma0 * math.sqrt(1.0 + 1.0 / n0)
+
+
+def threshold(sigma0: float, n0: int, m: int, alpha: float = ALPHA,
+              floor: float = FLOOR_BPB) -&gt; float:
+    """Ambang R8: kuantil-t Bonferroni x galat baku prediktif, dengan lantai."""
+    q = t_ppf(1.0 - alpha / (2.0 * m), n0 - 1)
+    return max(q * se_predictive(sigma0, n0), floor)
+
+
+def threshold_z(sigma0: float, n0: int, m: int, alpha: float = ALPHA,
+                floor: float = FLOOR_BPB) -&gt; float:
+    """Versi normal (dipakai untuk pemantauan berurutan, bukan klaim konfirmatori)."""
+    from statistics import NormalDist
+    q = NormalDist().inv_cdf(1.0 - alpha / (2.0 * m))
+    return max(q * se_predictive(sigma0, n0), floor)
+
+
+def mde80(sigma0: float, n0: int, m: int, alpha: float = ALPHA) -&gt; float:
+    q = t_ppf(1.0 - alpha / (2.0 * m), n0 - 1)
+    return (q + QUANTILE_80) * se_predictive(sigma0, n0)
+
+
+def equivalence_bound(mu0: float) -&gt; float:
+    """Batas ekuivalensi: 'stabil' hanya bila seluruh CI di bawah batas ini."""
+    return max(FLOOR_BPB, 0.05 * mu0)
+
+
+def floor_binding(sigma0: float, n0: int, m: int) -&gt; bool:
+    return t_ppf(1.0 - ALPHA / (2.0 * m), n0 - 1) * se_predictive(sigma0, n0) &lt; FLOOR_BPB
+
+
+def table() -&gt; str:
+    out = []
+    out.append("| sigma0 (bpb) | SE_pred (n0=5) | ambang konfirmatori (m=3) | ambang monitoring (m=90) | MDE80 konfirmatori | `delta_eq` bila mu0=0,90 |")
+    out.append("| --- | --- | --- | --- | --- | --- |")
+    for s in (0.005, 0.010, 0.0126, 0.015, 0.020, 0.030, 0.040, 0.060):
+        se = se_predictive(s, 5)
+        tc = threshold(s, 5, 3)
+        tm = threshold(s, 5, 90)
+        md = mde80(s, 5, 3)
+        out.append(f"| {s:.4f} | {se:.4f} | {tc:.4f} | {tm:.4f} | {md:.4f} | {equivalence_bound(0.90):.4f} |")
+    return "\n".join(out)
+
+
+def main() -&gt; None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--table", action="store_true")
+    args = ap.parse_args()
+    if args.table:
+        print(table())
+        return
+    print("t_ppf(0.975,4) =", round(t_ppf(0.975, 4), 4), "(harus 2.7764)")
+    print("t_ppf(0.95,4)  =", round(t_ppf(0.95, 4), 4), "(harus 2.1318)")
+    print("t_ppf(0.999722,4) =", round(t_ppf(1 - 0.05 / (2 * 90), 4), 4))
+    print("t_ppf(0.991667,4) =", round(t_ppf(1 - 0.05 / (2 * 3), 4), 4))
+    print()
+    print(table())
+
+
+if __name__ == "__main__":
+    main()
 </code></pre></details><details class="viewer"><summary class="mono">dashboard/assets/app.js <span class="muted small">· 4.8 KB · sha256 b45fdb40b90f…</span></summary><pre><code>/* Dashboard transparansi — interaksi minimum, tanpa dependensi. */
 (function () {
   "use strict";
@@ -3746,7 +4265,7 @@ footer {
   .shell { display: block; max-width: none; }
   section { break-inside: avoid; }
 }
-</code></pre></details><details class="viewer"><summary class="mono">dashboard/build.py <span class="muted small">· 22.1 KB · sha256 5f451241ab3d…</span></summary><pre><code>#!/usr/bin/env python3
+</code></pre></details><details class="viewer"><summary class="mono">dashboard/build.py <span class="muted small">· 22.9 KB · sha256 a75bc8d50aa5…</span></summary><pre><code>#!/usr/bin/env python3
 """Bangun dashboard statis dari PLAN.md + status.json.
 
 Sengaja tanpa dependensi eksternal (tanpa paket markdown, tanpa CDN) supaya
@@ -3778,6 +4297,8 @@ AUDIT = ROOT / "docs" / "self-audit-v0.2.md"
 POLICY = ROOT / "ops" / "policy.v1.json"
 REPORT = ROOT / "REPORT-P0.md"
 P0_METRICS = ROOT / "runs" / "p0" / "metrics.jsonl"
+PREREG = ROOT / "PREREGISTRATION.md"
+PREREG_LOCK = ROOT / "ops" / "prereg.lock.json"
 STATUS = DASH / "status.json"
 TEMPLATE = DASH / "template.html"
 STYLE = DASH / "assets" / "style.css"
@@ -4110,6 +4631,20 @@ def main() -&gt; None:
         for l in status["literature"]
     )
 
+    # --- status pra-registrasi (dihitung ulang saat build, bukan diketik)
+    pr = {"version": "-", "hash": "-", "state": "belum dikunci", "class": "zero"}
+    if PREREG_LOCK.exists() and PREREG.exists():
+        import json as _json
+        rec = _json.loads(PREREG_LOCK.read_text(encoding="utf-8"))
+        live = sha256(PREREG)
+        ok = live == rec.get("sha256")
+        pr = {
+            "version": rec.get("version", "?"),
+            "hash": rec.get("sha256", "?")[:32] + "…",
+            "state": "cocok dengan kunci" if ok else "TIDAK COCOK dengan kunci",
+            "class": "ok" if ok else "zero",
+        }
+
     # --- ringkasan artefak hasil run (tidak di-inline agar halaman tetap ringan)
     art_rows = []
     for sub in ("runs", "data", "checkpoints"):
@@ -4267,6 +4802,10 @@ def main() -&gt; None:
         "{{TOTAL_BYTES}}": human_bytes(sum(f["bytes"] for f in files)),
         "{{HEADLINE}}": esc(meta["headline"]),
         "{{READ_ME_FIRST}}": esc(meta["read_me_first"]),
+        "{{PREREG_VERSION}}": pr["version"],
+        "{{PREREG_HASH}}": pr["hash"],
+        "{{PREREG_STATE}}": pr["state"],
+        "{{PREREG_CLASS}}": pr["class"],
         "{{P0_MODELS}}": p0["models"],
         "{{P0_MU}}": p0["mu"],
         "{{P0_SIGMA}}": p0["sigma"],
@@ -4307,10 +4846,10 @@ def main() -&gt; None:
 
 if __name__ == "__main__":
     main()
-</code></pre></details><details class="viewer"><summary class="mono">dashboard/status.json <span class="muted small">· 28.7 KB · sha256 38cc97fe5568…</span></summary><pre><code>{
+</code></pre></details><details class="viewer"><summary class="mono">dashboard/status.json <span class="muted small">· 30.6 KB · sha256 0cc0da17d401…</span></summary><pre><code>{
   "meta": {
     "project": "AI Belajar dari AI — Dashboard Transparansi",
-    "headline": "Model bahasa dari nol, data seluruhnya dari AI, dieksperimen sebagai risiko (bukan produk). Status 1 Nov 2026: Pilot P0 sudah BENAR-BENAR DIJALANKAN di sandbox — 16 model 0,48 jt parameter, 17 node pipeline, 749.133 byte teks sintetis, 22 menit 23 detik. sigma0 pertama terukur (0,0126 bpb). Hasil terpenting justru kritik terhadap aturan saya sendiri: degradasi 3x lipat terdeteksi oleh metrik utama tetapi TIDAK ditandai 'collapse' oleh gate, karena sinyal cedera sekunder mati di lantai.",
+    "headline": "Model bahasa dari nol, data seluruhnya dari AI, dieksperimen sebagai risiko. Status 1 Nov 2026: Pilot P0 dijalankan (16 model, 749.133 byte sintetis) dan gagal mendeteksi degradasi 29x ambang — cacat aturan yang ditemukan data, bukan teori. Sebagai jawabannya, aturan R8 + korpus P1 + protokol buta sekarang DIKUNCI di PREREGISTRATION.md v1.1 (sha256 e19796bf…) sebelum satu model P1 pun ada.",
     "read_me_first": "Dashboard ini dibuat oleh AI yang sama yang menulis rencananya. Artinya ini bukan laporan independen. Karena itu setiap angka di sini bisa kamu cocokkan dengan berkas aslinya: hash SHA-256 tiap berkas tercantum, inventaris berkas dihitung langsung dari disk saat dashboard dibangun, dan setiap klaim punya perintah verifikasinya sendiri. Kalau ada yang tidak cocok, AI-nya yang salah, bukan berkasnya.",
     "plan_version": "0.3.1",
     "plan_status": "rencana v0.3 + hasil pilot P0 (bukti mekanisme, bukan temuan)",
@@ -4360,9 +4899,17 @@ if __name__ == "__main__":
       "evidence": "runs/p0/metrics.jsonl, REPORT-P0.md, analysis/p0_metrics.csv, checkpoints/p0"
     },
     {
+      "id": "P0.9",
+      "name": "Pra-registrasi R8 dikunci",
+      "desc": "PREREGISTRATION.md v1.1 dikunci sebelum eksekusi P1: kuantil-t Student, enam sinyal cedera dalam empat kelompok independen, aturan sadar-lantai, ambang 40 item aritmetika, keputusan tiga-nilai dengan uji ekuivalensi, gerbang korpus T0 &gt;= 2 MB, baseline 5 seed, protokol buta berkomitmen hash.",
+      "status": "selesai",
+      "output": "PREREGISTRATION.md v1.1 (326 baris) + kunci hash + alat verifikasi + alat blinding",
+      "evidence": "ops/prereg.lock.json, ops/prereg_lock.py, ops/blind.py, analysis/stats_r8.py"
+    },
+    {
       "id": "P1",
       "name": "P1 Pilot diperluas (belum dijalankan)",
-      "desc": "Baseline &gt;= 5 seed, 3 arm (A, B1, kontrol tanpa self-training) x 5 seed x 6 generasi, korpus guru non-templat &gt;= 2 MB, evaluasi 40+ item aritmetika, aturan R8 dipraregistrasi lebih dulu. Menunggu keputusanmu soal executor.",
+      "desc": "Menunggu eksekusi di executor offline: baseline 5 seed, 3 arm (A, B1, C) x 5 seed x 6 generasi, T0 non-templat &gt;= 2 MB yang harus lulus 5 gerbang, evaluasi 40 item aritmetika, analisis buta. Aturan sudah dikunci; tidak ada parameter yang boleh berubah saat run.",
       "status": "belum-mulai",
       "output": "Grafik pertama: kualitas vs generasi (skala mini)",
       "evidence": "belum ada"
@@ -4897,9 +5444,23 @@ if __name__ == "__main__":
       "title": "Pilot P0 dijalankan (eksekusi nyata pertama)",
       "detail": "16 model dilatih, 17 node selesai, 749.133 byte sintetis, 22 menit 23 detik di 2 vCPU tanpa GPU. sigma0 = 0,0126 bpb; ambang R7 = 0,0488 bpb. Arm A naik ke 1,93 bpb (+1,44) pada generasi 3, arm B1 ke 0,92 bpb (+0,43). Tidak ada titik yang ditandai 'collapse' oleh gate karena sinyal cedera sekunder tidak pernah menyala — cacat aturan yang ditemukan oleh data, bukan oleh teori. Deviasi dari PLAN (byte-level, posisi dipelajari, 600 langkah, filter lenient) dicatat di REPORT-P0.md.",
       "evidence": "REPORT-P0.md, runs/p0/metrics.jsonl, analysis/p0_metrics.csv"
+    },
+    {
+      "date": "2026-11-01",
+      "title": "Pra-registrasi R8 dikunci (v1.1)",
+      "detail": "PREREGISTRATION.md v1.0 dikunci 03:42Z, diamandemen ke v1.1 03:43Z sebelum ada model P1: F1/F2 dipisah dan dikelompokkan agar tidak dihitung sebagai dua bukti (cacat P0 terulang), komposisi data tiap arm dinyatakan, dan lima gerbang penerimaan korpus T0 ditambahkan. Hash v1.1 = e19796bff06c9f2f3bd20f2401fdc719488bbe81fb7d93d1776a63a381566d9f, diverifikasi setiap `make check`.",
+      "evidence": "PREREGISTRATION.md, ops/prereg.lock.json, ops/prereg_lock.py"
     }
   ],
   "claims": [
+    {
+      "claim": "Pra-registrasi dikunci dan tidak berubah sejak dikunci (diverifikasi ulang saat build).",
+      "verify": "make -C experiments/ai-belajar-dari-ai prereg-verify"
+    },
+    {
+      "claim": "Ambang R8 dihitung oleh kode, bukan diketik: jalankan ulang tabelnya.",
+      "verify": "python3 experiments/ai-belajar-dari-ai/analysis/stats_r8.py --table"
+    },
     {
       "claim": "Ada 1.419 baris kode eksperimen di 11 modul src/ (dihitung saat dashboard dibangun).",
       "verify": "wc -l experiments/ai-belajar-dari-ai/src/*.py"
@@ -4930,6 +5491,10 @@ if __name__ == "__main__":
     }
   ],
   "bias_notes": [
+    {
+      "title": "Buta prosedural, bukan buta kriptografis",
+      "detail": "Protokol D9 menyegel pemetaan arm-&gt;label dan meng-commit sha256-nya sebelum eksekusi. Tapi agen yang sama yang menulis analisis juga bisa membaca .blind/key.json. Itu tidak bisa dicegah di dalam satu proses; yang bisa dilakukan hanya membuat pelanggaran urutan terlihat (komitmen hash + hash kesimpulan sebelum reveal). Siapa pun yang membaca laporan P1 harus menganggap blind ini sebagai pengurang bias, bukan penghilang."
+    },
     {
       "title": "Gate saya sendiri gagal: 12 dari 12 titik melewati ambang, 0 ditandai collapse",
       "detail": "P0 memperlihatkan cacat yang tidak terlihat di atas kertas. bpb naik sampai +1,44 (29x ambang), tetapi status gate tetap 'watch' karena syarat cedera sekunder tidak pernah terpenuhi: arith_acc sudah 0,00 di baseline (mustahil turun 10pp), distinct2 justru naik pada teks rusak, style_div datar, repetisi nol. Aku TIDAK mengubah aturan setelah melihat data; kandidat R8 (sinyal degenerate/truncated + aturan sadar-lantai) harus dipraregistrasi sebelum P1. Ini contoh persis 'collapse semu' versi terbalik: kegagalan deteksi yang menyamar sebagai hasil negatif."
@@ -5018,7 +5583,7 @@ if __name__ == "__main__":
     }
   ]
 }
-</code></pre></details><details class="viewer"><summary class="mono">dashboard/template.html <span class="muted small">· 30.6 KB · sha256 18832f0fd087…</span></summary><pre><code>&lt;!doctype html&gt;
+</code></pre></details><details class="viewer"><summary class="mono">dashboard/template.html <span class="muted small">· 31.2 KB · sha256 88303777f992…</span></summary><pre><code>&lt;!doctype html&gt;
 &lt;html lang="id"&gt;
 &lt;head&gt;
 &lt;meta charset="utf-8"&gt;
@@ -5379,6 +5944,17 @@ COLLAPSE bila:
         &lt;div class="stat zero"&gt;&lt;div class="stat-label"&gt;Token sintetis&lt;/div&gt;&lt;div class="stat-value"&gt;{{P0_TOKENS}}&lt;/div&gt;&lt;div class="stat-sub"&gt;byte dihasilkan model siswa&lt;/div&gt;&lt;/div&gt;
       &lt;/div&gt;
 
+      &lt;div class="stat {{PREREG_CLASS}}" style="margin:18px 0"&gt;
+        &lt;div class="stat-label"&gt;Gate P1 — pra-registrasi R8 terkunci&lt;/div&gt;
+        &lt;div class="stat-value"&gt;v{{PREREG_VERSION}}&lt;/div&gt;
+        &lt;div class="stat-sub mono"&gt;sha256 {{PREREG_HASH}} · {{PREREG_STATE}}&lt;/div&gt;
+      &lt;/div&gt;
+      &lt;p class="small"&gt;
+        &lt;code&gt;PREREGISTRATION.md&lt;/code&gt; dikunci dengan hash; hash di atas dihitung ulang setiap kali
+        dashboard dibangun, jadi kalau berkasnya diubah diam-diam, halaman ini berubah sendiri.
+        Verifikasi: &lt;code&gt;make prereg-verify&lt;/code&gt;. Isi lengkapnya ada di daftar berkas (bagian 09).
+      &lt;/p&gt;
+
       &lt;nav class="plantoc" aria-label="Daftar isi laporan P0"&gt;{{REPORT_TOC}}&lt;/nav&gt;
       &lt;article class="prose"&gt;{{REPORT_HTML}}&lt;/article&gt;
     &lt;/section&gt;
@@ -5683,6 +6259,125 @@ find experiments/ai-belajar-dari-ai -type f | sort
 ```
 
 Kalau angka kalibrasi berubah tanpa perubahan kode, aku berbohong. Kalau `policy_lint` gagal tapi dashboard tetap hijau, dashboard-nya yang berbohong. Kalau ada checkpoint tersembunyi, klaim "0%" di dashboard adalah kebohongan.
+</code></pre></details><details class="viewer"><summary class="mono">ops/blind.py <span class="muted small">· 4.2 KB · sha256 2f3f8b4d6d3b…</span></summary><pre><code>#!/usr/bin/env python3
+"""Protokol buta untuk P1 (PREREGISTRATION.md bagian 8).
+
+    python3 ops/blind.py seal        # acak label arm, simpan kunci di .blind/, tulis komitmen
+    python3 ops/blind.py status      # tunjukkan komitmen (bukan kunci)
+    python3 ops/blind.py reveal --conclusions-sha256 &lt;hash&gt;
+
+Kunci disimpan di `.blind/key.json` yang tidak masuk git. Yang di-commit hanya
+komitmen sha256-nya, sehingga urutan seal -&gt; analisis -&gt; reveal bisa diperiksa
+walau tidak bisa dipaksakan secara kriptografis.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import secrets
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+KEY = ROOT / ".blind" / "key.json"
+COMMIT = ROOT / "ops" / "blind_commitment.json"
+EVENTS = ROOT / "ops" / "blind_events.jsonl"
+ARMS = ["A", "B1", "C"]
+
+
+def now() -&gt; str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def sha256_bytes(b: bytes) -&gt; str:
+    return hashlib.sha256(b).hexdigest()
+
+
+def log_event(kind: str, **kw) -&gt; None:
+    EVENTS.parent.mkdir(parents=True, exist_ok=True)
+    with EVENTS.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps({"ts": now(), "event": kind, **kw}, ensure_ascii=False) + "\n")
+
+
+def seal() -&gt; int:
+    if COMMIT.exists():
+        print("GAGAL: komitmen buta sudah ada. Menyegel ulang akan merusak protokol.")
+        return 1
+    if KEY.exists():
+        print("GAGAL: .blind/key.json sudah ada tanpa komitmen — keadaan tidak konsisten.")
+        return 1
+    labels = ARMS[:]
+    secrets.SystemRandom().shuffle(labels)
+    mapping = {arm: f"X{i + 1}" for i, arm in enumerate(labels)}
+    KEY.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps({"created_at": now(), "mapping": mapping}, ensure_ascii=False, sort_keys=True).encode()
+    KEY.write_bytes(payload)
+    COMMIT.write_text(json.dumps({
+        "sealed_at": now(),
+        "n_arms": len(ARMS),
+        "key_sha256": sha256_bytes(payload),
+        "key_path": str(KEY.relative_to(ROOT)),
+        "note": "Kunci tidak di-commit. Hash ini membuktikan pemetaan tidak diubah setelah analisis.",
+    }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    log_event("seal", key_sha256=sha256_bytes(payload))
+    print(f"TERSEGEL: {len(ARMS)} arm, komitmen {COMMIT.relative_to(ROOT)}")
+    print(f"  key sha256 = {sha256_bytes(payload)}")
+    return 0
+
+
+def status() -&gt; int:
+    if not COMMIT.exists():
+        print("belum tersegel")
+        return 0
+    rec = json.loads(COMMIT.read_text(encoding="utf-8"))
+    print(f"tersegel {rec['sealed_at']}  n_arm={rec['n_arms']}  key_sha256={rec['key_sha256']}")
+    if KEY.exists():
+        got = sha256_bytes(KEY.read_bytes())
+        print("  kunci ada di disk, cocok" if got == rec["key_sha256"] else "  PERINGATAN: kunci tidak cocok dengan komitmen")
+    return 0
+
+
+def reveal(conclusions_sha: str) -&gt; int:
+    path = ROOT / "analysis" / "p1_conclusions.md"
+    if not path.exists():
+        print("GAGAL: analysis/p1_conclusions.md belum ada — kesimpulan harus ditulis lebih dulu.")
+        return 1
+    actual = sha256_bytes(path.read_bytes())
+    if actual != conclusions_sha:
+        print("GAGAL: hash kesimpulan tidak cocok. Unblinding ditolak.")
+        print(f"  diberikan : {conclusions_sha}")
+        print(f"  sebenarnya: {actual}")
+        return 1
+    if not KEY.exists():
+        print("GAGAL: kunci tidak ada di disk.")
+        return 1
+    payload = json.loads(KEY.read_text(encoding="utf-8"))
+    log_event("reveal", conclusions_sha256=actual, key_sha256=sha256_bytes(KEY.read_bytes()))
+    print("kesimpulan terkunci:", actual)
+    for arm, label in sorted(payload["mapping"].items()):
+        print(f"  {label} = arm {arm}")
+    return 0
+
+
+def main() -&gt; int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("command", choices=["seal", "status", "reveal"])
+    ap.add_argument("--conclusions-sha256")
+    args = ap.parse_args()
+    if args.command == "seal":
+        return seal()
+    if args.command == "status":
+        return status()
+    if not args.conclusions_sha256:
+        print("GAGAL: reveal butuh --conclusions-sha256")
+        return 1
+    return reveal(args.conclusions_sha256)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
 </code></pre></details><details class="viewer"><summary class="mono">ops/policy.v1.json <span class="muted small">· 12.3 KB · sha256 28a8d1711bfe…</span></summary><pre><code>{
   "version": 1,
   "updated": "2026-11-01",
@@ -6030,6 +6725,134 @@ def main() -&gt; int:
         return 1
     print("\nLULUS: setiap mode kegagalan punya sinyal, pemeriksa, rute, kewenangan, dan SLA.")
     return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+</code></pre></details><details class="viewer"><summary class="mono">ops/prereg.lock.json <span class="muted small">· 434 B · sha256 f45295f6cdb6…</span></summary><pre><code>{
+  "file": "PREREGISTRATION.md",
+  "version": "1.1",
+  "sha256": "e19796bff06c9f2f3bd20f2401fdc719488bbe81fb7d93d1776a63a381566d9f",
+  "bytes": 17785,
+  "lines": 326,
+  "locked_at": "2026-11-01T03:43:01Z",
+  "history": [
+    {
+      "version": "1.0",
+      "sha256": "f8a0a939e19cc32bb73ff23804ddb5295c81a8046be8ea86277ae82cf9f9c67b",
+      "locked_at": "2026-11-01T03:42:42Z",
+      "superseded": "2026-11-01T03:43:01Z"
+    }
+  ]
+}
+</code></pre></details><details class="viewer"><summary class="mono">ops/prereg_lock.py <span class="muted small">· 3.8 KB · sha256 60939bef504c…</span></summary><pre><code>#!/usr/bin/env python3
+"""Kunci dan verifikasi PREREGISTRATION.md.
+
+    python3 ops/prereg_lock.py --lock     # kunci (menolak menimpa tanpa --amend)
+    python3 ops/prereg_lock.py --verify   # gagal bila berkas berubah sejak dikunci
+
+Alasannya sederhana: pra-registrasi yang bisa diedit diam-diam tidak lebih baik
+daripada tidak ada pra-registrasi sama sekali.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+DOC = ROOT / "PREREGISTRATION.md"
+LOCK = ROOT / "ops" / "prereg.lock.json"
+
+
+def sha256(path: Path) -&gt; str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1 &lt;&lt; 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def doc_version(text: str) -&gt; str:
+    m = re.search(r"\|\s*Versi\s*\|\s*\**([0-9]+\.[0-9]+)\**", text)
+    return m.group(1) if m else "?"
+
+
+def lock(amend: str | None) -&gt; int:
+    if not DOC.exists():
+        print("GAGAL: PREREGISTRATION.md tidak ada")
+        return 1
+    text = DOC.read_text(encoding="utf-8")
+    digest = sha256(DOC)
+    entry = {
+        "file": DOC.name,
+        "version": doc_version(text),
+        "sha256": digest,
+        "bytes": DOC.stat().st_size,
+        "lines": len(text.splitlines()),
+        "locked_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+
+    history = []
+    if LOCK.exists():
+        old = json.loads(LOCK.read_text(encoding="utf-8"))
+        if old.get("sha256") == digest:
+            print(f"SUDAH TERKUNCI: {digest}")
+            return 0
+        if not amend:
+            print("GAGAL: PREREGISTRATION.md berubah setelah dikunci.")
+            print(f"  hash lama : {old.get('sha256')}")
+            print(f"  hash baru : {digest}")
+            print("  Amandemen wajib: naikkan versi + isi tabel amandemen, lalu jalankan --amend &lt;versi&gt;.")
+            return 1
+        history = old.get("history", []) + [
+            {k: old.get(k) for k in ("version", "sha256", "locked_at")} | {"superseded": entry["locked_at"]}
+        ]
+
+    LOCK.write_text(
+        json.dumps({**entry, "history": history}, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    print(f"TERKUNCI v{entry['version']}  sha256={digest}  ({entry['bytes']} B, {entry['lines']} baris)")
+    return 0
+
+
+def verify(quiet: bool = False) -&gt; int:
+    if not LOCK.exists():
+        print("GAGAL: ops/prereg.lock.json tidak ada — pra-registrasi belum dikunci")
+        return 1
+    record = json.loads(LOCK.read_text(encoding="utf-8"))
+    if not DOC.exists():
+        print("GAGAL: PREREGISTRATION.md hilang padahal kuncinya ada")
+        return 1
+    digest = sha256(DOC)
+    if digest != record.get("sha256"):
+        print("GAGAL: PREREGISTRATION.md tidak cocok dengan kunci.")
+        print(f"  terkunci : {record.get('sha256')} (v{record.get('version')})")
+        print(f"  sekarang : {digest}")
+        print("  Setiap perubahan wajib jadi versi baru dengan entri di tabel amandemen.")
+        return 1
+    if not quiet:
+        print(f"OK: pra-registrasi utuh — v{record['version']} sha256={digest}")
+        print(f"    dikunci {record['locked_at']}, {record['lines']} baris")
+    return 0
+
+
+def main() -&gt; int:
+    ap = argparse.ArgumentParser()
+    g = ap.add_mutually_exclusive_group(required=True)
+    g.add_argument("--lock", action="store_true")
+    g.add_argument("--verify", action="store_true")
+    ap.add_argument("--amend", metavar="VERSI", help="wajib saat mengunci ulang setelah ada perubahan")
+    ap.add_argument("--quiet", action="store_true")
+    args = ap.parse_args()
+    if args.lock:
+        return lock(args.amend)
+    return verify(args.quiet)
 
 
 if __name__ == "__main__":
@@ -7519,6 +8342,17 @@ print(f"SMOKE OK dalam {time.time()-t:.1f}s")
         <div class="stat zero"><div class="stat-label">Token sintetis</div><div class="stat-value">749.133</div><div class="stat-sub">byte dihasilkan model siswa</div></div>
       </div>
 
+      <div class="stat ok" style="margin:18px 0">
+        <div class="stat-label">Gate P1 — pra-registrasi R8 terkunci</div>
+        <div class="stat-value">v1.1</div>
+        <div class="stat-sub mono">sha256 e19796bff06c9f2f3bd20f2401fdc719… · cocok dengan kunci</div>
+      </div>
+      <p class="small">
+        <code>PREREGISTRATION.md</code> dikunci dengan hash; hash di atas dihitung ulang setiap kali
+        dashboard dibangun, jadi kalau berkasnya diubah diam-diam, halaman ini berubah sendiri.
+        Verifikasi: <code>make prereg-verify</code>. Isi lengkapnya ada di daftar berkas (bagian 09).
+      </p>
+
       <nav class="plantoc" aria-label="Daftar isi laporan P0"><a class="toc-l2" href="#laporan-pilot-p0">Laporan Pilot P0</a><a class="toc-l3" href="#baseline-m0">Baseline M0</a><a class="toc-l3" href="#rantai-per-arm">Rantai per arm</a><a class="toc-l3" href="#agregat-per-arm">Agregat per arm</a><a class="toc-l3" href="#temuan-p0">Temuan P0</a><a class="toc-l3" href="#konsekuensi-untuk-p1-belum-dijalankan">Konsekuensi untuk P1 (belum dijalankan)</a><a class="toc-l3" href="#cara-menjalankan-ulang">Cara menjalankan ulang</a><a class="toc-l3" href="#catatan-eksekusi">Catatan eksekusi</a></nav>
       <article class="prose"><h2 id="laporan-pilot-p0">Laporan Pilot P0<a class="anchor" href="#laporan-pilot-p0">#</a></h2>
 <p><strong>Status: bukti mekanisme, bukan temuan ilmiah.</strong></p>
@@ -8032,7 +8866,7 @@ find experiments/ai-belajar-dari-ai -type f | sort</code></pre>
     </section>
 
     <footer>
-      Dibangun otomatis oleh <code>dashboard/build.py</code> pada 2026-11-01 03:23 UTC · plan v0.3.1 · 29 berkas · tanpa CDN, tanpa telemetri.
+      Dibangun otomatis oleh <code>dashboard/build.py</code> pada 2026-11-01 03:43 UTC · plan v0.3.1 · 34 berkas · tanpa CDN, tanpa telemetri.
     </footer>
   </main>
 </div>

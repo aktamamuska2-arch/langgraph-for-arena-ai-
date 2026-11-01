@@ -359,6 +359,17 @@ COLLAPSE bila:
         <div class="stat zero"><div class="stat-label">Token sintetis</div><div class="stat-value">{{P0_TOKENS}}</div><div class="stat-sub">byte dihasilkan model siswa</div></div>
       </div>
 
+      <div class="stat {{PREREG_CLASS}}" style="margin:18px 0">
+        <div class="stat-label">Gate P1 — pra-registrasi R8 terkunci</div>
+        <div class="stat-value">v{{PREREG_VERSION}}</div>
+        <div class="stat-sub mono">sha256 {{PREREG_HASH}} · {{PREREG_STATE}}</div>
+      </div>
+      <p class="small">
+        <code>PREREGISTRATION.md</code> dikunci dengan hash; hash di atas dihitung ulang setiap kali
+        dashboard dibangun, jadi kalau berkasnya diubah diam-diam, halaman ini berubah sendiri.
+        Verifikasi: <code>make prereg-verify</code>. Isi lengkapnya ada di daftar berkas (bagian 09).
+      </p>
+
       <nav class="plantoc" aria-label="Daftar isi laporan P0">{{REPORT_TOC}}</nav>
       <article class="prose">{{REPORT_HTML}}</article>
     </section>

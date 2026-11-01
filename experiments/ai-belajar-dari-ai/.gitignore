@@ -2,3 +2,6 @@
 data/
 checkpoints/
 runs/
+
+# kunci blinding P1 — TIDAK boleh masuk git
+.blind/

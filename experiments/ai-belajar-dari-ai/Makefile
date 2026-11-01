@@ -5,6 +5,8 @@
 #   make verify      cek bahwa dashboard cocok dengan berkas di disk
 #   make policy      lint kebijakan kegagalan (ops/policy.v1.json)
 #   make calibrate   hitung ulang FWER/power/MDE aturan collapse (±80 detik, tanpa dependensi)
+#   make prereg-verify  pastikan PREREGISTRATION.md tidak berubah sejak dikunci
+#   make blind-status   status protokol buta P1
 #
 # Semua target hanya butuh python3 (tanpa paket eksternal).
 #
@@ -18,7 +20,7 @@ PY ?= python3
 PORT ?= 8000
 HERE := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: dashboard open verify policy calibrate check clean
+.PHONY: dashboard open verify policy calibrate prereg prereg-verify blind-status check clean
 
 dashboard:
 	$(PY) $(HERE)dashboard/build.py
@@ -40,8 +42,17 @@ policy:
 calibrate:
 	$(PY) $(HERE)analysis/calibration.py
 
-check: policy dashboard
-	@echo "OK: kebijakan lolos lint, dashboard dibangun ulang"
+prereg:
+	$(PY) $(HERE)ops/prereg_lock.py --lock
+
+prereg-verify:
+	@$(PY) $(HERE)ops/prereg_lock.py --verify
+
+blind-status:
+	@$(PY) $(HERE)ops/blind.py status
+
+check: policy prereg-verify dashboard
+	@echo "OK: kebijakan lolos lint, pra-registrasi utuh, dashboard dibangun ulang"
 
 clean:
 	rm -f $(HERE)dashboard/index.html
