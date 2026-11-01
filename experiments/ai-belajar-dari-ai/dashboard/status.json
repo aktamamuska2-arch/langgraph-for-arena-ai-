@@ -1,9 +1,9 @@
 {
   "meta": {
     "project": "AI Belajar dari AI — Dashboard Transparansi",
-    "headline": "Model bahasa yang dilatih dari nol, dengan data pelatihan yang seluruhnya dihasilkan AI. Rencana v0.2: 13 arm dalam 3 tier, metrik tokenizer-agnostik, ambang collapse berbasis derau baseline. Masih tahap rencana: belum ada kode eksperimen yang dijalankan.",
+    "headline": "Model bahasa yang dilatih dari nol dari data yang seluruhnya dihasilkan AI. Rencana v0.3 setelah audit mandiri: aturan deteksi collapse dikalibrasi ulang (FWER 5%), eksekusi dibagi ke profil P0–P3 karena sandbox tidak punya GPU, dan kebijakan kegagalan 13 mode yang bisa di-lint. Masih tahap rencana: 0 model dilatih.",
     "read_me_first": "Dashboard ini dibuat oleh AI yang sama yang menulis rencananya. Artinya ini bukan laporan independen. Karena itu setiap angka di sini bisa kamu cocokkan dengan berkas aslinya: hash SHA-256 tiap berkas tercantum, inventaris berkas dihitung langsung dari disk saat dashboard dibangun, dan setiap klaim punya perintah verifikasinya sendiri. Kalau ada yang tidak cocok, AI-nya yang salah, bukan berkasnya.",
-    "plan_version": "0.2",
+    "plan_version": "0.3",
     "plan_status": "draft rencana — dinamis",
     "branch": "arena/43651650-langgraph-for-arena-ai",
     "updated": "2026-11-01"
@@ -35,6 +35,14 @@
       "evidence": "dashboard/build.py, dashboard/status.json"
     },
     {
+      "id": "P0.7",
+      "name": "Audit mandiri & kalibrasi statistik",
+      "desc": "Uji aturan deteksi sebelum ada model: FWER, power, MDE untuk 7 aturan. Hasil: aturan v0.2 memberi FWER 8,5–11,4% (bukan 0,3%); diganti R7.",
+      "status": "selesai",
+      "output": "docs/self-audit-v0.2.md, analysis/calibration_results.md, ops/policy.v1.json",
+      "evidence": "analysis/calibration.py, ops/policy_lint.py"
+    },
+    {
       "id": "P1",
       "name": "Pilot mini (1 hari)",
       "desc": "200 ribu token T0, model 2 juta parameter, 3 generasi, 1 arm, 1 seed. Sekaligus mengukur throughput generasi dan menjadikannya gate anggaran.",
@@ -45,7 +53,7 @@
     {
       "id": "P2",
       "name": "Korpus T0 skala penuh",
-      "desc": "±2,5 juta token, ±800 dokumen, reservoir 6.000 intent + 5 parafrase per intent, batch guru C2/C3 dibuat sekali dan dibekukan.",
+      "desc": "±2,5 juta token, ±800 dokumen, reservoir 6.000 intent + 5 parafrase per intent, batch guru C2/C3 dibuat sekali dan dibekukan. (+ profil eksekusi P0–P3, §20)",
       "status": "belum-mulai",
       "output": "Korpus T0 + manifest + tokenizer + test anchor beku",
       "evidence": "belum ada"
@@ -69,7 +77,7 @@
     {
       "id": "P5",
       "name": "Sweep 13 arm / 32 chain",
-      "desc": "Tier 1 konfirmatori (A, A′, B1, C1, C2, D2, 3 seed), Tier 2 sekunder (B2, C3, D1, E, 2 seed), Tier 3 eksploratif (F, B3, G, 4 generasi). ±120 GPU-jam.",
+      "desc": "Tier 1 konfirmatori (A, A′, B1, C1, C2, D2, 3 seed), Tier 2 sekunder (B2, C3, D1, E, 2 seed), Tier 3 eksploratif (F, B3, G, 4 generasi). ±120 GPU-jam pada profil P2 (GPU eksternal), bukan di sandbox (terukur 1.067 jam CPU).",
       "status": "belum-mulai",
       "output": "Kurva degenerasi lengkap",
       "evidence": "belum ada"
@@ -263,6 +271,36 @@
       "purpose": "D12: sub-studi dosis kebaruan prompt (A vs F vs A′).",
       "phase": "P6",
       "status": "belum-mulai"
+    },
+    {
+      "path": "docs/self-audit-v0.2.md",
+      "purpose": "D16: audit titik buta, batas otonomi, dan yang tidak bisa diselamatkan.",
+      "phase": "P0.7",
+      "status": "selesai"
+    },
+    {
+      "path": "analysis/calibration.py",
+      "purpose": "D15: simulasi FWER/power/MDE untuk 7 aturan collapse, tanpa dependensi.",
+      "phase": "P0.7",
+      "status": "selesai"
+    },
+    {
+      "path": "analysis/calibration_results.md",
+      "purpose": "Keluaran kalibrasi; lampiran wajib pra-registrasi.",
+      "phase": "P0.7",
+      "status": "selesai"
+    },
+    {
+      "path": "ops/policy.v1.json",
+      "purpose": "D14: 13 mode kegagalan, rute, kewenangan, SLA, kill switch.",
+      "phase": "P0.7",
+      "status": "selesai"
+    },
+    {
+      "path": "ops/policy_lint.py",
+      "purpose": "Menolak kebijakan yang tidak lengkap atau bertentangan.",
+      "phase": "P0.7",
+      "status": "selesai"
     }
   ],
   "decisions": [
@@ -412,9 +450,65 @@
           "default": true
         }
       ]
+    },
+    {
+      "id": "D8",
+      "question": "Profil eksekusi mana yang dijalankan?",
+      "impact": "Menentukan apakah kita hanya membuktikan pipeline (P0), mendapat pratinjau (P1), atau klaim utama (P2 di GPU eksternal).",
+      "status": "menunggu jawabanmu",
+      "options": [
+        {
+          "id": "a",
+          "label": "P0 saja, ±40 menit di sandbox"
+        },
+        {
+          "id": "b",
+          "label": "P0 → P1 di sandbox (±5 jam dicicil)"
+        },
+        {
+          "id": "c",
+          "label": "P0 → P1 → P2 lewat offline executor di GPU eksternal",
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "D9",
+      "question": "Analisis dijalankan buta?",
+      "impact": "Label arm diacak sampai kesimpulan ditulis, lalu dibuka. Mengurangi bias narasi penulis.",
+      "status": "menunggu jawabanmu",
+      "options": [
+        {
+          "id": "a",
+          "label": "Ya, buta (default-ku)",
+          "default": true
+        },
+        {
+          "id": "b",
+          "label": "Tidak, langsung terbuka"
+        }
+      ]
     }
   ],
   "changelog": [
+    {
+      "date": "2026-11-01",
+      "title": "PLAN.md v0.3 — ambang collapse diganti setelah kalibrasi",
+      "detail": "Simulasi menunjukkan aturan v0.2 (3σ̂ + lantai 0,10) memberi FWER studi 8,5% pada σ=0,06, dan 11,4% tanpa lantai — bukan 0,3%. Penyebab: variansi selisih σ²(1+1/5), σ̂ hanya 4 derajat bebas, dan 180 uji tanpa koreksi. Aturan primer diganti R7 (Bonferroni + selang prediksi, lantai 0,03); MDE80 (0,078–0,233 bpb) wajib dilaporkan.",
+      "evidence": "PLAN.md §10.5, §11, analysis/calibration_results.md"
+    },
+    {
+      "date": "2026-11-01",
+      "title": "Sandbox diukur: studi penuh tidak mungkin di sini",
+      "detail": "2 vCPU, 3 GB RAM, tanpa GPU. Model S penuh ±5,6 jam/model; 192 model ≈ 1.067 jam CPU ≈ 44 hari. Eksekusi dibagi ke profil P0 (±30 menit, bukti pipeline), P1 (±5 jam), P2 (120 GPU-jam lewat offline executor dengan verifikasi hash saat ingest).",
+      "evidence": "PLAN.md §6.5, §20.1–20.2"
+    },
+    {
+      "date": "2026-11-01",
+      "title": "Kebijakan kegagalan 13 mode + lint, dan audit mandiri",
+      "detail": "ops/policy.v1.json: 13 mode kegagalan, 8 aksi otonom, 7 aksi manusia, kill switch berotoritas manusia, fail-closed. ops/policy_lint.py menolak kebijakan yang bolong. docs/self-audit-v0.2.md memuat titik buta, bukti kalibrasi, dan hal-hal yang tidak bisa diselamatkan.",
+      "evidence": "ops/, docs/self-audit-v0.2.md"
+    },
     {
       "date": "2026-11-01",
       "title": "PLAN.md v0.2 — menutup tiga sumber collapse semu",

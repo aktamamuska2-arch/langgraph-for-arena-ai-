@@ -5,13 +5,13 @@
 | Field | Nilai |
 | --- | --- |
 | Status | Draft rencana (belum ada kode dieksekusi) |
-| Versi | **0.2** |
+| Versi | **0.3** |
 | Tanggal | 2026-11-01 |
-| Versi sebelumnya | v0.1 (commit `289c20a`), lihat §19 Riwayat |
+| Versi sebelumnya | v0.1 (`289c20a`), v0.2 (`3153476`), lihat §19 Riwayat |
 | Lokasi kerja | `experiments/ai-belajar-dari-ai/` |
 | Sifat | Eksperimen riset kecil, non-produksi, tidak untuk dirilis sebagai model siap pakai |
 | Estimasi durasi | 7 minggu (pilot 1 hari di awal; bisa dipadatkan ke 6 minggu dengan mematikan Tier 3) |
-| Estimasi komputasi | ±120 GPU-jam (T4/P100 kelas Colab/Kaggle); bisa dipangkas ke ±85 GPU-jam |
+| Estimasi komputasi | **Berlapis** (§20): P0 ±20–40 menit di sandbox (2 vCPU, tanpa GPU), P1 ±3–5 jam, P2 ±120 GPU-jam di GPU eksternal |
 
 ---
 
@@ -34,6 +34,12 @@ Pertanyaan intinya bukan "bisakah AI melatih AI" (jawabannya jelas bisa), melain
 | Subsampling Arm B bisa menggeser frekuensi data | Spesifikasi sampler eksplisit (B1 vs B2), audit TVD tiap generasi, kontrol `B3 matched-unigram` | §7.3, §5.2 |
 | 1.200 prompt statis berulang → confound "prompt repetition" | Tiga tingkat kebaruan prompt (statis / parafrase / intent baru) sebagai dosis | §5.5 |
 | LangGraph hanya dipakai sebagai checkpointer | Graf dengan *conditional routing*, *critic* deterministik, *fork/time-travel*, dan anggaran perbaikan | §8 |
+
+**Yang berubah di v0.3 (hasil audit mandiri, `docs/self-audit-v0.2.md`).** Audit menemukan tiga hal yang tidak nyaman:
+
+1. **Aturan ambang v0.2 salah secara statistik.** Simulasi (`analysis/calibration.py`) menunjukkan `Δ ≥ max(3σ̂, 0,10)` memberi **FWER studi 8,5%** pada skenario derau terburuk, dan aturan tanpa lantai memberi **11,4%** — bukan 0,3%. Penyebabnya aritmetika: variansi selisih adalah `σ²(1+1/5)`, `σ̂` hanya 4 derajat bebas (perlu kuantil t), dan ada 180 uji tanpa koreksi. Aturan primer diganti ke **R7** (§10.5).
+2. **Batas deteksi lebih kasar dari yang tersirat.** MDE80 = 0,078–0,233 bpb (5–17% relatif). "Tidak terdeteksi" tidak boleh ditulis sebagai "tidak terjadi".
+3. **Studi penuh tidak mungkin di sandbox ini.** Terukur 2 vCPU / 3 GB / tanpa GPU; ±1.067 jam CPU untuk 192 model S. Karena itu eksekusi dibagi menjadi profil P0–P3 dengan kontrak *offline executor* (§20).
 
 Luaran: deret model M0 → M6 untuk 13 arm dalam 3 tier, plus kurva degenerasi lintas metrik, audit validitas, dan laporan bergaya *paper*.
 
@@ -278,6 +284,8 @@ A3 adalah uji falsifikasi H10: kalau kesimpulan tetap, artefak tokenizer bukan p
 | Total token sintetis dihasilkan | **±350 juta** (32 chain × 6 generasi × 2,4 juta, dikurangi arm yang memakai korpus guru beku) |
 | Penyimpanan | ±200 GB (korpus ±5 GB teks + 32×6 checkpoint ±30 MB + log) |
 
+**Realitas sandbox (terukur 2026-11-01, lihat §20):** 2 vCPU Xeon 2,60 GHz, RAM 3 GB, tanpa GPU, disk 20 GB, numpy tersedia (puncak matmul 155–175 GFLOP/s), PyTorch belum terpasang. Konsekuensinya: profil S penuh ≈ 5,6 jam/model di CPU, dan studi 192 model ≈ **1.067 jam CPU ≈ 44 hari**. Angka 120 GPU-jam di tabel di atas berlaku untuk profil **P2** (GPU eksternal), bukan untuk sandbox.
+
 Catatan jujur: bila throughput generasi jatuh ke ±450 token/detik (sampling tanpa batching), biayanya **tiga kali lipat** dan rencana ini tidak lagi realistis dalam 7 minggu. Karena itu throughput diukur di pilot dan dijadikan gate.
 
 ### 6.6 Stack
@@ -511,20 +519,35 @@ Kritik bahwa `1,5 × anchor_ppl(M_0)` terlalu kaku untuk model 8 juta parameter 
 **Aturan primer (per chain, generasi k):**
 
 ```text
-Δ = anchor_bpb(M_k) − μ0
+Baseline: 5 seed M0 -> mu0, sigma0
+
+Ambang R7 (primer):
+  thr = max( z_bonf * sigma_hat * sqrt(1 + 1/5), 0,03 bpb )
+  z_bonf = Phi^-1(1 - 0,05/180) = 3,89      # 10 arm x 6 generasi x 3 seed = 180 uji
 
 COLLAPSE bila:
-  Δ ≥ max(3σ0, 0,10 bpb)                       # signifikan terhadap derau DAN cukup besar secara materi
+  Δ = anchor_bpb(M_k) - mu0  >=  thr
   DAN setidaknya satu metrik cedera turun:
-      distinct_2   turun ≥ max(3σ0_div, 25% relatif)   ATAU
-      code_pass@1  turun ≥ 10 poin persentase          ATAU
-      style_div    turun ≥ 3σ0_gaya
-  DAN terkonfirmasi pada ≥2/3 seed (Tier 1) atau 2/2 seed (Tier 2, daya lebih rendah)
+      distinct_2   turun >= max(3*sigma0_div, 25% relatif)   ATAU
+      code_pass@1  turun >= 10 poin persentase               ATAU
+      style_div    turun >= 3*sigma0_gaya
+  DAN terkonfirmasi pada >=2/3 seed (Tier 1) atau 2/2 seed (Tier 2)
 
-WATCH bila 2σ0 ≤ Δ < 3σ0 (peringatan dini, dipakai untuk RQ2)
+WATCH (peringatan dini, untuk RQ2): thr/2 <= Δ < thr
 ```
 
-**Aturan sekunder (dilaporkan, bukan penentu):** `anchor_ppl ≥ 1,5 × anchor_ppl(M_0)` — supaya pembaca bisa membandingkan dengan literatur yang memakai ambang sederhana, dan supaya terlihat bila kedua aturan berbeda kesimpulan.
+**Kenapa berubah dari v0.2.** Aturan lama memakai `3σ̂` seolah-olah uji satu kali dengan σ diketahui. Kenyataannya: (a) observasi baru dibandingkan dengan `μ̂` dari 5 seed, sehingga variansi selisih `σ²(1+1/5)`; (b) `σ̂` hanya 4 derajat bebas, sehingga kuantil yang benar adalah t, bukan 3; (c) ada 180 uji. Ambang yang benar untuk galat per-look 1% adalah `t(0,99;4)·σ̂·√(1+1/5) ≈ 4,10σ̂` — v0.2 memakai 3,0σ̂, yaitu **27% lebih rendah**, sebelum punya koreksi multiplisitas sama sekali.
+
+**Yang wajib dilaporkan bersama aturan ini:**
+
+| Item | Alasan |
+| --- | --- |
+| `μ0`, `σ0`, `MDE80` | Menyatakan batas resolusi eksperimen, bukan menyembunyikannya |
+| R1 (`3σ̂ + 0,10`) dan R3 (`3σ̂`) sebagai sensitivitas | Membuktikan kesimpulan tidak bergantung pada satu ambang pilihan penulis |
+| `anchor_ppl ≥ 1,5×` gaya literatur (sekunder) | Perbandingan dengan pembaca yang memakai ambang sederhana |
+| Kalimat baku: *"tidak terdeteksi" = "lebih kecil dari MDE80"* | Mencegah kesalahan tafsir yang paling mudah terjadi |
+
+Aturan futilitas (pra-registrasi): arm dihentikan bila batas atas CI efek < MDE80/2 selama dua generasi berturut-turut. **Hanya untuk efek nol**, tidak pernah untuk efek positif. Penghentian dicatat sebagai hasil, bukan kegagalan.
 
 **Yang dilaporkan wajib:** μ₀, σ₀, MDE (`3σ0`), dan kurva tiap seed. Kalau MDE terlalu besar untuk mendeteksi efek yang kita pedulikan, itu ditulis sebagai keterbatasan, bukan disembunyikan.
 
@@ -545,9 +568,13 @@ Dikunci sebagai `PREREGISTRATION.md` **sebelum** run Tier 1 (commit terpisah), b
 | Metrik primer | `anchor_bpb` |
 | Metrik sekunder | `distinct-2`, `tail_coverage`, `code_pass@1`, `style_div`, `fact_probe_acc`, `extraction_rate` |
 | Baseline | 5 seed M0; μ₀, σ₀, MDE dilaporkan |
-| Ambang | §10.5 (primer) + `1,5×` PPL (sekunder) |
+| Ambang | **R7** (§10.5) + R1/R3 sebagai sensitivitas + `1,5×` PPL (sekunder) |
 | Uji tren | Jonckheere–Terpstra + regresi campuran (`gen` fixed, `seed` random) |
-| α | 0,05 dengan koreksi Holm untuk 6 metrik sekunder |
+| α | 0,05 **family-wise** atas 180 uji (Bonferroni); Holm untuk 6 metrik sekunder |
+| Daya | **MDE80 wajib dihitung dan ditulis sebelum run**; bila σ̂ M0 > 0,06, tambah seed baseline sampai MDE turun |
+| Kalibrasi | `analysis/calibration_results.md` menjadi lampiran wajib pra-registrasi |
+| Kontrol | Kontrol negatif (pasangan seed) + kontrol positif berdos + golden fixture **wajib lulus** sebelum Tier 1 |
+| Buta | Analisis dijalankan dengan label arm diacak; kesimpulan ditulis sebelum unblinding |
 | Tier & seed | §5.3, seed bersarang |
 | Aturan berhenti | Collapse pada kriteria §10.5, atau N=6 (Tier 3: N=4) |
 | Keputusan tentang data | Semua seed dilaporkan; tidak ada pemilihan seed; tidak ada pengulangan run yang "gagal" |
@@ -574,6 +601,9 @@ Dikunci sebagai `PREREGISTRATION.md` **sebelum** run Tier 1 (commit terpisah), b
 | **D11** | **Audit validitas** | `docs/validity-audit.md` | Tokenizer A1–A3, campuran, derau seed, drift guru |
 | **D12** | **Sub-studi dinamika prompt** | `analysis/prompt-study/` | Arm A′ vs F vs A (dosis kebaruan) |
 | **D13** | **Log routing & fork LangGraph** | `runs/graph-log.jsonl` | Rute, interrupt, fork, biaya per node |
+| **D14** | **Kebijakan kegagalan mesin-terbaca** | `ops/policy.v1.json` + `ops/policy_lint.py` | 13 mode, kewenangan, SLA, kill switch |
+| **D15** | **Laporan kalibrasi statistik** | `analysis/calibration_results.md` | FWER, power, MDE untuk 7 aturan |
+| **D16** | **Audit mandiri** | `docs/self-audit-v0.2.md` | Titik buta, batas otonomi, yang tidak bisa diselamatkan |
 
 Grafik inti wajib:
 
@@ -633,6 +663,10 @@ Bisa dipadatkan ke 6 minggu dengan mematikan Tier 3 (hemat ±16 GPU-jam dan 4 ha
 | **Sampling menggeser frekuensi data** | Vektor target, `mix_tvd`, `lex_tvd`, arm B3 |
 | **Drift guru antar batch** | Batch guru tunggal & beku, `teacher_version`, `docs/teacher-batches.md` |
 | **Homogenisasi tak terlihat di metrik kualitas** | `style_div`, `openers_entropy`, `centroid_shift` |
+| **Peeking & multiplisitas (180 uji)** | Bonferroni + gate hanya di generasi pra-registrasi + kalibrasi FWER |
+| **Bug metrik tampak seperti temuan** | Golden fixture, dua implementasi BPB, gate fail-closed |
+| **Hasil nol dibingkai sebagai keberhasilan** | Pra-registrasi menyebut hasil nol wajib terbit; aturan bahasa di §10.5 |
+| **Ambang dipilih agar penulis terlihat benar** | Kalibrasi pra-run, R1/R3 dilaporkan, hash pra-registrasi |
 | **Critic AI menyeragamkan gaya** | Arm G mengukur tradeoff; K2 hanya di arm G |
 | Confounding ukuran model vs rekursi | Konfigurasi & anggaran token identik |
 | Tidak bisa direplikasi | Hash, seed, config, prompt, `graph_sha` di git |
@@ -701,7 +735,9 @@ Default-ku di kolom kanan; kalau tidak dijawab, aku pakai default dan mencatatny
 | 4 | Fokus tambahan | (a) teknis saja, (b) + bias, (c) + keamanan | **(c)** |
 | 5 | Publikasi | (a) internal, (b) laporan publik tanpa checkpoint, (c) rilis semua | **(b)** |
 | 6 | **Critic AI (arm G)** | (a) jalankan sebagai ablasi, (b) tak perlu, (c) ganti dengan dua AI critic independen | **(a)** |
-| 7 | **Ambang collapse** | (a) aturan σ + lantai absolut (§10.5), (b) tetap `1,5×` sederhana, (c) laporkan keduanya, σ sebagai penentu | **(c)** |
+| 7 | **Ambang collapse** | (a) R7 Bonferroni + selang prediksi (§10.5), (b) tetap `1,5×` sederhana, (c) R7 sebagai penentu + R1/R3 sebagai sensitivitas | **(c)** |
+| 8 | **Profil eksekusi** | (a) P0 saja (±40 menit, bukti pipeline), (b) P0→P1 di sandbox (±5 jam), (c) P0→P1 lalu P2 di GPU eksternal lewat offline executor | **(c)** |
+| 9 | **Analisis buta** | (a) ya, label arm diacak sampai kesimpulan ditulis, (b) tidak, langsung analisis terbuka | **(a)** |
 
 ---
 
@@ -715,6 +751,29 @@ Default-ku di kolom kanan; kalau tidak dijawab, aku pakai default dan mencatatny
 ---
 
 ## 19. Riwayat versi
+
+### v0.3 — 2026-11-01
+
+Audit mandiri (`docs/self-audit-v0.2.md`) menemukan bahwa aturan deteksi v0.2 salah secara statistik dan bahwa studi penuh tidak dapat dijalankan di sandbox. Perubahan:
+
+| # | Temuan audit | Keputusan v0.3 | Alasan | Bagian |
+| --- | --- | --- | --- | --- |
+| 1 | `3σ̂` bukan aturan 0,3%: FWER studi terukur 11,4% | Aturan primer diganti **R7** (Bonferroni 180 uji × selang prediksi t₀,₉₉,₄ × √(1+1/5), lantai 0,03 bpb); R1 & R3 dilaporkan sebagai sensitivitas | Ambang lama lebih rendah 27% dari yang seharusnya, dan tanpa koreksi multiplisitas | §10.5, §11 |
+| 2 | MDE80 = 0,078–0,233 bpb (5–17% relatif) | **MDE wajib** di pra-registrasi; kalimat baku "tidak terdeteksi ≠ tidak terjadi"; tambah seed baseline bila σ̂ > 0,06 | Batas resolusi harus dinyatakan sebelum hasil, bukan setelah | §10.5, §11 |
+| 3 | Sandbox: 2 vCPU, 3 GB, tanpa GPU → 1.067 jam CPU untuk studi penuh | **Profil P0–P3** menggantikan satu matriks; kontrak **offline executor** (`make bundle` / `make ingest`) | Eksekusi harus mengikuti sumber daya nyata tanpa menurunkan standar bukti | §6.5, §20 |
+| 4 | Detektor belum pernah diuji terhadap kebenaran yang diketahui | **Kontrol negatif, kontrol positif berdos, uji metamorphic, golden fixture, dua implementasi BPB, analisis buta** — wajib lulus sebelum Tier 1 | Yang diuji bukan hanya model, tetapi juga alat ukurnya | §20.4 |
+| 5 | Prosa tidak bisa menegakkan apa pun | Kebijakan kegagalan **mesin-terbaca** (`ops/policy.v1.json`, 13 mode, lint wajib lulus) | 13 mode, 8 aksi otonom, 7 aksi manusia, kill switch dengan otoritas manusia | §20.5 |
+| 6 | Penulis audit = penulis sistem | Hash pra-registrasi + kebijakan disimpan di setiap manifest; kontrol buta; audit eksternal oleh pengguna | Kontrol yang bisa ditembus tetap lebih baik daripada tidak ada kontrol, asalkan dinyatakan | §20.6 |
+
+**Yang ditolak pada v0.3:**
+
+| Usulan | Keputusan | Alasan |
+| --- | --- | --- |
+| Menjalankan studi penuh (32 chain) di sandbox ini | **Ditolak** | 1.067 jam CPU. "Bisa kalau dioptimalkan" adalah eufemisme untuk "tidak bisa". |
+| Memakai AI kedua sebagai juri independen | **Ditolak** | Dua model sekeluarga berbagi bias; kesepakatan bukan bukti |
+| Menjadikan aturan persistensi dua generasi sebagai primer | **Ditolak** | Power 2–26% pada efek 0,05 bpb; terlalu konservatif untuk keputusan utama. Dipakai hanya sebagai alarm dini |
+| Menurunkan ambang agar "collapse"-nya terlihat | **Ditolak** | Itu membuat temuan, bukan menemukannya |
+| Menghapus artefak saat terjadi kontaminasi | **Ditolak** | Menghapus bukti. Karantina + forensik |
 
 ### v0.2 — 2026-11-01
 
@@ -747,3 +806,79 @@ Revisi berbasis tinjauan atas tiga celah desain. Ringkasan keputusan, alasan, da
 Rencana awal: 18 bagian, 6 arm, 4 keluarga metrik, definisi collapse `1,5×`, pra-registrasi, risiko, batasan. Digantikan oleh v0.2 karena tiga celah yang bisa memunculkan *collapse semu* (lihat tabel di atas).
 
 **Cara membaca riwayat ini:** setiap baris menyebut bagian dokumen yang berubah. Kalau ada perubahan perilaku eksperimen yang tidak tercatat di sini, itu pelanggaran terhadap aturan transparansi di dashboard.
+
+---
+
+## 20. Lampiran operasional — profil eksekusi & protokol kegagalan
+
+Bagian ini lahir dari audit `docs/self-audit-v0.2.md`. Tujuannya: membuat rencana ini **bisa dieksekusi pada sumber daya yang benar-benar ada**, tanpa menurunkan standar bukti.
+
+### 20.1 Profil eksekusi
+
+| Profil | Di mana | Skala | Waktu | Yang dihasilkan | Status klaim |
+| --- | --- | --- | --- | --- | --- |
+| **P0 — bukti hidup** | sandbox (2 vCPU, 3 GB) | XS 0,5 jt parameter, 200 rb token/generasi, 2 arm × 2 seed × 3 generasi | ±20–40 menit | Pipeline end-to-end; kurva pertama (berisik); σ̂ terukur pertama | **bukan temuan** |
+| **P1 — mini** | sandbox, proses latar + checkpoint | 2 jt parameter, 400 rb token, 2 arm × 2 seed × 4 generasi | ±3–5 jam, dicicil | Arah efek, kalibrasi σ̂, MDE terukur | pratinjau |
+| **P2 — penuh** | GPU eksternal (Colab/Kaggle) lewat offline executor | 8 jt parameter, 3 jt token, 32 chain | ±120 GPU-jam | Klaim utama | dapat dilaporkan + batasan |
+| **P3 — cek skala** | GPU eksternal | 30 jt parameter, subset arm | ±40 GPU-jam | Apakah pola bertahan pada skala lebih besar | opsional |
+
+Aturan: **profil ditentukan oleh pengukuran, bukan harapan.** Gate pilot mengukur token/detik dan σ̂ M0; bila hasilnya di bawah asumsi, profil turun dan klaim yang bisa ditarik menyempit secara eksplisit di laporan.
+
+### 20.2 Kontrak offline executor
+
+1. `make bundle` → arsip mandiri: kode, config, hash korpus, seed, `policy.v1.json`, `PREREGISTRATION.md`, `graph_sha`. Korpus besar diregenerasi dari seed, tidak ikut diarsipkan.
+2. Eksekusi di GPU eksternal dengan satu perintah; skrip menolak jalan bila hash konfigurasi tidak cocok.
+3. `make ingest` memverifikasi: hash manifest, rantai lineage, versi kebijakan, dan **rekomputasi 10% metrik** dari checkpoint yang dikembalikan.
+4. Hasil yang tidak lolos verifikasi tidak masuk analisis. Tidak ada jalur "percaya saja".
+
+### 20.3 Disiplin checkpoint & anggaran waktu
+
+- Setiap proses dibatasi 45 menit *wall clock*; budgeter berhenti rapi di batas batch berikutnya (kerja hilang ≤ 5 menit).
+- Artefak beralamat-konten; resume idempoten.
+- Anggaran berlapis: Tier 1 lebih dulu; aturan futilitas (hanya untuk efek nol) memindahkan sisa anggaran ke arm yang mendekati ambang.
+- Bila throughput < 50% asumsi profil: tidak ada chain baru dimulai sampai profil diturunkan.
+
+### 20.4 Kontrol wajib sebelum Tier 1
+
+| Kontrol | Yang dibuktikan | Biaya |
+| --- | --- | --- |
+| **Negatif** — dua model, korpus identik, seed berbeda | Setiap "collapse" di pasangan ini adalah false positive | 2 run |
+| **Positif berdos** — hapus 0/10/20/40% token langka; ganti 30% dokumen dengan repetisi | Detektor monoton dan tidak buta | 4 run kecil |
+| **Metamorphic** — acak urutan dokumen (invarian), duplikasi 5% (peka), ganti kata langka (peka di ekor) | Pipeline tidak punya bug arah | menit |
+| **Golden fixture** — korpus mini + nilai metrik acuan | Regresi senyap saat kode berubah | menit |
+| **Dua implementasi BPB** | Bukan salah hitung | menit |
+| **Analisis buta** | Bias narasi penulis | jam |
+
+Kalau salah satu kontrol gagal, gate menolak lanjut (`invalid`), bukan "lanjut dengan peringatan".
+
+### 20.5 Kebijakan kegagalan (ringkas)
+
+Sumber tunggal: `ops/policy.v1.json`; dijaga `ops/policy_lint.py` (gagal = kebijakan tidak boleh dipakai).
+
+| ID | Kegagalan | Keparahan | Kewenangan | Rute | MTTR |
+| --- | --- | --- | --- | --- | --- |
+| F1 | Test-anchor bocor | kritis | manusia | karantina + forensik | — |
+| F2 | Canary bocor antar-arm | kritis | manusia | karantina arm + forensik | 30 menit |
+| F10 | Bug metrik | kritis | manusia | fail-closed + forensik | 120 menit |
+| F12 | Kebijakan diubah saat run | kritis | manusia | hentikan semua | — |
+| F3 | M0 buruk sejak awal | tinggi | otonom | rollback ke pilot / turunkan profil | 60 menit |
+| F5 | Critic menolak > 30% | tinggi | otonom | rollback + karantina | 20 menit |
+| F7 | Throughput anjlok | tinggi | otonom | turunkan profil / hentikan chain | 30 menit |
+| F4 | Korpus rusak massal | sedang | otonom | regenerasi (maks 2) | 15 menit |
+| F8 | Proses dibunuh batas waktu | sedang | otonom | checkpoint + resume | 5 menit |
+| F11 | Sampling drift | sedang | otonom | sampling ulang (maks 3) | 10 menit |
+| F9 | Drift guru | sedang | manusia | batch baru sebagai versi terpisah | 60 menit |
+| F6 | Divergensi training | rendah | otonom | retry seed sama (maks 1) | 20 menit |
+| F13 | Futilitas (efek nol) | rendah | otonom | hentikan arm, realokasi | 5 menit |
+
+### 20.6 Batas otonomi
+
+**Otonom:** regenerasi batch (≤2×, ≤10% token), retry seed (≤1×, hanya NaN), sampling ulang campuran, karantina arm, rollback ke checkpoint terverifikasi, turunkan profil sebelum chain, hentikan arm karena futilitas, ulang fork dengan alasan.
+
+**Harus manusia:** mengubah ambang/metrik/definisi keberhasilan; menambah atau menghapus arm/seed setelah run; menghapus artefak; melanjutkan setelah kebocoran terkonfirmasi; menaikkan anggaran; menafsirkan hasil untuk publik; mengubah kebijakan itu sendiri.
+
+Pagar: hash kebijakan disimpan di setiap manifest run; perubahan menaikkan versi dan muncul di dashboard. Ini kontrol prosedural yang **bisa ditembus** oleh pihak yang berniat curang — karena itu nilainya harus dinilai olehmu, bukan olehku.
+
+### 20.7 Yang masih tidak bisa diselamatkan
+
+Skala (8 juta parameter), definisi kualitas (ditentukan penulis), tidak adanya data manusia, dan tidak adanya penilai independen. Semuanya dinyatakan di `docs/self-audit-v0.2.md` §7 dan wajib ikut ke laporan akhir.

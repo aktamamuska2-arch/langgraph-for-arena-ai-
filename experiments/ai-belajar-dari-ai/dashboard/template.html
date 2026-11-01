@@ -33,7 +33,8 @@
       <a href="#keputusan"><span class="n">07</span>Keputusan terbuka</a>
       <a href="#log"><span class="n">08</span>Riwayat</a>
       <a href="#berkas"><span class="n">09</span>Inventaris berkas</a>
-      <a href="#mulai"><span class="n">10</span>Verifikasi sendiri</a>
+      <a href="#audit"><span class="n">10</span>Audit mandiri &amp; kegagalan</a>
+      <a href="#mulai"><span class="n">11</span>Verifikasi sendiri</a>
     </nav>
     <div class="side-meta">
       <div><b>root</b><br>{{ROOT_ABS}}</div>
@@ -339,8 +340,39 @@ COLLAPSE bila:
     </section>
 
     <!-- ============================================================ -->
+    <section id="audit">
+      <h2><span class="idx">10</span>Audit mandiri &amp; protokol kegagalan</h2>
+      <p class="sub">
+        Audit ini ditulis oleh AI yang sama yang merancang sistem — jadi bobotnya lebih rendah daripada tinjauan pihak ketiga,
+        dan itu dinyatakan di dalam dokumennya sendiri. Yang membuatnya berguna bukan retorikanya, melainkan angka yang bisa
+        direproduksi: <code>python3 analysis/calibration.py</code>.
+      </p>
+
+      <div class="stats">
+        <div class="stat zero"><div class="stat-label">FWER aturan v0.2</div><div class="stat-value">8,5%</div><div class="stat-sub">peluang "collapse" palsu per studi (σ=0,06)</div></div>
+        <div class="stat zero"><div class="stat-label">FWER tanpa lantai</div><div class="stat-value">11,4%</div><div class="stat-sub">bukan 0,3% seperti diasumsikan</div></div>
+        <div class="stat ok"><div class="stat-label">FWER aturan R7</div><div class="stat-value">5,0%</div><div class="stat-sub">sesuai target, setelah koreksi</div></div>
+        <div class="stat zero"><div class="stat-label">MDE80</div><div class="stat-value">0,08–0,23</div><div class="stat-sub">bpb; 5–17% degradasi relatif</div></div>
+        <div class="stat zero"><div class="stat-label">Studi penuh di sandbox</div><div class="stat-value">44 hari</div><div class="stat-sub">1.067 jam CPU (2 vCPU, tanpa GPU)</div></div>
+        <div class="stat ok"><div class="stat-label">Profil P0</div><div class="stat-value">±30 mnt</div><div class="stat-sub">bukti pipeline, bukan temuan</div></div>
+      </div>
+
+      <h3>Kebijakan kegagalan (mesin-terbaca)</h3>
+      <p class="small muted">
+        Sumber tunggal: <code>ops/policy.v1.json</code>, dijaga <code>ops/policy_lint.py</code>.
+        {{POLICY_META}} · sha256 <code class="hash">{{POLICY_HASH}}</code>.
+        Kebijakan yang tidak lolos lint tidak boleh dipakai.
+      </p>
+      {{POLICY_TABLE}}
+
+      <h3>Dokumen audit</h3>
+      <nav class="plantoc" aria-label="Daftar isi audit">{{AUDIT_TOC}}</nav>
+      <article class="prose">{{AUDIT_HTML}}</article>
+    </section>
+
+    <!-- ============================================================ -->
     <section id="mulai">
-      <h2><span class="idx">10</span>Verifikasi sendiri</h2>
+      <h2><span class="idx">11</span>Verifikasi sendiri</h2>
       <p class="sub">Tiga hal yang bisa kamu lakukan tanpa membuka editor kode: membangun ulang halaman ini, menjalankan server lokal, dan mengecek klaim dengan perintah shell.</p>
 
       <h3>Bangun ulang halaman</h3>
@@ -350,6 +382,11 @@ COLLAPSE bila:
       <h3>Jalankan server lokal</h3>
       <div class="cmdline"><code>cd {{ROOT_ABS}}/dashboard &amp;&amp; python3 -m http.server 8000 --bind 0.0.0.0</code><button data-copy="cd {{ROOT_ABS}}/dashboard &amp;&amp; python3 -m http.server 8000 --bind 0.0.0.0">salin</button></div>
       <p class="small muted">Buka <code>http://localhost:8000</code>. Halaman ini juga bisa dibuka langsung sebagai berkas (<code>file://</code>) karena tidak memuat apa pun dari internet.</p>
+
+      <h3>Uji audit &amp; kebijakan</h3>
+      <div class="cmdline"><code>cd {{ROOT_ABS}} &amp;&amp; python3 analysis/calibration.py</code><button data-copy="cd {{ROOT_ABS}} &amp;&amp; python3 analysis/calibration.py">salin</button></div>
+      <div class="cmdline"><code>cd {{ROOT_ABS}} &amp;&amp; python3 ops/policy_lint.py</code><button data-copy="cd {{ROOT_ABS}} &amp;&amp; python3 ops/policy_lint.py">salin</button></div>
+      <p class="small muted">Kalau angka kalibrasi berubah tanpa perubahan kode, aku berbohong. Kalau lint gagal tapi halaman ini tetap hijau, halaman ini yang berbohong.</p>
 
       <h3>Pertanyaan yang sebaiknya kamu tanyakan ke aku</h3>
       <ul class="tight">

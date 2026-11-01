@@ -25,6 +25,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent          # .../ai-belajar-dari-ai
 DASH = ROOT / "dashboard"
 PLAN = ROOT / "PLAN.md"
+AUDIT = ROOT / "docs" / "self-audit-v0.2.md"
+POLICY = ROOT / "ops" / "policy.v1.json"
 STATUS = DASH / "status.json"
 TEMPLATE = DASH / "template.html"
 STYLE = DASH / "assets" / "style.css"
@@ -385,6 +387,39 @@ def main() -> None:
         if item["level"] <= 3
     )
 
+    # --- audit mandiri + kebijakan kegagalan
+    audit_html, audit_toc = ("", [])
+    policy_table, policy_meta = "", ""
+    if AUDIT.exists():
+        audit_html, audit_toc = md_to_html(AUDIT.read_text(encoding="utf-8"), demote=1)
+    if POLICY.exists():
+        pol = json.loads(POLICY.read_text(encoding="utf-8"))
+        sev_badge = {"critical": "badge-wait", "high": "badge-wait", "medium": "badge-run", "low": "badge-idle"}
+        auth_badge = {"human": "badge-wait", "autonomous": "badge-done"}
+        rows = []
+        for f in pol["failures"]:
+            rows.append(
+                "<tr>"
+                f'<td class="mono small">{esc(f["id"])}</td>'
+                f'<td class="small">{esc(f["name"])}</td>'
+                f'<td><span class="badge {sev_badge.get(f["severity"], "badge-idle")}">{esc(f["severity"])}</span></td>'
+                f'<td><span class="badge {auth_badge.get(f["autonomy"], "badge-idle")}">{esc(f["autonomy"])}</span></td>'
+                f'<td class="small mono">{esc(" -> ".join(f["route"]))}</td>'
+                f'<td class="small mono">{esc(str(f["recovery_minutes"]))} mnt</td>'
+                "</tr>"
+            )
+        policy_table = (
+            "<table><thead><tr><th>ID</th><th>Kegagalan</th><th>Keparahan</th>"
+            "<th>Kewenangan</th><th>Rute</th><th>MTTR</th></tr></thead><tbody>"
+            + "".join(rows) + "</tbody></table>"
+        )
+        n_auto = len(pol["autonomy"]["autonomous"])
+        n_human = len(pol["autonomy"]["human"])
+        policy_meta = (
+            f'{len(pol["failures"])} mode kegagalan · {n_auto} aksi otonom · {n_human} aksi manusia · '
+            f'kill switch {len(pol["kill_switch"]["triggers"])} pemicu (otoritas: {pol["kill_switch"]["authority"]})'
+        )
+
     build_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     plan_hash = sha256(PLAN)
     status_hash = sha256(STATUS)
@@ -419,6 +454,14 @@ def main() -> None:
         "{{TOTAL_BYTES}}": human_bytes(sum(f["bytes"] for f in files)),
         "{{HEADLINE}}": esc(meta["headline"]),
         "{{READ_ME_FIRST}}": esc(meta["read_me_first"]),
+        "{{AUDIT_HTML}}": audit_html,
+        "{{AUDIT_TOC}}": "".join(
+            f'<a class="toc-l{item["level"]}" href="#{item["anchor"]}">{esc(item["text"])}</a>'
+            for item in audit_toc if item["level"] <= 3
+        ),
+        "{{POLICY_TABLE}}": policy_table,
+        "{{POLICY_META}}": esc(policy_meta),
+        "{{POLICY_HASH}}": sha256(POLICY) if POLICY.exists() else "-",
     }
 
     page = TEMPLATE.read_text(encoding="utf-8")
