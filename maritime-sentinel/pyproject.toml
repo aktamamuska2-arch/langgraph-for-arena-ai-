@@ -24,8 +24,6 @@ dependencies = [
     "networkx>=3.2,<4",
     "simpy>=4.1,<5",
     "pandas>=2.1,<4",
-    "plotly>=5.20",
-    "streamlit>=1.36",
 ]
 
 [project.optional-dependencies]
@@ -52,5 +50,4 @@ select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
 ignore = ["E501", "B008"]
 
 [tool.ruff.lint.per-file-ignores]
-"app/mission_control.py" = ["E402"]
 "scripts/*.py" = ["E402"]

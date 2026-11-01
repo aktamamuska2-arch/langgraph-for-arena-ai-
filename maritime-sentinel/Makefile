@@ -1,4 +1,4 @@
-.PHONY: help install test lint format build dashboard mc clean
+.PHONY: help install test lint format build mc clean
 
 PY ?= python3
 OUT ?= artifacts/mc
@@ -10,7 +10,6 @@ help:
 	@echo "  lint       ruff check"
 	@echo "  format     ruff format"
 	@echo "  build      run the AM-SES self-healing build graph end-to-end"
-	@echo "  dashboard  launch the Streamlit Mission Control"
 	@echo "  mc         headless Monte Carlo sweep -> $(OUT)"
 	@echo "  clean      remove generated artifacts and caches"
 
@@ -28,9 +27,6 @@ format:
 
 build:
 	$(PY) scripts/run_workflow.py
-
-dashboard:
-	$(PY) -m streamlit run app/mission_control.py
 
 mc:
 	$(PY) scripts/run_montecarlo.py --out $(OUT)

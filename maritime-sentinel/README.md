@@ -9,12 +9,11 @@ nodes.
 The lab compiles itself. A cyclic [LangGraph](https://github.com/langchain-ai/langgraph) state
 machine decomposes the macro-scenario, **generates** an executable simulation artifact, **runs it in
 a sandbox**, and — if any acceptance gate fails — **reflects on the failure and patches the build**
-before retrying. The result is a validated, hashed, reproducible build directory plus a
-high-density Streamlit "Mission Control" for the telemetry.
+before retrying. The result is a validated, hashed, reproducible build directory.
 
 > The engine is a *model*, not a control system. Nothing in this repository connects to a vessel, a
-> terminal operating system, or a live AIS feed. Every number on the dashboard is produced by the
-> discrete-event simulation described below.
+> terminal operating system, or a live AIS feed. Every number in this repository is produced by
+> the discrete-event simulation described below.
 
 ---
 
@@ -28,11 +27,10 @@ high-density Streamlit "Mission Control" for the telemetry.
 6. [Monte Carlo perturbation & resilience](#6-monte-carlo-perturbation--resilience)
 7. [Acceptance gates](#7-acceptance-gates)
 8. [Reference results](#8-reference-results)
-9. [Mission Control dashboard](#9-mission-control-dashboard)
-10. [Configuration & extension](#10-configuration--extension)
-11. [Reproducibility & determinism](#11-reproducibility--determinism)
-12. [Dependencies](#12-dependencies)
-13. [Limitations](#13-limitations)
+9. [Configuration & extension](#9-configuration--extension)
+10. [Reproducibility & determinism](#10-reproducibility--determinism)
+11. [Dependencies](#11-dependencies)
+12. [Limitations](#12-limitations)
 
 ---
 
@@ -48,10 +46,9 @@ high-density Streamlit "Mission Control" for the telemetry.
 | Monte Carlo driver | `maritime_sentinel/montecarlo.py` | Latin Hypercube, resilience index, CVaR, tornado |
 | Code synthesis + static scan | `maritime_sentinel/codegen.py` | Emits manifest, runner, design memo, acceptance file |
 | Sandboxed executor | `maritime_sentinel/sandbox.py` | `python -I`, rlimits, scrubbed env, wall-clock kill |
-| Mission Control UI | `app/mission_control.py` | 6 tabs, 16 live charts, build-pipeline inspector |
 | CLI — build graph | `scripts/run_workflow.py` | `make build` |
 | CLI — ensemble | `scripts/run_montecarlo.py` | `make mc` |
-| Tests | `tests/` | 58 tests, ~15 s |
+| Tests | `tests/` | 59 tests, ~17 s |
 
 ---
 
@@ -66,14 +63,10 @@ python -m pip install -r requirements.txt
 # 2. compile + sandbox-test the artifact (the real deliverable)
 python scripts/run_workflow.py
 
-# 3. launch the telemetry dashboard
-python -m streamlit run app/mission_control.py
-#    -> http://localhost:8501
-
-# 4. Monte Carlo sweep to disk
+# 3. Monte Carlo sweep to disk
 python scripts/run_montecarlo.py --reps 32 --out artifacts/mc
 
-# 5. verification
+# 4. verification
 python -m pytest tests -q
 ```
 
@@ -81,7 +74,6 @@ Everything is driven through `make` as well:
 
 ```bash
 make build      # AM-SES build graph
-make dashboard  # Streamlit Mission Control
 make mc         # headless ensemble
 make test       # pytest
 make lint       # ruff check
@@ -123,7 +115,6 @@ maritime-sentinel/
 │       ├── state.py      State TypedDict + RunContext
 │       ├── nodes.py      planner / synthesizer / tester / reflector / finalizer
 │       └── build.py      StateGraph wiring + retry governor
-├── app/mission_control.py
 ├── scripts/{run_workflow,run_montecarlo}.py
 ├── tests/
 └── artifacts/            (git-ignored) every build, hash and report
@@ -480,34 +471,7 @@ acts on by prescribing +21 % berth provision.
 
 ---
 
-## 9. Mission Control dashboard
-
-```bash
-python -m streamlit run app/mission_control.py
-```
-
-Six tabs, all backed by live simulation:
-
-| Tab | Contents |
-| --- | --- |
-| **OVERVIEW** | P05–P95 throughput envelope vs baseline, backlog vs slope gate, berth-utilisation bars, ensemble histogram, disruption register, queue heat-map |
-| **NETWORK** | Indonesia lane map (ports, straits, contingency bypass), betweenness criticality, sea-state field, terminal ledger |
-| **PORT OPS** | Per-terminal queue traces, queue heat-map, sojourn distribution vs SLA, routing & cost ledger per channel |
-| **MONTE CARLO** | Resilience & utilisation distributions, replicate cloud, tornado loadings, ensemble statistics, CSV export |
-| **BUILD PIPELINE** | Run the AM-SES graph from the UI: verdict tile, execution trace, gate table, reflection trail with patches, artifact hashes, Mermaid graph, generated memo and generated source |
-| **RAW DATA** | Telemetry, vessel records, incidents, ensemble samples, full scenario manifest |
-
-The sidebar drives the stress envelope (horizon, demand multiplier, weather and geopolitical
-intensity, season, routing policy, berth capacity, scheduled shock) and the ensemble (replications,
-seed, perturbation ranges). Changing any control re-runs the reference replication immediately and
-the ensemble on demand.
-
-> Set *Berth capacity scale* to `1.21` to see the network the build graph prescribes; leave it at
-> `1.00` to see the as-built network under stress.
-
----
-
-## 10. Configuration & extension
+## 9. Configuration & extension
 
 The whole scenario is one validated object. To model a different corridor, copy `config.py` and edit:
 
@@ -534,7 +498,7 @@ To add a new failure mode, extend `failure_class` in `TestReport`, add a branch 
 
 ---
 
-## 11. Reproducibility & determinism
+## 10. Reproducibility & determinism
 
 * One integer seed per replication: `np.random.SeedSequence(seed).spawn(6)` gives six independent
   streams (weather, geopolitics, demand, service, ops, auxiliary). Same seed ⇒ bit-identical KPIs
@@ -542,7 +506,7 @@ To add a new failure mode, extend `failure_class` in `TestReport`, add a branch 
 * Ensemble replicate `i` uses `master + 1000·(i+1)`; baseline `j` uses `master + 7000 + j`.
 * Every build writes `scenario_manifest.json` (the exact scenario + deployment used) and the SHA-256
   of every artifact into `final_report.json`, so a reported verdict can always be tied to bytes.
-* `state_snapshot.json` lets the dashboard re-open a finished build without re-running the sandbox.
+* `state_snapshot.json` lets a finished build be re-opened and audited without re-running the sandbox.
 
 ```text
 artifacts/<run-id>/
@@ -555,7 +519,7 @@ artifacts/<run-id>/
 
 ---
 
-## 12. Dependencies
+## 11. Dependencies
 
 | Package | Version | Role |
 | --- | --- | --- |
@@ -565,8 +529,6 @@ artifacts/<run-id>/
 | `networkx` | ≥ 3.2, < 4 | lane graph, shortest paths, centrality |
 | `numpy` | ≥ 1.26, < 3 | RNG streams, linear algebra, statistics |
 | `pandas` | ≥ 2.1, < 4 | telemetry frames |
-| `plotly` | ≥ 5.20 | dashboard charts |
-| `streamlit` | ≥ 1.36 | Mission Control |
 | `pytest` | ≥ 8.0 | verification only |
 
 Python **3.10+** (developed and verified on 3.11).
@@ -577,7 +539,7 @@ pip install -r requirements.txt   # or: pip install -e ".[dev]"
 
 ---
 
-## 13. Limitations
+## 12. Limitations
 
 Stated plainly, because a stress-test that hides its assumptions is worse than none:
 

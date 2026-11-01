@@ -13,7 +13,7 @@ Resilience index
 ----------------
 ``R = Theta_stress / Theta_baseline`` where the baseline is the same network
 run with benign forcing (weather intensity 0.55, no geopolitical incidents, no
-shock). ``R`` is reported with a lower-tail CVaR so the dashboard can show
+shock). ``R`` is reported with a lower-tail CVaR so the report can answer
 "how bad is a bad day", not just the mean.
 """
 

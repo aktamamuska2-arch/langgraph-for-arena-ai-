@@ -297,9 +297,6 @@ def make_planner(context: RunContext) -> Callable[[State], dict[str, Any]]:
                     role="KPI + convergence diagnostics",
                     loc_estimate=230,
                 ),
-                ModuleRecord(
-                    path="app/mission_control.py", role="Streamlit telemetry dashboard", loc_estimate=640
-                ),
             ],
             test_criteria=criteria,
             risk_notes=[
@@ -811,7 +808,7 @@ def make_finalizer(context: RunContext) -> Callable[[State], dict[str, Any]]:
         (run_dir / "execution_log.json").write_text(
             json.dumps(state.get("execution_logs", []), indent=2, default=str)
         )
-        # Full snapshot so dashboards and reviewers can re-hydrate a finished
+        # Full snapshot so reviewers can re-hydrate a finished
         # build without re-executing the sandbox.
         snapshot = {
             key: state.get(key)
