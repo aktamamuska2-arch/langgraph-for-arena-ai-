@@ -1,0 +1,17 @@
+# Generated build artifacts (reports, manifests, sandbox builds)
+artifacts/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+# Streamlit secrets
+.streamlit/secrets.toml
