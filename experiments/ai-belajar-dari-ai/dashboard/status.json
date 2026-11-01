@@ -1,0 +1,459 @@
+{
+  "meta": {
+    "project": "AI Belajar dari AI — Dashboard Transparansi",
+    "headline": "Model bahasa yang dilatih dari nol, dengan data pelatihan yang seluruhnya dihasilkan AI. Sedang dalam tahap rencana: belum ada kode eksperimen yang dijalankan.",
+    "read_me_first": "Dashboard ini dibuat oleh AI yang sama yang menulis rencananya. Artinya ini bukan laporan independen. Karena itu setiap angka di sini bisa kamu cocokkan dengan berkas aslinya: hash SHA-256 tiap berkas tercantum, inventaris berkas dihitung langsung dari disk saat dashboard dibangun, dan setiap klaim punya perintah verifikasinya sendiri. Kalau ada yang tidak cocok, AI-nya yang salah, bukan berkasnya.",
+    "plan_version": "0.1",
+    "plan_status": "draft rencana — dinamis",
+    "branch": "arena/43651650-langgraph-for-arena-ai",
+    "updated": "2026-11-01"
+  },
+  "progress": {
+    "plan_pct": 100,
+    "implementation_pct": 0,
+    "models_trained": 0,
+    "tokens_generated": 0,
+    "runs_completed": 0,
+    "checkpoints": 0,
+    "lines_of_experiment_code": 0
+  },
+  "phases": [
+    {
+      "id": "P0",
+      "name": "Rencana eksperimen",
+      "desc": "Dokumen desain: pertanyaan riset, arm, metrik, anggaran, risiko.",
+      "status": "selesai",
+      "output": "PLAN.md v0.1 (18 bagian)",
+      "evidence": "PLAN.md"
+    },
+    {
+      "id": "P0.5",
+      "name": "Dashboard transparansi",
+      "desc": "Halaman statis ini: rencana, status, peta kode, cara verifikasi.",
+      "status": "selesai",
+      "output": "dashboard/index.html (dibangun dari PLAN.md + status.json)",
+      "evidence": "dashboard/build.py, dashboard/status.json"
+    },
+    {
+      "id": "P1",
+      "name": "Pilot mini (1 hari)",
+      "desc": "200 ribu token T0, model 2 juta parameter, 3 generasi, 1 arm, 1 seed. Tujuannya membuktikan pipaannya jalan, bukan menghasilkan temuan.",
+      "status": "belum-mulai",
+      "output": "Grafik pertama: kualitas vs generasi (skala mini)",
+      "evidence": "belum ada"
+    },
+    {
+      "id": "P2",
+      "name": "Korpus T0 skala penuh",
+      "desc": "±2,5 juta token, ±800 dokumen, 6 domain, katalog 1.200 prompt dibekukan.",
+      "status": "belum-mulai",
+      "output": "Korpus T0 + manifest + tokenizer + test anchor beku",
+      "evidence": "belum ada"
+    },
+    {
+      "id": "P3",
+      "name": "Harness training & evaluasi",
+      "desc": "Training loop manual, evaluator metrik, orkestrasi LangGraph, unit test anti-kebocoran.",
+      "status": "belum-mulai",
+      "output": "make pilot hijau, M0 sehat",
+      "evidence": "belum ada"
+    },
+    {
+      "id": "P4",
+      "name": "Pra-registrasi dikunci",
+      "desc": "Metrik utama, ambang collapse, uji statistik ditetapkan sebelum run penuh.",
+      "status": "belum-mulai",
+      "output": "PREREGISTRATION.md",
+      "evidence": "belum ada"
+    },
+    {
+      "id": "P5",
+      "name": "Sweep arm A–E",
+      "desc": "6 arm × 3 seed × M0–M6 = 126 run, ±100 GPU-jam.",
+      "status": "belum-mulai",
+      "output": "Kurva degenerasi lengkap",
+      "evidence": "belum ada"
+    },
+    {
+      "id": "P6",
+      "name": "Analisis & laporan",
+      "desc": "Uji tren, 8 grafik inti, laporan 8–12 halaman termasuk batasan.",
+      "status": "belum-mulai",
+      "output": "REPORT.md + paper.pdf",
+      "evidence": "belum ada"
+    }
+  ],
+  "planned_files": [
+    {
+      "path": "PLAN.md",
+      "purpose": "Dokumen rencana eksperimen (hidup, berversi).",
+      "phase": "P0",
+      "status": "selesai"
+    },
+    {
+      "path": "dashboard/build.py",
+      "purpose": "Pembangun dashboard statis dari PLAN.md + status.json.",
+      "phase": "P0.5",
+      "status": "selesai"
+    },
+    {
+      "path": "dashboard/status.json",
+      "purpose": "Klaim status terstruktur yang dibaca dashboard (bisa diverifikasi terhadap disk).",
+      "phase": "P0.5",
+      "status": "selesai"
+    },
+    {
+      "path": "dashboard/index.html",
+      "purpose": "Keluaran dashboard, dibuka di browser.",
+      "phase": "P0.5",
+      "status": "selesai"
+    },
+    {
+      "path": "PREREGISTRATION.md",
+      "purpose": "Metrik, ambang collapse, uji statistik — dikunci sebelum run penuh.",
+      "phase": "P4",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "docs/data-spec.md",
+      "purpose": "Spesifikasi korpus: taksonomi, format, aturan filter, canary.",
+      "phase": "P2",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "prompts/catalog_v1.jsonl",
+      "purpose": "1.200 prompt beku (6 domain × 200), dipakai untuk T0 dan semua generasi.",
+      "phase": "P2",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "data/t0/manifest.jsonl",
+      "purpose": "Manifest korpus T0: doc_id, hash, domain, generator, split.",
+      "phase": "P2",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "src/tokenizer.py",
+      "purpose": "Latih BPE 8.192 vocab hanya pada T0; simpan hash vocab.",
+      "phase": "P3",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "src/generate.py",
+      "purpose": "Generator T0 (AI guru) dan T1..Tn (model siswa), sampling dikunci.",
+      "phase": "P3",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "src/validate.py",
+      "purpose": "Normalisasi, dedup MinHash, filter kualitas, checker deterministik, canary.",
+      "phase": "P3",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "src/model.py",
+      "purpose": "GPT decoder-only dari nol (RMSNorm, RoPE, SwiGLU), ±600 baris.",
+      "phase": "P3",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "src/train.py",
+      "purpose": "Training loop manual, anggaran token tetap, logging JSONL + TensorBoard.",
+      "phase": "P3",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "src/evaluate.py",
+      "purpose": "Metrik A–D: anchor ppl/KL, diversitas, akurasi terverifikasi, memorisasi.",
+      "phase": "P3",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "src/orchestrate.py",
+      "purpose": "Graf LangGraph: plan → generate → validate → freeze → train → eval → gate (SQLite checkpointer).",
+      "phase": "P3",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "configs/s.yaml",
+      "purpose": "Konfigurasi model S (8 jt parameter) — dikunci untuk semua arm.",
+      "phase": "P3",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "configs/m.yaml",
+      "purpose": "Konfigurasi model M (30 jt parameter) untuk cek skala.",
+      "phase": "P3",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "tests/test_no_leak.py",
+      "purpose": "Uji anti-kebocoran: hash test anchor tidak boleh muncul di korpus latih.",
+      "phase": "P3",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "tests/test_determinism.py",
+      "purpose": "Uji reproduksibilitas: seed sama → hash keluaran sama.",
+      "phase": "P3",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "analysis/metrics.csv",
+      "purpose": "Tabel panjang semua metrik per run/generasi/seed.",
+      "phase": "P6",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "analysis/plots/",
+      "purpose": "8 grafik inti (ppl, diversitas, ekor, kode, memorisasi, dll).",
+      "phase": "P6",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "REPORT.md",
+      "purpose": "Laporan hasil + batasan + rekomendasi.",
+      "phase": "P6",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "REPRODUCE.md",
+      "purpose": "Satu halaman: cara menjalankan ulang dari nol, termasuk versi paket.",
+      "phase": "P6",
+      "status": "belum-mulai"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "question": "Hardware apa yang dipakai?",
+      "impact": "Menentukan konfigurasi model: S/M (GPU) atau XS (CPU). Di CPU, kesimpulan yang bisa ditarik jauh lebih lemah.",
+      "status": "menunggu jawabanmu",
+      "options": [
+        {
+          "id": "a",
+          "label": "GPU Colab/Kaggle",
+          "default": true
+        },
+        {
+          "id": "b",
+          "label": "GPU lokal"
+        },
+        {
+          "id": "c",
+          "label": "CPU saja (konfigurasi XS, 3–6 jam/run)"
+        }
+      ]
+    },
+    {
+      "id": "D2",
+      "question": "Seberapa besar ambisinya?",
+      "impact": "Menentukan jumlah arm, seed, dan apakah ada cek skala M.",
+      "status": "menunggu jawabanmu",
+      "options": [
+        {
+          "id": "a",
+          "label": "Cepat: 2 minggu, 2 arm"
+        },
+        {
+          "id": "b",
+          "label": "Sedang: 6 minggu, 6 arm, 3 seed",
+          "default": true
+        },
+        {
+          "id": "c",
+          "label": "Mini-paper: 10 minggu"
+        }
+      ]
+    },
+    {
+      "id": "D3",
+      "question": "Bahasa korpus T0?",
+      "impact": "Mempengaruhi tokenizer, jumlah token per dokumen, dan di domain mana efek ekor distribusi paling terlihat.",
+      "status": "menunggu jawabanmu",
+      "options": [
+        {
+          "id": "a",
+          "label": "Indonesia"
+        },
+        {
+          "id": "b",
+          "label": "Inggris"
+        },
+        {
+          "id": "c",
+          "label": "Campuran 70/30 (ID mayoritas)",
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "D4",
+      "question": "Fokus pengukuran risiko?",
+      "impact": "Menentukan metrik mana yang wajib ada sejak pilot.",
+      "status": "menunggu jawabanmu",
+      "options": [
+        {
+          "id": "a",
+          "label": "Murni teknis (kualitas & diversitas)"
+        },
+        {
+          "id": "b",
+          "label": "Teknis + bias/keadilan"
+        },
+        {
+          "id": "c",
+          "label": "Teknis + keamanan (memorisasi, ekstraksi)",
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "D5",
+      "question": "Sejauh mana hasil boleh dirilis?",
+      "impact": "Menentukan apakah checkpoint ikut dibagikan (aku menyarankan tidak).",
+      "status": "menunggu jawabanmu",
+      "options": [
+        {
+          "id": "a",
+          "label": "Internal saja"
+        },
+        {
+          "id": "b",
+          "label": "Laporan publik, tanpa checkpoint",
+          "default": true
+        },
+        {
+          "id": "c",
+          "label": "Rilis semua"
+        }
+      ]
+    }
+  ],
+  "changelog": [
+    {
+      "date": "2026-11-01",
+      "title": "PLAN.md: deliverable D10 (dashboard transparansi) ditambahkan",
+      "detail": "Rencana diperbarui agar mencantumkan dashboard ini sebagai artefak resmi (D10), supaya dokumen dan halaman tidak saling bertentangan.",
+      "evidence": "PLAN.md §12 (baris D10), Makefile (komentar target yang belum ada)"
+    },
+    {
+      "date": "2026-11-01",
+      "title": "Dashboard transparansi v1",
+      "detail": "Halaman statis dibangun dari PLAN.md + status.json. Tanpa dependensi eksternal, tanpa CDN, bisa dibangun ulang dengan satu perintah.",
+      "evidence": "dashboard/build.py, dashboard/index.html"
+    },
+    {
+      "date": "2026-11-01",
+      "title": "PLAN.md v0.1",
+      "detail": "Rencana awal: 18 bagian, 6 arm eksperimen, 4 keluarga metrik, definisi operasional collapse, pra-registrasi, risiko, batasan.",
+      "evidence": "PLAN.md (544 baris)"
+    }
+  ],
+  "claims": [
+    {
+      "claim": "Belum ada kode eksperimen yang ditulis.",
+      "verify": "find experiments/ai-belajar-dari-ai -type f | sort"
+    },
+    {
+      "claim": "Belum ada model dilatih / checkpoint dibuat.",
+      "verify": "ls experiments/ai-belajar-dari-ai/checkpoints 2>/dev/null || echo 'tidak ada direktori checkpoints'"
+    },
+    {
+      "claim": "Dashboard ini dibangun dari berkas sumber, bukan ditulis tangan.",
+      "verify": "python3 experiments/ai-belajar-dari-ai/dashboard/build.py && sha256sum experiments/ai-belajar-dari-ai/dashboard/index.html"
+    },
+    {
+      "claim": "Isi tiap berkas di halaman ini sama dengan isi di disk (hash ikut ditampilkan).",
+      "verify": "sha256sum experiments/ai-belajar-dari-ai/PLAN.md experiments/ai-belajar-dari-ai/dashboard/status.json"
+    },
+    {
+      "claim": "Tidak ada dependensi eksternal / CDN di dashboard.",
+      "verify": "grep -nE 'https?://' experiments/ai-belajar-dari-ai/dashboard/index.html | grep -vE 'arxiv|nature|doi' | head"
+    },
+    {
+      "claim": "Klaim angka di tabel progres berasal dari status.json, yang bisa kamu baca sendiri.",
+      "verify": "cat experiments/ai-belajar-dari-ai/dashboard/status.json"
+    }
+  ],
+  "bias_notes": [
+    {
+      "title": "Dashboard ini dilaporkan oleh pihak yang dinilai",
+      "detail": "Aku menulis rencana, menulis kode status, dan membangun halaman ini. Kalau aku ingin terlihat bagus, aku bisa memilih metrik yang menguntungkan. Penangkalnya: angka progres hanya boleh berubah bersamaan dengan bukti berkas yang bisa kamu buka di bagian 'Inventaris berkas'."
+    },
+    {
+      "title": "Aku adalah sumber data pelatihan, jadi aku juga subjek eksperimen",
+      "detail": "Korpus T0 ditulis olehku. Artinya 'kualitas asli' yang jadi pembanding adalah kualitas AI, bukan kualitas manusia atau dunia nyata. Model yang 'kolaps' di sini mungkin masih benar secara faktual; yang hilang adalah keragaman, cakupan, dan detail. Ini ditulis di bagian batasan PLAN.md §15 dan tidak boleh dihapus dari laporan akhir."
+    },
+    {
+      "title": "Metrik yang dipilih menentukan kesimpulan",
+      "detail": "Kalau hanya perplexity rata-rata yang dilaporkan, collapse bisa tampak tidak terjadi. Karena itu metrik utama dipasangkan: perplexity pada anchor DAN diversitas/akurasi terverifikasi. Definisi operasional 'collapse' dikunci sebelum run penuh (PLAN.md §10.3, §11)."
+    },
+    {
+      "title": "Tiga seed bukan bukti statistik kuat",
+      "detail": "Cukup untuk melihat arah tren, tidak cukup untuk klaim efek kecil. Semua seed dilaporkan; kami tidak akan memilih seed yang paling dramatis."
+    },
+    {
+      "title": "Tidak ada penilai manusia independen",
+      "detail": "Penilaian kualitas narasi tidak punya checker deterministik. Untuk domain itu, satu-satunya penilai adalah metrik otomatis dan aku sendiri — sumber bias yang harus disebutkan di laporan."
+    }
+  ],
+  "literature": [
+    {
+      "title": "AI models collapse when trained on recursively generated data",
+      "authors": "Shumailov, Shumaylov, Zhao, Papernot, Anderson, Gal",
+      "year": 2024,
+      "url": "https://www.nature.com/articles/s41586-024-07566-y",
+      "why": "Dasar utama eksperimen: penggantian data oleh keluaran model sendiri menghilangkan ekor distribusi secara ireversibel."
+    },
+    {
+      "title": "The Curse of Recursion: Training on Generated Data Makes Models Forget",
+      "authors": "Shumailov dkk.",
+      "year": 2023,
+      "url": "https://arxiv.org/abs/2305.17493",
+      "why": "Versi awal protokol rekursif yang kita replikasi (katalog prompt sama, jawaban makin menyusut)."
+    },
+    {
+      "title": "Is Model Collapse Inevitable? Breaking the Curse of Recursion by Accumulating Real and Synthetic Data",
+      "authors": "Gerstgrasser dkk.",
+      "year": 2024,
+      "url": "https://arxiv.org/abs/2404.01413",
+      "why": "Dasar arm B (accumulate): akumulasi data lama bersama data baru menahan collapse."
+    },
+    {
+      "title": "Strong Model Collapse",
+      "authors": "Dohmatob dkk.",
+      "year": 2024,
+      "url": "https://arxiv.org/abs/2410.04840",
+      "why": "Landasan H3: bagian ekor distribusi hilang lebih dulu dan tidak kembali."
+    },
+    {
+      "title": "Self-Consuming Generative Models Go MAD",
+      "authors": "Alemohammad dkk.",
+      "year": 2024,
+      "url": "https://arxiv.org/abs/2307.01850",
+      "why": "Menunjukkan quality (precision) vs diversity (recall) turun bergantian; dasar pemisahan dua keluarga metrik."
+    },
+    {
+      "title": "Beyond Model Collapse: Scaling Up with Synthesized Data Requires Verification",
+      "authors": "Feng dkk.",
+      "year": 2025,
+      "url": "https://arxiv.org/abs/2406.07515",
+      "why": "Dasar arm E: data sintetis hanya berguna kalau diverifikasi; menjelaskan kenapa domain kode/aritmetika diukur terpisah."
+    },
+    {
+      "title": "A Theoretical Perspective: How to Prevent Model Collapse in Self-consuming Training Loops",
+      "authors": "Fu dkk.",
+      "year": 2025,
+      "url": "https://arxiv.org/abs/2502.18865",
+      "why": "Kerangka 'recursive stability': menjelaskan kenapa sebagian loop stabil dan sebagian tidak."
+    },
+    {
+      "title": "TinyStories: How Small Can Language Models Be and Still Speak Coherent English?",
+      "authors": "Eldan, Li",
+      "year": 2023,
+      "url": "https://arxiv.org/abs/2305.07759",
+      "why": "Bukti bahwa model 1–30 juta parameter bisa koheren pada korpus sintetis kecil — dasar kelayakan skala kita."
+    }
+  ]
+}

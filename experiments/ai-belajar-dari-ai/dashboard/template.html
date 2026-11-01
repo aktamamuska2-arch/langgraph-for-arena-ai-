@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="description" content="Dashboard transparansi eksperimen AI belajar dari AI: rencana, status, peta kode, dan cara memverifikasi klaim.">
+<meta name="color-scheme" content="dark">
+<style>{{CSS}}</style>
+</head>
+<body>
+<a class="skip" href="#main">Lewati ke isi</a>
+
+<header class="topbar">
+  <span class="dot" aria-hidden="true"></span>
+  <span class="brand">AI Belajar dari AI <small>· dashboard transparansi</small></span>
+  <span class="spacer"></span>
+  <span class="pill">plan <b>v{{PLAN_VERSION}}</b></span>
+  <span class="pill">implementasi <b>{{IMPL_PCT}}%</b></span>
+  <span class="pill warn">dibangun {{BUILD_TIME}}</span>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <h2>Isi halaman</h2>
+    <nav id="nav">
+      <a href="#status"><span class="n">01</span>Status jujur</a>
+      <a href="#dasar"><span class="n">02</span>Dasar eksperimen</a>
+      <a href="#denah"><span class="n">03</span>Yang akan dibangun</a>
+      <a href="#peta"><span class="n">04</span>Posisi kode</a>
+      <a href="#rencana"><span class="n">05</span>Rencana lengkap</a>
+      <a href="#transparansi"><span class="n">06</span>Transparansi &amp; bias</a>
+      <a href="#keputusan"><span class="n">07</span>Keputusan terbuka</a>
+      <a href="#log"><span class="n">08</span>Riwayat</a>
+      <a href="#berkas"><span class="n">09</span>Inventaris berkas</a>
+      <a href="#mulai"><span class="n">10</span>Verifikasi sendiri</a>
+    </nav>
+    <div class="side-meta">
+      <div><b>root</b><br>{{ROOT_ABS}}</div>
+      <div style="margin-top:8px"><b>branch</b><br>{{BRANCH}}</div>
+      <div style="margin-top:8px"><b>sha256 PLAN.md</b><br>{{PLAN_HASH}}</div>
+      <div style="margin-top:8px"><b>sha256 status.json</b><br>{{STATUS_HASH}}</div>
+      <div style="margin-top:8px"><b>berkas</b> {{FILE_COUNT}} · {{TOTAL_BYTES}}</div>
+    </div>
+  </aside>
+
+  <main id="main">
+    <div class="hero">
+      <div class="eyebrow">eksperimen: model dari nol, data dari ai</div>
+      <h1>AI Belajar dari AI</h1>
+      <p class="lede">{{HEADLINE}}</p>
+      <div class="tags">
+        <span class="pill">rencana <b>v{{PLAN_VERSION}}</b></span>
+        <span class="pill">{{PLAN_STATUS}}</span>
+        <span class="pill">kode eksperimen <b>{{LOC}} baris</b></span>
+        <span class="pill">model terlatih <b>{{MODELS}}</b></span>
+        <span class="pill warn">halaman ini tidak memuat progres palsu</span>
+      </div>
+      <div class="callout">
+        <strong>Baca ini dulu.</strong> {{READ_ME_FIRST}}
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <section id="status">
+      <h2><span class="idx">01</span>Status jujur</h2>
+      <p class="sub">
+        Angka di bawah dibaca dari <code>dashboard/status.json</code>, bukan diketik ke dalam HTML.
+        Kalau kamu ingin memastikan, buka bagian <a href="#berkas">Inventaris berkas</a> dan baca isi berkasnya langsung.
+        Saat ini yang ada hanyalah rencana dan halaman ini — tidak ada kode eksperimen, tidak ada model, tidak ada data yang dihasilkan.
+      </p>
+      <div class="stats">{{CARDS}}</div>
+
+      <h3>Fase pekerjaan</h3>
+      <p class="small muted">Kolom “Bukti di repo” adalah tempat aku wajib menuliskan berkas yang bisa kamu buka. Kalau isinya “belum ada”, berarti memang belum ada.</p>
+      {{PHASES}}
+
+      <div class="grid2" style="margin-top:18px">
+        <div class="card">
+          <h4>Kenapa implementasi masih 0%</h4>
+          <p class="small muted">Kamu minta rencana dulu, dan rencana itu dinamis. Menulis kode sebelum desain eksperimennya disepakati akan mengunci keputusan yang seharusnya masih terbuka — terutama lima keputusan di <a href="#keputusan">bagian 07</a> yang mengubah ukuran model, jumlah arm, dan bahasa korpus.</p>
+        </div>
+        <div class="card">
+          <h4>Yang belum ada, secara eksplisit</h4>
+          <p class="small muted">Tidak ada <code>src/</code>, tidak ada korpus, tidak ada tokenizer, tidak ada checkpoint, tidak ada hasil evaluasi, tidak ada grafik. Angka “0” di kartu atas bukan angka simbolis — itu hasil hitung inventaris berkas saat halaman ini dibangun.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="dasar">
+      <h2><span class="idx">02</span>Dasar eksperimen</h2>
+      <p class="sub">Bagian ini menjelaskan dasar ilmiahnya, supaya kamu bisa menilai apakah desainnya masuk akal tanpa harus mempercayai ringkasanku.</p>
+
+      <h3>Masalah yang diuji</h3>
+      <p>Model bahasa generasi baru dilatih pada data yang makin banyak dihasilkan model lama. Literatur menyebut fenomena ini <em>model collapse</em>: ketika keluaran model menggantikan data asli secara berulang, bagian ekor distribusi (hal-hal langka, spesifik, dan tidak biasa) hilang lebih dulu, lalu distribusinya menyempit dan akhirnya menyimpang dari kenyataan. Ada juga temuan penting yang berlawanan arah: kalau data lama <em>diakumulasi</em> dan bukan diganti, collapse bisa dicegah. Eksperimen ini menguji keduanya dalam skala kecil yang bisa dijalankan satu orang.</p>
+
+      <h3>Pertanyaan riset</h3>
+      <table>
+        <thead><tr><th>ID</th><th>Pertanyaan</th><th>Diukur dengan</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">RQ1</td><td>Seberapa cepat kualitas turun bila data generasi ke-<em>k</em> seluruhnya dari model generasi ke-<em>k−1</em>?</td><td><code>anchor_ppl</code> per generasi</td></tr>
+          <tr><td class="mono">RQ2</td><td>Sinyal apa yang paling awal mendeteksi penurunan?</td><td>Perbandingan waktu deteksi antar-metrik</td></tr>
+          <tr><td class="mono">RQ3</td><td>Apakah menyisakan sebagian data T0 menahan penurunan, dan berapa fraksi minimumnya?</td><td>Arm D1 (10%) vs D2 (25%) vs B (akumulasi)</td></tr>
+          <tr><td class="mono">RQ4</td><td>Apakah model generasi lanjut mulai menghafal data latihnya?</td><td><code>extraction_rate</code>, <code>canary_leak</code></td></tr>
+          <tr><td class="mono">RQ5</td><td>Apakah degradasi menyerang kemampuan rapuh lebih dulu (aritmetika, kode) sebelum bahasa sehari-hari?</td><td>Metrik per-domain</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Definisi operasional “collapse” (dikunci sebelum run penuh)</h3>
+      <pre><code>anchor_ppl(M_k) &gt;= 1,5 x anchor_ppl(M_0)
+DAN
+(distinct_2 turun &gt;= 30% relatif M_0  ATAU  code_pass@1 turun &gt;= 50% relatif M_0)
+
+berlaku pada &gt;= 2 dari 3 seed</code></pre>
+      <p class="small muted">Definisi ini sengaja konservatif: butuh dua keluarga metrik turun bersamaan, karena perplexity rata-rata saja bisa tampak stabil sementara keragaman sudah hilang. Detail lengkap ada di <a href="#rencana">PLAN.md §10–11</a>.</p>
+
+      <h3>Literatur yang jadi dasar</h3>
+      <ul class="tight">{{LITERATURE}}</ul>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="denah">
+      <h2><span class="idx">03</span>Yang akan dibangun</h2>
+      <p class="sub">Gambaran utuh sistem yang direncanakan: alur data, ukuran model, komposisi korpus, arm eksperimen, dan bentuk direktori akhirnya.</p>
+
+      <h3>Alur generasi</h3>
+      <div class="flow">
+        <div class="node teacher"><span class="k">Langkah 1</span><b>Spesifikasi</b><div class="d">Taksonomi 6 domain, katalog 1.200 prompt</div></div>
+        <div class="arrow">→</div>
+        <div class="node teacher"><span class="k">Langkah 2</span><b>Generate T0</b><div class="d">Ditulis AI guru (aku)</div></div>
+        <div class="arrow">→</div>
+        <div class="node freeze"><span class="k">Langkah 3</span><b>Validasi &amp; beku</b><div class="d">Dedup, filter, checker, hash</div></div>
+        <div class="arrow">→</div>
+        <div class="node student"><span class="k">Langkah 4</span><b>Latih M0</b><div class="d">Model dari nol, 8 jt parameter</div></div>
+        <div class="arrow">→</div>
+        <div class="node student"><span class="k">Langkah 5</span><b>Generate T1</b><div class="d"><em>Model siswa</em> menjawab prompt yang sama</div></div>
+        <div class="arrow">→</div>
+        <div class="node student"><span class="k">Langkah 6</span><b>Latih M1</b><div class="d">Komposisi sesuai arm</div></div>
+        <div class="arrow">→</div>
+        <div class="node"><span class="k">Langkah 7</span><b>… M6</b><div class="d">Sampai 6 generasi</div></div>
+        <div class="arrow">→</div>
+        <div class="node freeze"><span class="k">Langkah 8</span><b>Evaluasi</b><div class="d">Semua M0–M6 pada test anchor beku</div></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:#3c4a2a"></i>ditulis AI guru</span>
+        <span><i style="background:#234050"></i>model siswa sendiri</span>
+        <span><i style="background:#4a3a12"></i>titik pembekuan / pengukuran</span>
+      </div>
+      <p class="flow-note" style="margin-top:10px">Poin krusial: mulai langkah 5, data dibuat oleh <strong>model yang sedang diuji</strong>, bukan olehku. Kalau aku yang menulis semuanya, loop-nya tidak akan pernah kolaps dan eksperimennya kehilangan makna.</p>
+
+      <h3>Spesifikasi model</h3>
+      <table>
+        <thead><tr><th>Komponen</th><th>Konfigurasi S (utama)</th><th>Konfigurasi M (cek skala)</th></tr></thead>
+        <tbody>
+          <tr><td>Parameter</td><td>±8 juta</td><td>±30 juta</td></tr>
+          <tr><td>Layer / d_model / head</td><td class="mono">4 / 256 / 4</td><td class="mono">8 / 512 / 8</td></tr>
+          <tr><td>Arsitektur</td><td colspan="2">Decoder-only, pre-LN RMSNorm, RoPE, SwiGLU, weight tying, context 512</td></tr>
+          <tr><td>Vocabulary</td><td colspan="2">BPE 8.192, dilatih <em>hanya</em> pada T0 (supaya tokenizer bukan variabel pengganggu)</td></tr>
+          <tr><td>Token per generasi</td><td>3 juta</td><td>10 juta</td></tr>
+          <tr><td>Waktu training / run</td><td>10–20 menit (T4)</td><td>±45 menit (T4)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Komposisi korpus per arm</h3>
+      <table>
+        <thead><tr><th>Arm</th><th>Data generasi ke-<em>k</em></th><th>Yang diuji</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">A · replace</td><td>100% keluaran M(k−1)</td><td>Replikasi protokol collapse klasik</td></tr>
+          <tr><td class="mono">B · accumulate</td><td>T0 + seluruh T1..T(k−1), sampel ukuran tetap</td><td>Apakah akumulasi menahan collapse</td></tr>
+          <tr><td class="mono">C · fixed-teacher</td><td>100% keluaran AI guru (aku)</td><td>Batas atas — pembanding agar penurunan tidak salah disebut akibat “AI”</td></tr>
+          <tr><td class="mono">D1 · anchor-10</td><td>90% sintetis + 10% T0</td><td>Fraksi anchor minimum</td></tr>
+          <tr><td class="mono">D2 · anchor-25</td><td>75% sintetis + 25% T0</td><td>Fraksi anchor minimum</td></tr>
+          <tr><td class="mono">E · verified-only</td><td>Sintetis yang lolos checker deterministik</td><td>Efek verifikasi</td></tr>
+        </tbody>
+      </table>
+      <p class="small muted">Anggaran adil: setiap model melihat jumlah token latih yang sama, berapa pun besar pool datanya — kalau tidak, arm akumulasi menang hanya karena makan lebih banyak data.</p>
+
+      <h3>Bentuk direktori akhir (rencana)</h3>
+      <pre class="tree">experiments/ai-belajar-dari-ai/
+├── PLAN.md                  <span class="new">✓ ada</span>   rencana eksperimen, dinamis
+├── PREREGISTRATION.md       <span class="soon">· nanti</span> metrik &amp; ambang dikunci sebelum run penuh
+├── dashboard/               <span class="new">✓ ada</span>   halaman yang sedang kamu baca
+│   ├── build.py             <span class="new">✓ ada</span>   pembangun statis, tanpa dependensi
+│   ├── status.json          <span class="new">✓ ada</span>   klaim status (bisa diverifikasi)
+│   ├── template.html        <span class="new">✓ ada</span>   kerangka halaman
+│   ├── assets/style.css     <span class="new">✓ ada</span>
+│   └── index.html           <span class="new">✓ ada</span>   keluaran: buka di browser
+├── docs/data-spec.md        <span class="soon">· nanti</span> taksonomi, format, aturan filter
+├── prompts/catalog_v1.jsonl <span class="soon">· nanti</span> 1.200 prompt beku
+├── data/t0/                 <span class="soon">· nanti</span> korpus guru + manifest (di luar git)
+├── src/                     <span class="soon">· nanti</span> generate, validate, model, train, eval
+├── configs/                 <span class="soon">· nanti</span> s.yaml, m.yaml
+├── tests/                   <span class="soon">· nanti</span> uji anti-kebocoran &amp; determinisme
+├── checkpoints/             <span class="soon">· nanti</span> M0–M6 semua arm (di luar git)
+├── analysis/                <span class="soon">· nanti</span> metrics.csv + 8 grafik
+└── REPORT.md                <span class="soon">· nanti</span> hasil, batasan, rekomendasi</pre>
+
+      <h3>Perintah yang akan tersedia</h3>
+      <div class="cmdline"><code>make pilot</code><button data-copy="make pilot">salin</button></div>
+      <div class="cmdline"><code>make sweep</code><button data-copy="make sweep">salin</button></div>
+      <div class="cmdline"><code>make report</code><button data-copy="make report">salin</button></div>
+      <p class="small muted">Ketiganya belum ada. <code>make pilot</code> akan menjalankan rantai mini end-to-end (200 ribu token, model 2 juta parameter, 3 generasi) untuk membuktikan pipaannya jalan sebelum membakar ±100 GPU-jam.</p>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="peta">
+      <h2><span class="idx">04</span>Posisi kode</h2>
+      <p class="sub">Karena kamu sulit membuka kode di mode ini, semua lokasi ditulis lengkap dan isi berkasnya bisa dibaca langsung di halaman ini (bagian 09).</p>
+
+      <h3>Lokasi absolut</h3>
+      <div class="cmdline"><code>{{ROOT_ABS}}</code><button data-copy="{{ROOT_ABS}}">salin</button></div>
+      <div class="cmdline"><code>{{ROOT_ABS}}/PLAN.md</code><button data-copy="{{ROOT_ABS}}/PLAN.md">salin</button></div>
+      <div class="cmdline"><code>{{ROOT_ABS}}/dashboard/index.html</code><button data-copy="{{ROOT_ABS}}/dashboard/index.html">salin</button></div>
+      <p class="small muted">Relatif terhadap akar repo: <code>experiments/ai-belajar-dari-ai/</code>. Branch: <code>{{BRANCH}}</code>.</p>
+
+      <h3>Berkas yang direncanakan</h3>
+      <p class="small muted">Tabel ini berasal dari <code>status.json</code>. Status “belum mulai” berarti berkasnya benar-benar tidak ada di disk — bukan sekadar belum didokumentasikan.</p>
+      <table>
+        <thead><tr><th>Path</th><th>Fungsi</th><th>Fase</th><th>Status</th></tr></thead>
+        <tbody>{{PLANNED_FILES}}</tbody>
+      </table>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="rencana">
+      <h2><span class="idx">05</span>Rencana lengkap</h2>
+      <p class="sub">
+        Isi <code>PLAN.md</code> versi {{PLAN_VERSION}}, dirender apa adanya: {{PLAN_LINES}} baris, ±{{PLAN_TOKENS}} kata.
+        sha256 <code class="hash">{{PLAN_HASH}}</code>.
+        Rencana ini <strong>dinamis</strong> — versinya akan naik setiap kali desain berubah, dan setiap perubahan dicatat di <a href="#log">Riwayat</a>.
+      </p>
+
+      <nav class="plantoc" aria-label="Daftar isi rencana">{{PLAN_TOC}}</nav>
+      <article class="prose">{{PLAN_HTML}}</article>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="transparansi">
+      <h2><span class="idx">06</span>Transparansi &amp; bias</h2>
+      <p class="sub">Bagian ini sengaja tidak menyenangkan bagi pembuatnya. Isinya hal-hal yang bisa membuat dashboard ini menyesatkan, plus cara memeriksanya sendiri.</p>
+
+      <h3>Risiko bias yang aku akui</h3>
+      <ul class="tight">{{BIAS}}</ul>
+
+      <h3>Klaim di halaman ini dan cara memverifikasinya</h3>
+      <p class="small muted">Klik sel berisi perintah untuk menyalinnya. Semua dijalankan dari akar repo <code>/home/user/langgraph-for-arena-ai-</code>.</p>
+      <table>
+        <thead><tr><th>Klaim</th><th>Perintah verifikasi</th></tr></thead>
+        <tbody>{{CLAIMS}}</tbody>
+      </table>
+
+      <h3>Siapa menilai apa</h3>
+      <table>
+        <thead><tr><th>Objek penilaian</th><th>Penilai</th><th>Kenapa begitu</th></tr></thead>
+        <tbody>
+          <tr><td>Jawaban aritmetika</td><td>Program (eksekusi ulang)</td><td>Tidak perlu pendapat siapa pun</td></tr>
+          <tr><td>Kode yang dihasilkan</td><td>Unit test di sandbox tanpa jaringan</td><td>Benar/salah bisa dieksekusi</td></tr>
+          <tr><td>Kepatuhan format</td><td>Skema &amp; parser</td><td>Deterministik</td></tr>
+          <tr><td>Kualitas narasi</td><td>Metrik otomatis + aku</td><td><strong>Bias:</strong> tidak ada penilai manusia, dan aku pihak yang berkepentingan</td></tr>
+          <tr><td>Kualitas korpus T0</td><td>Aku (sebagai penulis)</td><td><strong>Bias:</strong> menilai pekerjaan sendiri; penangkalnya hanya transparansi berkas</td></tr>
+          <tr><td>Status progres</td><td>Aku, lewat status.json</td><td><strong>Bias:</strong> laporan diri; penangkalnya inventaris berkas + hash</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Yang tidak diklaim</h3>
+      <ul class="tight">
+        <li>Tidak ada klaim yang berlaku untuk model besar (≥1 miliar parameter) atau data skala web.</li>
+        <li>Tidak mengklaim data sintetis berbahaya secara umum — literatur justru menunjukkan sintetis + verifikasi bisa membantu.</li>
+        <li>Tidak berlaku untuk arsitektur selain decoder-only transformer kecil.</li>
+        <li>Hasil akhir bukan model yang layak dipakai; semua checkpoint akan berlabel <code>EXPERIMENTAL-DEGRADED</code>.</li>
+        <li>“Kualitas asli” di eksperimen ini adalah kualitas AI, bukan kualitas manusia — jarak yang diukur adalah jarak dari distribusi guru, bukan dari dunia nyata.</li>
+      </ul>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="keputusan">
+      <h2><span class="idx">07</span>Keputusan terbuka</h2>
+      <p class="sub">Lima keputusan ini mengubah desain secara nyata. Kalau kamu tidak menjawab, aku memakai opsi yang ditandai <em>default-ku</em> dan akan kucatat di Riwayat bahwa itu keputusanku, bukan keputusanmu.</p>
+      <div class="grid2">{{DECISIONS}}</div>
+      <div class="callout" style="margin-top:18px">
+        <strong>Konsekuensi default.</strong> Dengan default, yang kamu dapatkan adalah: GPU Colab/Kaggle, 6 minggu, 6 arm, 3 seed, korpus campuran Indonesia–Inggris, fokus keamanan (memorisasi), laporan publik tanpa checkpoint. Semua itu boleh kamu ubah kapan saja — rencananya memang dinamis.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="log">
+      <h2><span class="idx">08</span>Riwayat</h2>
+      <p class="sub">Setiap perubahan rencana atau status dicatat di sini dengan bukti berkasnya. Riwayat terbaru di atas.</p>
+      {{CHANGELOG}}
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="berkas">
+      <h2><span class="idx">09</span>Inventaris berkas</h2>
+      <p class="sub">
+        Dihitung langsung dari disk saat halaman ini dibangun: {{FILE_COUNT}} berkas, total {{TOTAL_BYTES}}.
+        Klik nama berkas untuk membaca isinya tanpa membuka editor. Hash ditampilkan supaya kamu bisa membandingkan dengan <code>sha256sum</code> di mesinmu.
+      </p>
+      <table>
+        <thead><tr><th>Berkas</th><th>Ukuran</th><th>SHA-256</th><th>Isi</th></tr></thead>
+        <tbody>{{FILES}}</tbody>
+      </table>
+      <h3>Baca isinya di sini</h3>
+      <p class="small muted">Termasuk kode pembangun halaman ini (<code>build.py</code>) dan data status mentahnya (<code>status.json</code>).</p>
+      {{VIEWERS}}
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="mulai">
+      <h2><span class="idx">10</span>Verifikasi sendiri</h2>
+      <p class="sub">Tiga hal yang bisa kamu lakukan tanpa membuka editor kode: membangun ulang halaman ini, menjalankan server lokal, dan mengecek klaim dengan perintah shell.</p>
+
+      <h3>Bangun ulang halaman</h3>
+      <div class="cmdline"><code>cd {{ROOT_ABS}} &amp;&amp; python3 dashboard/build.py</code><button data-copy="cd {{ROOT_ABS}} &amp;&amp; python3 dashboard/build.py">salin</button></div>
+      <p class="small muted">Tanpa dependensi eksternal. Keluarannya <code>dashboard/index.html</code>, dengan hash yang berubah bila isi rencana berubah.</p>
+
+      <h3>Jalankan server lokal</h3>
+      <div class="cmdline"><code>cd {{ROOT_ABS}}/dashboard &amp;&amp; python3 -m http.server 8000 --bind 0.0.0.0</code><button data-copy="cd {{ROOT_ABS}}/dashboard &amp;&amp; python3 -m http.server 8000 --bind 0.0.0.0">salin</button></div>
+      <p class="small muted">Buka <code>http://localhost:8000</code>. Halaman ini juga bisa dibuka langsung sebagai berkas (<code>file://</code>) karena tidak memuat apa pun dari internet.</p>
+
+      <h3>Pertanyaan yang sebaiknya kamu tanyakan ke aku</h3>
+      <ul class="tight">
+        <li>“Berkas mana yang membuktikan klaim X?” — jawaban yang benar selalu berupa path, bukan penjelasan.</li>
+        <li>“Apa yang berubah antara plan v0.1 dan v0.2, dan mengapa?” — harus ada entri di Riwayat.</li>
+        <li>“Metrik mana yang paling menguntungkan hipotesismu, dan mana yang paling merugikan?” — kalau aku tidak bisa menjawab, desainnya belum matang.</li>
+        <li>“Kalau hasilnya nol (tidak ada degradasi), apakah eksperimennya masih dianggap berhasil?” — jawabannya ada di <a href="#rencana">PLAN.md §2.1 dan §11</a>; hasil nol tetap terbit.</li>
+      </ul>
+
+      <div class="callout" style="margin-top:20px">
+        <strong>Aturan main yang aku usulkan.</strong> Setiap kali kamu meminta sesuatu, aku perbarui <code>status.json</code> + <code>PLAN.md</code>, bangun ulang halaman ini, dan sebutkan hash barunya. Kalau halaman berubah tanpa entri riwayat, itu tanda ada yang tidak jujur.
+      </div>
+    </section>
+
+    <footer>
+      Dibangun otomatis oleh <code>dashboard/build.py</code> pada {{BUILD_TIME}} · plan v{{PLAN_VERSION}} · {{FILE_COUNT}} berkas · tanpa CDN, tanpa telemetri.
+    </footer>
+  </main>
+</div>
+
+<script>{{JS}}</script>
+</body>
+</html>
