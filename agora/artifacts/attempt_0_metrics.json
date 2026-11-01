@@ -1,0 +1,114 @@
+{
+  "attempt": 0,
+  "passed": false,
+  "metrics": {
+    "shock_recovery": 1.134806288,
+    "shock_dip": 1.507917436,
+    "abs_growth_tail": 0.002906959,
+    "cv_drift": 0.006070252,
+    "pop_drawdown": 0.0,
+    "field_lag1_corr": 0.977029969,
+    "field_peak_share": 0.001597324,
+    "block_mass_error": 0.0,
+    "hatch_cells": 600.0,
+    "giant_component_share": 0.3125,
+    "edges_per_node": 0.9375,
+    "orphan_fraction": 0.125,
+    "mean_degree": 2.0,
+    "mass_balance_error": 0.0,
+    "alive_fraction": 1.0,
+    "visual_contract_score": 1.0,
+    "duration_seconds": 1.530761195
+  },
+  "detail": {
+    "shock": {
+      "baseline_flow": 176.67045863014124,
+      "mid_flow": 266.4044650004506,
+      "recovery_flow": 200.48674742179537
+    },
+    "visual": {
+      "pixel_std": 34.88614025394021,
+      "terrain_classes": 7,
+      "pop_mean_before": 24.478841145833332,
+      "pop_mean_after": 25.9833984375,
+      "hatch_cells": 600,
+      "flows": 15,
+      "pulses": 480,
+      "checks": {
+        "not_blank": true,
+        "terrain_variety": true,
+        "population_grew": true,
+        "shading_present": true,
+        "hatching_present": true,
+        "flows_land_anchored": true,
+        "pulses_alive": true
+      }
+    }
+  },
+  "gates": [
+    {
+      "id": "C-GRID",
+      "metric": "abs_growth_tail",
+      "observed": 0.0029069594110492803,
+      "threshold": 0.0045,
+      "comparator": "<=",
+      "passed": true
+    },
+    {
+      "id": "C-COHER",
+      "metric": "field_lag1_corr",
+      "observed": 0.977029968707489,
+      "threshold": 0.55,
+      "comparator": ">=",
+      "passed": true
+    },
+    {
+      "id": "N-COMP",
+      "metric": "giant_component_share",
+      "observed": 0.3125,
+      "threshold": 0.85,
+      "comparator": ">=",
+      "passed": false
+    },
+    {
+      "id": "N-EDGE",
+      "metric": "edges_per_node",
+      "observed": 0.9375,
+      "threshold": 0.9,
+      "comparator": ">=",
+      "passed": true
+    },
+    {
+      "id": "N-MASS",
+      "metric": "mass_balance_error",
+      "observed": 8.631657449996408e-15,
+      "threshold": 1e-09,
+      "comparator": "<=",
+      "passed": true
+    },
+    {
+      "id": "V-CONTRACT",
+      "metric": "visual_contract_score",
+      "observed": 1.0,
+      "threshold": 0.85,
+      "comparator": ">=",
+      "passed": true
+    },
+    {
+      "id": "R-SHOCK",
+      "metric": "shock_recovery",
+      "observed": 1.134806288364901,
+      "threshold": 0.6,
+      "comparator": ">=",
+      "passed": true
+    },
+    {
+      "id": "C-STABLE",
+      "metric": "pop_drawdown",
+      "observed": 0.0,
+      "threshold": 0.35,
+      "comparator": "<=",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+numpy>=1.26
+networkx>=3.2
+mesa>=3.0
+fastapi>=0.110
+uvicorn>=0.29
+pillow>=10.0
+pydantic>=2.6

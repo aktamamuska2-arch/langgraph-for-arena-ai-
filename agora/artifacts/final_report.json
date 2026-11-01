@@ -1,0 +1,170 @@
+{
+  "run_id": "ASEOWS-001-20261101T114915",
+  "verdict": "PASS_WITH_RETRIES",
+  "experiment_id": "ASEOWS-001",
+  "blueprint_id": "BP-ASEOWS-001",
+  "attempts": 2,
+  "validation": {
+    "attempt": 1,
+    "passed": true,
+    "exit_code": 0,
+    "timed_out": false,
+    "duration_seconds": 2.662204772000223,
+    "failure_class": "none",
+    "results": [
+      {
+        "id": "C-GRID",
+        "metric": "abs_growth_tail",
+        "observed": 0.0029149834386573916,
+        "threshold": 0.0045,
+        "comparator": "<=",
+        "passed": true
+      },
+      {
+        "id": "C-COHER",
+        "metric": "field_lag1_corr",
+        "observed": 0.9771036766623645,
+        "threshold": 0.55,
+        "comparator": ">=",
+        "passed": true
+      },
+      {
+        "id": "N-COMP",
+        "metric": "giant_component_share",
+        "observed": 0.9375,
+        "threshold": 0.85,
+        "comparator": ">=",
+        "passed": true
+      },
+      {
+        "id": "N-EDGE",
+        "metric": "edges_per_node",
+        "observed": 1.4375,
+        "threshold": 0.9,
+        "comparator": ">=",
+        "passed": true
+      },
+      {
+        "id": "N-MASS",
+        "metric": "mass_balance_error",
+        "observed": 5.842178032615685e-14,
+        "threshold": 1e-9,
+        "comparator": "<=",
+        "passed": true
+      },
+      {
+        "id": "V-CONTRACT",
+        "metric": "visual_contract_score",
+        "observed": 1.0,
+        "threshold": 0.85,
+        "comparator": ">=",
+        "passed": true
+      },
+      {
+        "id": "R-SHOCK",
+        "metric": "shock_recovery",
+        "observed": 1.092060067045988,
+        "threshold": 0.6,
+        "comparator": ">=",
+        "passed": true
+      },
+      {
+        "id": "C-STABLE",
+        "metric": "pop_drawdown",
+        "observed": 0.0,
+        "threshold": 0.35,
+        "comparator": "<=",
+        "passed": true
+      }
+    ],
+    "metrics": {
+      "shock_recovery": 1.092060067045988,
+      "shock_dip": 1.4846765441660692,
+      "abs_growth_tail": 0.0029149834386573916,
+      "cv_drift": 0.005770526478255426,
+      "pop_drawdown": 0.0,
+      "field_lag1_corr": 0.9771036766623645,
+      "field_peak_share": 0.001578302365596722,
+      "block_mass_error": 0.0,
+      "hatch_cells": 600.0,
+      "giant_component_share": 0.9375,
+      "edges_per_node": 1.4375,
+      "orphan_fraction": 0.0625,
+      "mean_degree": 2.875,
+      "mass_balance_error": 5.842178032615685e-14,
+      "alive_fraction": 1.0,
+      "visual_contract_score": 1.0,
+      "duration_seconds": 2.662204772000223
+    },
+    "stdout_tail": "8 gates evaluated on attempt 1",
+    "stderr_tail": "",
+    "traceback_summary": ""
+  },
+  "reflections": [
+    {
+      "attempt": 0,
+      "failure_class": "network_fragmentation",
+      "diagnosis": "The market did not span the lattice. Geometry alone does not connect an economy: settlements must be close enough to a *complementary* endowment, not just to a neighbour.",
+      "patches": [
+        {
+          "pointer": "economy.discovery_radius",
+          "previous": 9.85,
+          "updated": 17.73,
+          "rationale": "giant component 0.31 < 0.85 with radius 9.85: the geometric critical radius 9.85 is only a lower bound, because a link needs a *complementary* pair inside the horizon, not merely a neighbour. Widening to 17.73 (ceiling 27.58)."
+        },
+        {
+          "pointer": "economy.max_partners",
+          "previous": 8,
+          "updated": 10,
+          "rationale": "too few links per node: allow each settlement to maintain more partners."
+        },
+        {
+          "pointer": "economy.candidate_cut",
+          "previous": 0.32,
+          "updated": 0.272,
+          "rationale": "relative selection cut trimmed too aggressively; relax it slightly."
+        }
+      ],
+      "next_action": "synthesize",
+      "confidence": 0.78
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/home/user/langgraph-for-arena-ai-/agora/artifacts/attempt_0_frame.png",
+      "role": "sandbox frame",
+      "sha256": "e74d4b216cbeb4be3b3bb3f0e9d0783c2532cb8f15c425136e8d819be331f0e4",
+      "bytes": 69021
+    },
+    {
+      "path": "/home/user/langgraph-for-arena-ai-/agora/artifacts/attempt_0_metrics.json",
+      "role": "gate metrics",
+      "sha256": "411b325edf6e3e35558967a2fd8fe66d86670ce7ebd3c5889f94ee952991fd44",
+      "bytes": 2669
+    },
+    {
+      "path": "/home/user/langgraph-for-arena-ai-/agora/artifacts/attempt_1_frame.png",
+      "role": "sandbox frame",
+      "sha256": "df6fc73ec0ee016b3293a175df7e25da8eaa05f0ad70242f1302b932d1a41e93",
+      "bytes": 73302
+    },
+    {
+      "path": "/home/user/langgraph-for-arena-ai-/agora/artifacts/attempt_1_metrics.json",
+      "role": "gate metrics",
+      "sha256": "21bda7fba1dd644fe28a6b1b26d6ce127a8d3d0404cf56af340b4597093fb634",
+      "bytes": 2675
+    },
+    {
+      "path": "/home/user/langgraph-for-arena-ai-/agora/artifacts/blueprint.json",
+      "role": "blueprint",
+      "sha256": "16593ad753291dfb306a1fe00150e416b1ec6c7788612bb3af23b4f0fa6bcd30",
+      "bytes": 10251
+    }
+  ],
+  "generated_at": "2026-11-01T11:49:15.163273Z",
+  "notes": [
+    "critical radius 9.85 derived from the settlement MST",
+    "final discovery radius 17.73",
+    "gates: 8/8 passed"
+  ]
+}

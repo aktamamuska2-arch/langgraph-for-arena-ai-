@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ASEOWS · Emergent Spatial-Economic Open World</title>
+<style>
+  :root {
+    --bg: #060b10;
+    --panel: #0c141b;
+    --panel-2: #101b24;
+    --line: #1b2b36;
+    --ink: #d6e6ee;
+    --dim: #6f8b99;
+    --accent: #2ee6c5;
+    --amber: #ffb24a;
+    --food: #ffc45c;
+    --wood: #68d694;
+    --ore: #ba8cff;
+    --danger: #ff6060;
+    font-synthesis: none;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: radial-gradient(1200px 700px at 30% -10%, #0d1b24 0%, var(--bg) 60%);
+    color: var(--ink);
+    font: 13px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    overflow: hidden;
+  }
+  #app { display: flex; flex-direction: column; height: 100vh; }
+
+  header {
+    display: flex; align-items: center; gap: 18px;
+    padding: 10px 16px; border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(12,20,27,.95), rgba(12,20,27,.75));
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; letter-spacing: .18em; font-weight: 600; }
+  .brand span { letter-spacing: .02em; color: var(--dim); font-weight: 400; font-size: 11px; }
+  .transport { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  button {
+    background: var(--panel-2); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 11px; font: inherit; cursor: pointer;
+    transition: all .14s ease;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.on { background: rgba(46,230,197,.14); border-color: var(--accent); color: var(--accent); }
+  button.ghost { background: transparent; }
+  button.shock:hover { border-color: var(--danger); color: var(--danger); }
+  input[type=range] { width: 110px; accent-color: var(--accent); }
+  .clock { display: flex; align-items: baseline; gap: 6px; min-width: 110px; justify-content: flex-end; }
+  .clock span { font-size: 20px; color-scheme: dark; color: var(--accent); }
+  .clock small { color: var(--dim); font-size: 10px; letter-spacing: .2em; }
+
+  main { flex: 1; display: flex; min-height: 0; }
+  .stage { position: relative; flex: 1; min-width: 0; }
+  canvas#map { display: block; width: 100%; height: 100%; cursor: crosshair; }
+  .overlay { position: absolute; pointer-events: none; }
+  .legend {
+    left: 14px; bottom: 14px; display: flex; gap: 14px; align-items: center;
+    padding: 8px 12px; background: rgba(6,12,17,.78); border: 1px solid var(--line);
+    border-radius: 8px; font-size: 11px; color: var(--dim); backdrop-filter: blur(6px);
+  }
+  .legend b { color: var(--ink); font-weight: 500; }
+  .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  #tooltip {
+    left: 0; top: 0; display: none; padding: 8px 10px; background: rgba(8,16,22,.94);
+    border: 1px solid var(--line); border-radius: 7px; font-size: 11px; line-height: 1.5;
+    box-shadow: 0 10px 30px rgba(0,0,0,.5); max-width: 230px; pointer-events: none;
+  }
+  #tooltip .t-name { color: var(--accent); font-size: 12px; margin-bottom: 3px; }
+  .hint {
+    right: 14px; top: 14px; padding: 7px 12px; background: rgba(255,96,96,.12);
+    border: 1px solid rgba(255,96,96,.5); color: #ffb3b3; border-radius: 7px;
+    font-size: 11px; display: none; pointer-events: none;
+  }
+  .hint.show { display: block; }
+
+  aside {
+    width: 330px; flex: 0 0 330px; border-left: 1px solid var(--line);
+    background: var(--panel); display: flex; flex-direction: column; overflow: hidden;
+  }
+  .scroll { overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .scroll::-webkit-scrollbar { width: 8px; }
+  .scroll::-webkit-scrollbar-thumb { background: #1d2f3a; border-radius: 4px; }
+
+  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kpi { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .kpi .k { color: var(--dim); font-size: 9px; letter-spacing: .16em; text-transform: uppercase; }
+  .kpi .v { font-size: 17px; color: var(--ink); }
+  .kpi .v.accent { color: var(--accent); }
+  .kpi .v.amber { color: var(--amber); }
+
+  .panel { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+  .panel h3 {
+    margin: 0 0 8px; font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--dim); font-weight: 500; display: flex; justify-content: space-between;
+  }
+  .row { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; padding: 2px 0; }
+  .row .muted { color: var(--dim); }
+  .bar { height: 3px; background: #16232c; border-radius: 2px; overflow: hidden; margin: 2px 0 6px; }
+  .bar > i { display: block; height: 100%; border-radius: 2px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { padding: 5px 8px; font-size: 11px; }
+  .empty { color: var(--dim); font-size: 11.5px; }
+  .log-line { font-size: 11px; color: var(--dim); padding: 1px 0; }
+  .log-line b { color: var(--accent); font-weight: 500; }
+  #spark { width: 100%; height: 64px; display: block; }
+  .spec { color: var(--dim); font-size: 10px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">ASEOWS <span>emergent spatial-economic open world</span></div>
+    <div class="transport">
+      <button id="btn-play">▶ play</button>
+      <button id="btn-step">step</button>
+      <button id="btn-pause">pause</button>
+      <label style="display:flex;align-items:center;gap:8px;color:var(--dim)">
+        speed <input id="speed" type="range" min="1" max="48" value="8" />
+        <span id="speedv" style="color:var(--accent);min-width:22px">8</span>
+      </label>
+      <button id="btn-reset" class="ghost">reset</button>
+    </div>
+    <div class="clock"><span id="tick">0</span><small>TICK</small></div>
+  </header>
+
+  <main>
+    <section class="stage">
+      <canvas id="map"></canvas>
+      <div id="tooltip" class="overlay"></div>
+      <div id="hint" class="hint overlay">click the map to place <b id="hint-kind"></b> shocks · esc to cancel</div>
+      <div class="legend overlay">
+        <span><b>flow</b></span>
+        <span><i class="swatch" style="background:var(--food)"></i>food</span>
+        <span><i class="swatch" style="background:var(--wood)"></i>wood</span>
+        <span><i class="swatch" style="background:var(--ore)"></i>ore</span>
+        <span><i class="swatch" style="background:var(--amber)"></i>population</span>
+        <span><i class="swatch" style="background:var(--accent)"></i>settlement</span>
+      </div>
+    </section>
+
+    <aside>
+      <div class="scroll">
+        <div class="kpis">
+          <div class="kpi"><div class="k">population</div><div class="v accent" id="kpi-pop">—</div></div>
+          <div class="kpi"><div class="k">trade links</div><div class="v" id="kpi-links">—</div></div>
+          <div class="kpi"><div class="k">volume moved</div><div class="v amber" id="kpi-flow">—</div></div>
+          <div class="kpi"><div class="k">road upgrades</div><div class="v" id="kpi-roads">—</div></div>
+          <div class="kpi"><div class="k">connected core</div><div class="v" id="kpi-giant">—</div></div>
+          <div class="kpi"><div class="k">mean degree</div><div class="v" id="kpi-degree">—</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>trajectory <span>pop · links</span></h3>
+          <canvas id="spark" width="600" height="128"></canvas>
+        </div>
+
+        <div class="panel" id="inspect">
+          <h3>inspector <span id="insp-sub">no selection</span></h3>
+          <div id="insp-body" class="empty">Click a settlement on the map to read its stocks, prices and trade partners.</div>
+        </div>
+
+        <div class="panel">
+          <h3>inject shock <span>then click the map</span></h3>
+          <div class="chips" id="shock-chips"></div>
+          <div class="row" style="margin-top:8px">
+            <label class="muted"><input type="checkbox" id="global-shock" /> world-wide</label>
+            <span class="muted" id="shock-status">idle</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>event log</h3>
+          <div id="log"><span class="empty">no events yet</span></div>
+        </div>
+        <div class="spec" id="spec">—</div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const COLORS = {
+    oceanDeep: [6, 15, 26], oceanShallow: [17, 47, 64],
+    terrain: { 0: [8, 19, 31], 1: [21, 45, 58], 2: [37, 55, 38], 3: [25, 43, 31],
+               4: [60, 56, 43], 5: [92, 90, 97], 6: [89, 75, 47] },
+    amber: [255, 178, 74], accent: [46, 230, 197],
+    food: "#ffc45c", wood: "#68d694", ore: "#ba8cff",
+  };
+  const RES = ["FOOD", "WOOD", "ORE"];
+  const RES_COLOR = { FOOD: [255, 196, 92], WOOD: [104, 214, 148], ORE: [186, 140, 255] };
+
+  const state = {
+    meta: null, frame: null, selected: null, hover: null,
+    pendingShock: null, globalShock: false, lastFrameAt: 0,
+  };
+
+  const canvas = document.getElementById("map");
+  const ctx = canvas.getContext("2d");
+  const terrainCanvas = document.createElement("canvas");
+  const popCanvas = document.createElement("canvas");
+  const roadCanvas = document.createElement("canvas");
+  const tooltip = document.getElementById("tooltip");
+
+  let view = { scale: 8, ox: 0, oy: 0, dpr: 1 };
+  let dashPhase = 0;
+
+  // ---------------------------------------------------------------- utils
+  const b64ToBytes = (b64) => {
+    const bin = atob(b64);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  };
+  const fmt = (v) => (v >= 1000 ? (v / 1000).toFixed(1) + "k" : v.toFixed(v < 10 ? 2 : 0));
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // ---------------------------------------------------------------- meta
+  async function loadMeta() {
+    const res = await fetch("/api/meta");
+    state.meta = await res.json();
+    buildTerrain();
+    document.getElementById("spec").textContent =
+      `${state.meta.width}×${state.meta.height} lattice · seed ${state.meta.experiment.seed} · ` +
+      `${state.meta.experiment.settlements} settlements · horizon ${state.meta.experiment.horizon}`;
+  }
+
+  function buildTerrain() {
+    const { width: w, height: h, terrain, depth } = state.meta;
+    terrainCanvas.width = w; terrainCanvas.height = h;
+    popCanvas.width = w; popCanvas.height = h;
+    roadCanvas.width = w; roadCanvas.height = h;
+
+    const img = terrainCanvas.getContext("2d").createImageData(w, h);
+    for (let i = 0; i < w * h; i++) {
+      const code = terrain[i];
+      let rgb = COLORS.terrain[code] || [0, 0, 0];
+      if (code === 0) {
+        const t = clamp(depth[i] / 10, 0, 1);
+        rgb = COLORS.oceanShallow.map((c, k) => Math.round(c * (1 - t) + COLORS.oceanDeep[k] * t));
+      }
+      img.data[i * 4] = rgb[0]; img.data[i * 4 + 1] = rgb[1];
+      img.data[i * 4 + 2] = rgb[2]; img.data[i * 4 + 3] = 255;
+    }
+    terrainCanvas.getContext("2d").putImageData(img, 0, 0);
+  }
+
+  // -------------------------------------------------------------- layout
+  function resize() {
+    if (!state.meta) return;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    if (rect.width < 40 || rect.height < 40) { requestAnimationFrame(resize); return; }
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    canvas.style.width = rect.width + "px";
+    canvas.style.height = rect.height + "px";
+    const s = Math.min(rect.width / state.meta.width, rect.height / state.meta.height);
+    view = {
+      dpr,
+      scale: s,
+      ox: (rect.width - state.meta.width * s) / 2,
+      oy: (rect.height - state.meta.height * s) / 2,
+    };
+  }
+  window.addEventListener("resize", resize);
+
+  // -------------------------------------------------------------- drawing
+  function draw() {
+    if (!state.meta || !state.frame) return;
+    const f = state.frame;
+    const { width: W, height: H } = state.meta;
+    const { scale, ox, oy, dpr } = view;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const bg = ctx.createRadialGradient(canvas.width * 0.35, 0, 0, canvas.width * 0.35, 0, canvas.width);
+    bg.addColorStop(0, "#0b1821"); bg.addColorStop(1, "#05090d");
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.setTransform(scale * dpr, 0, 0, scale * dpr, ox * dpr, oy * dpr);
+
+    // terrain (blocky, no smoothing)
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(terrainCanvas, 0, 0, W, H);
+
+    drawPopulation(f, W, H);
+    drawRoads(f, W, H);
+    drawFlows(f);
+    drawPulses(f);
+    drawSettlements(f);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (state.hover) drawTooltip(state.hover);
+  }
+
+  function drawPopulation(f, W, H) {
+    const pop = b64ToBytes(f.pop);
+    const hatch = b64ToBytes(f.hatch);
+    const img = popCanvas.getContext("2d").createImageData(W, H);
+    for (let i = 0; i < W * H; i++) {
+      const v = pop[i] / 255;
+      img.data[i * 4] = 255; img.data[i * 4 + 1] = 178; img.data[i * 4 + 2] = 74;
+      img.data[i * 4 + 3] = Math.round(255 * Math.pow(v, 1.25) * 0.72);
+    }
+    popCanvas.getContext("2d").putImageData(img, 0, 0);
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = 0.85;
+    ctx.drawImage(popCanvas, 0, 0, W, H);
+    ctx.restore();
+
+    // density hatching: tier 3 = cross hatch, tier 2 = single diagonal
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,196,110,0.34)";
+    ctx.lineWidth = 0.12;
+    ctx.beginPath();
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const tier = hatch[y * W + x];
+        if (tier < 2) continue;
+        ctx.moveTo(x + 0.15, y + 0.85); ctx.lineTo(x + 0.85, y + 0.15);
+        if (tier >= 3) { ctx.moveTo(x + 0.15, y + 0.15); ctx.lineTo(x + 0.85, y + 0.85); }
+      }
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawRoads(f, W, H) {
+    const roads = b64ToBytes(f.roads);
+    const img = roadCanvas.getContext("2d").createImageData(W, H);
+    let any = false;
+    for (let i = 0; i < W * H; i++) {
+      const v = roads[i] / 255;
+      if (v <= 0.02) continue;
+      any = true;
+      img.data[i * 4] = 214; img.data[i * 4 + 1] = 190; img.data[i * 4 + 2] = 132;
+      img.data[i * 4 + 3] = Math.round(200 * v);
+    }
+    if (!any) return;
+    roadCanvas.getContext("2d").putImageData(img, 0, 0);
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.globalAlpha = 0.5;
+    ctx.drawImage(roadCanvas, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  function curve(points) {
+    if (points.length < 3) return points;
+    const [x0, y0] = points[0], [x1, y1] = points[points.length - 1];
+    const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+    return points.map(([x, y], i) => {
+      const t = i / (points.length - 1);
+      const bow = 0.09 * len * Math.sin(Math.PI * t);
+      return [x + nx * bow + 0.5, y + ny * bow + 0.5];
+    });
+  }
+
+  function drawFlows(f) {
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.globalCompositeOperation = "lighter";
+    for (const flow of f.flows) {
+      const name = RES[flow.res] || "FOOD";
+      const col = RES_COLOR[name];
+      const pts = curve(flow.p);
+      if (pts.length < 2) continue;
+      const wgt = clamp(flow.w / 2.2, 0.22, 1);
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length - 1; i++) {
+        const mx = (pts[i][0] + pts[i + 1][0]) / 2, my = (pts[i][1] + pts[i + 1][1]) / 2;
+        ctx.quadraticCurveTo(pts[i][0], pts[i][1], mx, my);
+      }
+      const last = pts[pts.length - 1];
+      ctx.lineTo(last[0], last[1]);
+      ctx.setLineDash([0.9 + wgt * 0.8, 1.5 - wgt * 0.6]);
+      ctx.lineDashOffset = -dashPhase * (0.5 + wgt);
+      ctx.strokeStyle = `rgba(${col[0]},${col[1]},${col[2]},${0.30 + 0.45 * wgt})`;
+      ctx.lineWidth = 0.14 + 0.24 * wgt;
+      ctx.stroke();
+      // arrow head
+      const prev = pts[pts.length - 2];
+      const ang = Math.atan2(last[1] - prev[1], last[0] - prev[0]);
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(last[0], last[1]);
+      ctx.lineTo(last[0] - 0.42 * Math.cos(ang - 0.5), last[1] - 0.42 * Math.sin(ang - 0.5));
+      ctx.lineTo(last[0] - 0.42 * Math.cos(ang + 0.5), last[1] - 0.42 * Math.sin(ang + 0.5));
+      ctx.closePath();
+      ctx.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},${0.55 + 0.35 * wgt})`;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawPulses(f) {
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    const palette = { production: "#ffd08a", trade: "#6ce2ff", road: "#ffe9aa", shock: "#ff6060", discovery: "#ba8cff" };
+    for (const p of f.pulses) {
+      const t = clamp(p.age / 13, 0, 1);
+      const radius = (p.r + 2.6 * t) * 0.9;
+      ctx.beginPath();
+      ctx.arc(p.x + 0.5, p.y + 0.5, Math.max(radius, 0.2), 0, Math.PI * 2);
+      ctx.strokeStyle = palette[p.k] || "#ffffff";
+      ctx.globalAlpha = (1 - t) * 0.5 * (0.4 + 0.6 * p.s);
+      ctx.lineWidth = 0.09;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawSettlements(f) {
+    const alive = f.settlements.filter((s) => s.alive);
+    const peak = Math.max(1, ...alive.map((s) => s.population));
+    ctx.save();
+    for (const s of f.settlements) {
+      const r = s.alive ? 0.32 + 0.42 * (s.population / peak) : 0.25;
+      if (!s.alive) {
+        ctx.strokeStyle = "rgba(140,150,160,.6)"; ctx.lineWidth = 0.08;
+        ctx.beginPath(); ctx.moveTo(s.x - .2, s.y - .2); ctx.lineTo(s.x + .2, s.y + .2);
+        ctx.moveTo(s.x + .2, s.y - .2); ctx.lineTo(s.x - .2, s.y + .2); ctx.stroke();
+        continue;
+      }
+      const selected = state.selected === s.id;
+      // halo scaled with connectivity - hubs glow
+      const halo = 0.35 + 0.09 * Math.min(s.degree, 10);
+      const g = ctx.createRadialGradient(s.x + .5, s.y + .5, 0, s.x + .5, s.y + .5, r + halo);
+      g.addColorStop(0, "rgba(46,230,197,0.55)");
+      g.addColorStop(1, "rgba(46,230,197,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(s.x + .5, s.y + .5, r + halo, 0, Math.PI * 2); ctx.fill();
+
+      ctx.beginPath(); ctx.arc(s.x + .5, s.y + .5, r, 0, Math.PI * 2);
+      ctx.fillStyle = selected ? "#ffffff" : "rgba(46,230,197,0.95)";
+      ctx.fill();
+      ctx.beginPath(); ctx.arc(s.x + .5, s.y + .5, r * 0.42, 0, Math.PI * 2);
+      ctx.fillStyle = "#08131a"; ctx.fill();
+      if (selected) {
+        ctx.beginPath(); ctx.arc(s.x + .5, s.y + .5, r + 0.28, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 0.07; ctx.stroke();
+      }
+      if (r > 0.5) {
+        ctx.font = "0.55px ui-monospace, monospace";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "rgba(214,230,238,.78)";
+        ctx.fillText(s.name, s.x + .5, s.y - r - 0.22);
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawTooltip(s) {
+    const rect = canvas.getBoundingClientRect();
+    tooltip.style.display = "block";
+    tooltip.style.left = clamp(s.px + 16, 8, rect.width - 240) + "px";
+    tooltip.style.top = clamp(s.py - 10, 8, rect.height - 150) + "px";
+    tooltip.innerHTML =
+      `<div class="t-name">${s.name}</div>` +
+      `<div>population <b>${s.population.toFixed(1)}</b> / cap ${s.capacity.toFixed(0)}</div>` +
+      `<div>specialises in <b>${s.specialization}</b> · ${s.degree} links</div>` +
+      `<div>wealth <b>${fmt(s.wealth)}</b></div>` +
+      `<div style="color:var(--dim);margin-top:4px">click to inspect</div>`;
+  }
+
+  // -------------------------------------------------------------- panels
+  function renderPanels(f) {
+    const n = f.network;
+    document.getElementById("kpi-pop").textContent = fmt(n.nodes ? f.settlements.reduce((a, s) => a + (s.alive ? s.population : 0), 0) : 0);
+    document.getElementById("kpi-links").textContent = n.edges.toFixed(0);
+    document.getElementById("kpi-flow").textContent = fmt(n.total_flow);
+    document.getElementById("kpi-roads").textContent = n.roads_upgraded.toFixed(0);
+    document.getElementById("kpi-giant").textContent = (n.giant_component_share * 100).toFixed(0) + "%";
+    document.getElementById("kpi-degree").textContent = n.mean_degree.toFixed(2);
+    document.getElementById("tick").textContent = f.tick;
+
+    drawSpark(f.history);
+
+    const sel = f.settlements.find((s) => s.id === state.selected);
+    const body = document.getElementById("insp-body");
+    const sub = document.getElementById("insp-sub");
+    if (sel) {
+      sub.textContent = sel.alive ? sel.specialization.toLowerCase() : "abandoned";
+      const bars = RES.map((r) => {
+        const stock = sel.stocks[r], target = Math.max(sel.stocks[r] + sel.deficit[r] - sel.surplus[r], 0.001);
+        const ratio = clamp(stock / (target * 3), 0, 1);
+        const colour = `rgb(${RES_COLOR[r].join(",")})`;
+        return `<div class="row"><span class="muted">${r.toLowerCase()}</span>
+            <span>${stock.toFixed(1)} <span class="muted">/ ${target.toFixed(1)}</span></span></div>
+          <div class="bar"><i style="width:${(ratio * 100).toFixed(0)}%;background:${colour}"></i></div>`;
+      }).join("");
+      const prices = RES.map((r) => `<div class="row"><span class="muted">${r.toLowerCase()} price</span><span>${sel.prices[r].toFixed(2)}</span></div>`).join("");
+      const labour = RES.map((r) => `<div class="row"><span class="muted">${r.toLowerCase()} labour</span><span>${(sel.labor[r] * 100).toFixed(0)}%</span></div>`).join("");
+      body.className = "";
+      body.innerHTML =
+        `<div class="row"><span class="muted">population</span><span>${sel.population.toFixed(1)} / ${sel.capacity.toFixed(0)}</span></div>
+         <div class="row"><span class="muted">wealth</span><span>${fmt(sel.wealth)}</span></div>
+         <div class="row"><span class="muted">trade partners</span><span>${sel.degree}</span></div>
+         <div style="height:6px"></div>${bars}
+         <div style="height:4px"></div>${prices}${labour}`;
+    } else {
+      sub.textContent = "no selection";
+      body.className = "empty";
+      body.textContent = "Click a settlement on the map to read its stocks, prices and trade partners.";
+    }
+
+    const log = document.getElementById("log");
+    log.innerHTML = f.events.length
+      ? f.events.slice().reverse().map((e) => `<div class="log-line"><b>t${e.tick}</b> ${e.label}</div>`).join("")
+      : '<span class="empty">no events yet</span>';
+  }
+
+  function drawSpark(history) {
+    const c = document.getElementById("spark");
+    const g = c.getContext("2d");
+    g.clearRect(0, 0, c.width, c.height);
+    if (!history || history.length < 2) return;
+    const pops = history.map((h) => h.population);
+    const edges = history.map((h) => h.edges);
+    const maxPop = Math.max(...pops, 1), maxEdges = Math.max(...edges, 1);
+    const plot = (values, max, colour, fill) => {
+      g.beginPath();
+      values.forEach((v, i) => {
+        const x = (i / (values.length - 1)) * (c.width - 8) + 4;
+        const y = c.height - 8 - (v / max) * (c.height - 18);
+        i ? g.lineTo(x, y) : g.moveTo(x, y);
+      });
+      g.strokeStyle = colour; g.lineWidth = 2; g.stroke();
+      if (fill) {
+        g.lineTo(c.width - 4, c.height); g.lineTo(4, c.height); g.closePath();
+        g.fillStyle = fill; g.fill();
+      }
+    };
+    plot(pops, maxPop, "#2ee6c5", "rgba(46,230,197,.10)");
+    plot(edges, maxEdges, "#ffb24a", null);
+  }
+
+  // ------------------------------------------------------------- controls
+  const postJSON = (url, body) =>
+    fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+  document.getElementById("btn-play").onclick = () => postJSON("/api/control", { action: "play" });
+  document.getElementById("btn-pause").onclick = () => postJSON("/api/control", { action: "pause" });
+  document.getElementById("btn-step").onclick = () => postJSON("/api/control", { action: "step" });
+  document.getElementById("btn-reset").onclick = () =>
+    postJSON("/api/control", { action: "reset", seed: Math.floor(Math.random() * 90000) + 1000 });
+  const speedInput = document.getElementById("speed");
+  speedInput.oninput = () => {
+    document.getElementById("speedv").textContent = speedInput.value;
+    postJSON("/api/control", { action: "speed", speed: Number(speedInput.value) });
+  };
+
+  const SHOCKS = [
+    ["drought", "drought"], ["blight", "blight"], ["ore_discovery", "ore find"],
+    ["demand_boom", "demand boom"], ["plague", "plague"], ["embargo", "embargo"],
+    ["road_collapse", "road collapse"],
+  ];
+  const chips = document.getElementById("shock-chips");
+  SHOCKS.forEach(([kind, label]) => {
+    const b = document.createElement("button");
+    b.className = "shock ghost";
+    b.textContent = label;
+    b.onclick = () => {
+      state.pendingShock = state.pendingShock === kind ? null : kind;
+      document.getElementById("hint-kind").textContent = state.pendingShock || "";
+      document.getElementById("hint").classList.toggle("show", !!state.pendingShock);
+      document.getElementById("shock-status").textContent = state.pendingShock ? "awaiting click" : "idle";
+      chips.querySelectorAll("button").forEach((x) => x.classList.remove("on"));
+      if (state.pendingShock) b.classList.add("on");
+    };
+    chips.appendChild(b);
+  });
+  const globalBox = document.getElementById("global-shock");
+  globalBox.onchange = () => { state.globalShock = globalBox.checked; };
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      state.pendingShock = null;
+      document.getElementById("hint").classList.remove("show");
+      document.getElementById("shock-status").textContent = "idle";
+      chips.querySelectorAll("button").forEach((x) => x.classList.remove("on"));
+    }
+    if (e.code === "Space") {
+      e.preventDefault();
+      const running = state.frame && state.frame.running;
+      postJSON("/api/control", { action: running ? "pause" : "play" });
+    }
+  });
+
+  function worldFromEvent(ev) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (ev.clientX - rect.left - view.ox) / view.scale;
+    const y = (ev.clientY - rect.top - view.oy) / view.scale;
+    return { x, y, px: ev.clientX - rect.left, py: ev.clientY - rect.top };
+  }
+
+  canvas.addEventListener("mousemove", (ev) => {
+    if (!state.frame) return;
+    const p = worldFromEvent(ev);
+    let best = null, bestD = 2.2;
+    for (const s of state.frame.settlements) {
+      const d = Math.hypot(s.x + 0.5 - p.x, s.y + 0.5 - p.y);
+      if (d < bestD) { bestD = d; best = s; }
+    }
+    state.hover = best ? { ...best, px: p.px, py: p.py } : null;
+    tooltip.style.display = best ? "block" : "none";
+    if (best) drawTooltip(state.hover);
+  });
+
+  canvas.addEventListener("click", async (ev) => {
+    const p = worldFromEvent(ev);
+    if (state.pendingShock) {
+      const payload = {
+        kind: state.pendingShock,
+        x: state.globalShock ? null : Math.round(p.x),
+        y: state.globalShock ? null : Math.round(p.y),
+        radius: 13, magnitude: 0.7, duration: 60,
+      };
+      await postJSON("/api/shock", payload);
+      document.getElementById("shock-status").textContent = "injected";
+      state.pendingShock = null;
+      document.getElementById("hint").classList.remove("show");
+      chips.querySelectorAll("button").forEach((x) => x.classList.remove("on"));
+      return;
+    }
+    let best = null, bestD = 2.5;
+    for (const s of state.frame.settlements) {
+      const d = Math.hypot(s.x + 0.5 - p.x, s.y + 0.5 - p.y);
+      if (d < bestD) { bestD = d; best = s; }
+    }
+    state.selected = best ? (state.selected === best.id ? null : best.id) : null;
+    renderPanels(state.frame);
+  });
+
+  // ------------------------------------------------------------- polling
+  async function poll() {
+    try {
+      const res = await fetch("/api/state", { cache: "no-store" });
+      if (res.ok) {
+        state.frame = await res.json();
+        state.lastFrameAt = performance.now();
+        renderPanels(state.frame);
+      }
+    } catch (err) {
+      console.warn("poll failed", err);
+    }
+  }
+
+  function animate(now) {
+    dashPhase = (now / 55) % 40;
+    draw();
+    requestAnimationFrame(animate);
+  }
+
+  (async function boot() {
+    await loadMeta();
+    resize();
+    await poll();
+    setInterval(poll, 130);
+    requestAnimationFrame(animate);
+    postJSON("/api/control", { action: "play" });
+  })();
+})();
+</script>
+</body>
+</html>

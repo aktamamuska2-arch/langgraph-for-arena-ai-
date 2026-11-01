@@ -1,0 +1,336 @@
+{
+  "blueprint_id": "BP-ASEOWS-001",
+  "experiment_id": "ASEOWS-001",
+  "created_at": "2026-11-01T11:49:10.827916Z",
+  "objective": "Compile a 2D lattice world of autonomous settlements whose trade network self-organises from local surplus/deficit scans, and prove the result converges and stays connected.",
+  "equations": [
+    {
+      "name": "Cobb-Douglas production",
+      "latex": "Q_i^r = E_i^r \\left(\\ell_i^r\\right)^{\\kappa} (1 + \\theta_i)\\, R_i \\;\\cdot\\; \\sigma_i^r(t)",
+      "description": "Output of resource r at settlement i. E is the territorial endowment (terrain yield x deposit richness), l the labour share with diminishing returns kappa=0.78, theta accumulated knowledge, R the road multiplier and sigma the shock modifier.",
+      "domain": "production"
+    },
+    {
+      "name": "Labour reallocation",
+      "latex": "\\ell_i^r \\leftarrow (1-\\lambda)\\,\\ell_i^r + \\lambda\\,\\frac{(p_i^r E_i^r)^{\\nu}}{\\sum_s (p_i^s E_i^s)^{\\nu}}",
+      "description": "Decentralised adaptation: labour drifts toward the locally most valuable activity with inertia lambda=0.25 and sharpness nu=2.2. No settlement sees a price outside its own borders.",
+      "domain": "production"
+    },
+    {
+      "name": "Scarcity pricing",
+      "latex": "p_i^r = \\mathrm{clip}\\!\\left[p_0^r \\left(\\frac{\\bar S_i^r}{S_i^r}\\right)^{\\epsilon},\\; \\phi p_0^r,\\; \\Phi p_0^r\\right]",
+      "description": "Local price rises as the stock S falls below the target buffer S-bar = consumption x coverage_ticks. Elasticity eps=0.45, floor 0.25 and ceiling 6x the base price.",
+      "domain": "pricing"
+    },
+    {
+      "name": "Gravity attractiveness",
+      "latex": "A_{ij}^{r} = G\\,\\frac{\\left(S_i^r\\right)^{\\alpha}\\left(D_j^r\\right)^{\\beta}}{\\left(d_{ij}+d_0\\right)^{\\gamma}}\\,e^{-\\tau c_{ij}}\\,\\left(1+\\mu\\,m_{ij}\\right)",
+      "description": "The trade-routing kernel. Masses are origin surplus and destination deficit, d the Euclidean separation with a d0=3 cell offset that keeps nearby pairs finite, c the terrain-weighted transport cost on the cheapest A* route, tau the freight friction and m the repeat-partner memory.",
+      "domain": "gravity"
+    },
+    {
+      "name": "Spatial arbitrage condition",
+      "latex": "p_j^r - p_i^r > \\tau\\, c_{ij} \\quad\\Longrightarrow\\quad q_{ij}^r = \\min\\!\\left(S_i^r, D_j^r\\right)\\eta \\min(1, w_{ij}^r)",
+      "description": "A link only trades when the destination price premium covers freight. Volume is capped by the smaller of marketable surplus and unmet deficit, scaled by trade_fraction eta=0.45 and the edge weight.",
+      "domain": "network"
+    },
+    {
+      "name": "Edge weight dynamics",
+      "latex": "w_{ij}^r(t+1) = \\max\\!\\left(w_{ij}^r(t)\\,e^{-\\delta},\\; \\min\\!\\left(4,\\; 2\\frac{A_{ij}^r}{\\max_k A_{ik}^r}\\right)\\right)",
+      "description": "Weights decay geometrically (delta=0.965/tick) and are refreshed by each discovery pass relative to the settlement's own best partner. Links whose weight falls below edge_min_weight or that stay idle too long are pruned.",
+      "domain": "network"
+    },
+    {
+      "name": "Logistic demography",
+      "latex": "\\dot N_i = N_i\\left[\\rho\\,\\sigma(\\text{food})\\left(1 - \\frac{N_i}{K_i}\\right) - \\delta_m\\right],\\quad K_i = K_0 + \\kappa_E E_i^{\\text{food}}(1+\\theta_i) + \\kappa_R R_i",
+      "description": "Population grows logistically toward a carrying capacity set by food endowment, knowledge and road access, gated by a food-security term derived from the granary buffer.",
+      "domain": "demography"
+    },
+    {
+      "name": "Infrastructure feedback",
+      "latex": "c_{xy} = c^0_{xy}\\,\\big/\\left(1 + g\\,\\rho_{xy}\\right),\\qquad \\sum_t q_{ij}(t) > \\Theta \\Rightarrow \\rho_{xy} \\mathrel{+}= g\\ \\ \\forall (x,y)\\in \\text{path}_{ij}",
+      "description": "Sustained flow paves the route it uses: once cumulative volume on a link passes the threshold its whole cheapest path gains road level, lowering the cost c that feeds back into the gravity kernel.",
+      "domain": "infrastructure"
+    },
+    {
+      "name": "Ledger identity",
+      "latex": "S_{\\text{end}} = S_{\\text{start}} + Q - C + M_{\\text{in}} - M_{\\text{out}} - \\Sigma",
+      "description": "Physical conservation across the whole lattice: production Q, consumption C, delivered imports, exports and spoilage must reconstruct the final stocks to floating-point tolerance. This is the mass-balance gate.",
+      "domain": "validation"
+    }
+  ],
+  "gates": [
+    {
+      "id": "C-GRID",
+      "metric": "abs_growth_tail",
+      "comparator": "<=",
+      "threshold": 0.0045,
+      "description": "population series must flatten: |exponential rate| of the final 25% <= 0.0045/tick"
+    },
+    {
+      "id": "C-COHER",
+      "metric": "field_lag1_corr",
+      "comparator": ">=",
+      "threshold": 0.55,
+      "description": "population choropleth must be spatially coherent, not per-cell noise"
+    },
+    {
+      "id": "N-COMP",
+      "metric": "giant_component_share",
+      "comparator": ">=",
+      "threshold": 0.85,
+      "description": "at least 85% of living settlements must sit in one trade component"
+    },
+    {
+      "id": "N-EDGE",
+      "metric": "edges_per_node",
+      "comparator": ">=",
+      "threshold": 0.9,
+      "description": "the discovered market must carry at least one link per node"
+    },
+    {
+      "id": "N-MASS",
+      "metric": "mass_balance_error",
+      "comparator": "<=",
+      "threshold": 1e-9,
+      "description": "physical ledger identity must hold to floating-point tolerance"
+    },
+    {
+      "id": "V-CONTRACT",
+      "metric": "visual_contract_score",
+      "comparator": ">=",
+      "threshold": 0.85,
+      "description": "rendered frame must satisfy the visual specification"
+    },
+    {
+      "id": "R-SHOCK",
+      "metric": "shock_recovery",
+      "comparator": ">=",
+      "threshold": 0.6,
+      "description": "trade volume must recover to 60% of its pre-shock level"
+    },
+    {
+      "id": "C-STABLE",
+      "metric": "pop_drawdown",
+      "comparator": "<=",
+      "threshold": 0.35,
+      "description": "aggregate population must not collapse by more than 35% from its peak"
+    }
+  ],
+  "world_summary": {
+    "width": 96,
+    "height": 64,
+    "seed": 20261101,
+    "sites": 16,
+    "terrain_fractions": {
+      "ocean": 0.5745,
+      "coast": 0.0293,
+      "plains": 0.1064,
+      "forest": 0.1437,
+      "hills": 0.0298,
+      "mountain": 0.0099,
+      "desert": 0.1063
+    },
+    "land_fraction": 0.4255,
+    "mean_deposit": [
+      1.224,
+      1.191,
+      1.27
+    ]
+  },
+  "economy": {
+    "production": "Cobb-Douglas with territorial endowments",
+    "discovery": "decentralised surplus/deficit scan inside discovery_radius",
+    "routing": "gravity kernel over A* cheapest paths",
+    "start_radius": 9.85
+  },
+  "critical_radius": 9.849,
+  "site_audit": [
+    {
+      "settlement_id": 0,
+      "name": "Ancorun",
+      "x": 59,
+      "y": 14,
+      "territory_yield": [
+        78.3,
+        15.564,
+        0.0
+      ]
+    },
+    {
+      "settlement_id": 1,
+      "name": "Mibelia",
+      "x": 49,
+      "y": 45,
+      "territory_yield": [
+        83.01,
+        4.636,
+        0.08
+      ]
+    },
+    {
+      "settlement_id": 2,
+      "name": "Velnorar",
+      "x": 68,
+      "y": 16,
+      "territory_yield": [
+        20.823,
+        74.103,
+        0.15
+      ]
+    },
+    {
+      "settlement_id": 3,
+      "name": "Dorkaos",
+      "x": 67,
+      "y": 44,
+      "territory_yield": [
+        42.15,
+        22.266,
+        0.0
+      ]
+    },
+    {
+      "settlement_id": 4,
+      "name": "Katora",
+      "x": 50,
+      "y": 12,
+      "territory_yield": [
+        12.419,
+        60.922,
+        0.0
+      ]
+    },
+    {
+      "settlement_id": 5,
+      "name": "Kaithun",
+      "x": 62,
+      "y": 23,
+      "territory_yield": [
+        10.9,
+        53.768,
+        3.049
+      ]
+    },
+    {
+      "settlement_id": 6,
+      "name": "Ryntora",
+      "x": 58,
+      "y": 45,
+      "territory_yield": [
+        33.852,
+        7.24,
+        2.022
+      ]
+    },
+    {
+      "settlement_id": 7,
+      "name": "Rynvelar",
+      "x": 53,
+      "y": 21,
+      "territory_yield": [
+        10.094,
+        37.728,
+        10.243
+      ]
+    },
+    {
+      "settlement_id": 8,
+      "name": "Antorun",
+      "x": 42,
+      "y": 39,
+      "territory_yield": [
+        20.567,
+        10.941,
+        1.496
+      ]
+    },
+    {
+      "settlement_id": 9,
+      "name": "Dorkaun",
+      "x": 52,
+      "y": 54,
+      "territory_yield": [
+        28.088,
+        8.319,
+        1.212
+      ]
+    },
+    {
+      "settlement_id": 10,
+      "name": "Cornoria",
+      "x": 63,
+      "y": 32,
+      "territory_yield": [
+        24.825,
+        13.528,
+        0.686
+      ]
+    },
+    {
+      "settlement_id": 11,
+      "name": "Ososia",
+      "x": 40,
+      "y": 48,
+      "territory_yield": [
+        24.005,
+        3.684,
+        3.105
+      ]
+    },
+    {
+      "settlement_id": 12,
+      "name": "Dorvaeth",
+      "x": 72,
+      "y": 36,
+      "territory_yield": [
+        26.072,
+        6.842,
+        1.846
+      ]
+    },
+    {
+      "settlement_id": 13,
+      "name": "Quathelos",
+      "x": 51,
+      "y": 36,
+      "territory_yield": [
+        13.878,
+        9.554,
+        5.806
+      ]
+    },
+    {
+      "settlement_id": 14,
+      "name": "Belthelun",
+      "x": 63,
+      "y": 53,
+      "territory_yield": [
+        22.061,
+        4.797,
+        0.008
+      ]
+    },
+    {
+      "settlement_id": 15,
+      "name": "Thelithar",
+      "x": 41,
+      "y": 11,
+      "territory_yield": [
+        12.442,
+        16.619,
+        0.848
+      ]
+    }
+  ],
+  "expected": {
+    "giant_component_share": 1.0,
+    "mass_balance_error": 0.0,
+    "abs_growth_tail": 0.0
+  },
+  "risk_notes": [
+    "The critical radius is a *geometric* lower bound: complementary endowments may sit farther apart than the lattice diameter suggests.",
+    "Ore is structurally scarce by design; if too few mining sites exist the ore price will pin at its ceiling and the corridor stays thin.",
+    "Spoilage keeps granaries finite; a settlement that cannot sell will still hoard up to its storage buffer."
+  ]
+}
