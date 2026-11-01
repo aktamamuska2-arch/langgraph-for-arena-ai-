@@ -96,28 +96,21 @@ def write_syn(path: Path, texts: list[str]) -> None:
     tmp.replace(path)  # atomik: tidak ada keadaan setengah jadi
 
 
-def gen_prompt(doc: dict, length: int = P.GEN_PROMPT_LEN) -> bytes:
-    """Prompt generasi dengan panjang TETAP (satu bucket -> batch penuh).
+def gen_prompt(doc: dict) -> bytes:
+    """Prompt generasi, apa adanya (tanpa pad, tanpa potong).
 
-    Alasan: cache K/V tidak bisa menangani padding, sehingga `generate_batch`
-    mengelompokkan prompt menurut panjang persis. Prompt T0 hampir semuanya
-    panjangnya berbeda -> 49 bucket -> batch efektif ~15 -> laju 1.130 B/s
-    (terukur), bukan 4.500 B/s.
-
-    Dua kompromi, keduanya dinyatakan terbuka:
-      - prompt lebih pendek dari `length`: di-pad **spasi di depan**. Konteks yang
-        berbatasan langsung dengan titik generasi (`...</P><A>`) tetap utuh; yang
-        bergeser hanya posisi awal `<D>`, jauh dari tempat sampling.
-      - prompt lebih panjang: isi dipotong di tengah, penanda `<P>...</P><A>` dijaga.
+    Riwayat singkat, karena ini keputusan yang diukur bukan ditebak:
+      - versi 1 memotong isi prompt agar semua panjangnya sama -> 1 bucket, tapi
+        isi instruksi terpangkas.
+      - versi 2 memaksa panjang tetap dengan pad spasi di depan -> batch penuh dan
+        4.021 B/s, TETAPI model langsung memuntahkan markup rusak
+        (`</P>P-14/A><0 A><E>`): padding menggeser posisi awal `<D>` dan merusak
+        konteks. Terukur pada 16 dokumen: 6/16 menutup `<E>` (pad) vs 3/16 (asli),
+        tetapi kualitas teks jauh lebih buruk.
+    Keputusan: kembali ke prompt asli. Kecepatan 1.130 B/s diterima; format yang
+    benar lebih penting daripada 3,6x kecepatan.
     """
-    head = f"<D>{doc['domain']}</D><P>".encode("utf-8")
-    tail = b"</P><A>"
-    body = doc["prompt"].encode("utf-8")
-    room = max(0, length - len(head) - len(tail))
-    p = head + body[:room] + tail
-    if len(p) < length:
-        p = b" " * (length - len(p)) + p
-    return p[:length] if len(p) > length else p
+    return prompt_of(doc)
 
 
 def generate_syn(model: TinyGPT, docs: list[dict], n_bytes: int, tag: str, out_dir: Path) -> list[str]:
