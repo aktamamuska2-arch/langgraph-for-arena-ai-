@@ -249,8 +249,8 @@ def main() -> None:
     cards = [
         ("Rencana", f"{p['plan_pct']}%", "dokumen rencana (v" + meta["plan_version"] + ")", "ok"),
         ("Implementasi", f"{p['implementation_pct']}%", "belum ada kode eksperimen", "zero"),
-        ("Model terlatih", str(p["models_trained"]), "dari target 126 run", "zero"),
-        ("Token digenerate", f"{p['tokens_generated']:,}".replace(",", "."), "dari target ±20 juta", "zero"),
+        ("Model terlatih", str(p["models_trained"]), "dari target 32 chain / 13 arm", "zero"),
+        ("Token digenerate", f"{p['tokens_generated']:,}".replace(",", "."), "dari target ±350 juta token sintetis", "zero"),
         ("Checkpoint", str(p["checkpoints"]), "belum ada artefak model", "zero"),
         ("Baris kode eksperimen", str(p["lines_of_experiment_code"]), "0 baris ditulis", "zero"),
     ]

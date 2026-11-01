@@ -1,9 +1,9 @@
 {
   "meta": {
     "project": "AI Belajar dari AI — Dashboard Transparansi",
-    "headline": "Model bahasa yang dilatih dari nol, dengan data pelatihan yang seluruhnya dihasilkan AI. Sedang dalam tahap rencana: belum ada kode eksperimen yang dijalankan.",
+    "headline": "Model bahasa yang dilatih dari nol, dengan data pelatihan yang seluruhnya dihasilkan AI. Rencana v0.2: 13 arm dalam 3 tier, metrik tokenizer-agnostik, ambang collapse berbasis derau baseline. Masih tahap rencana: belum ada kode eksperimen yang dijalankan.",
     "read_me_first": "Dashboard ini dibuat oleh AI yang sama yang menulis rencananya. Artinya ini bukan laporan independen. Karena itu setiap angka di sini bisa kamu cocokkan dengan berkas aslinya: hash SHA-256 tiap berkas tercantum, inventaris berkas dihitung langsung dari disk saat dashboard dibangun, dan setiap klaim punya perintah verifikasinya sendiri. Kalau ada yang tidak cocok, AI-nya yang salah, bukan berkasnya.",
-    "plan_version": "0.1",
+    "plan_version": "0.2",
     "plan_status": "draft rencana — dinamis",
     "branch": "arena/43651650-langgraph-for-arena-ai",
     "updated": "2026-11-01"
@@ -37,7 +37,7 @@
     {
       "id": "P1",
       "name": "Pilot mini (1 hari)",
-      "desc": "200 ribu token T0, model 2 juta parameter, 3 generasi, 1 arm, 1 seed. Tujuannya membuktikan pipaannya jalan, bukan menghasilkan temuan.",
+      "desc": "200 ribu token T0, model 2 juta parameter, 3 generasi, 1 arm, 1 seed. Sekaligus mengukur throughput generasi dan menjadikannya gate anggaran.",
       "status": "belum-mulai",
       "output": "Grafik pertama: kualitas vs generasi (skala mini)",
       "evidence": "belum ada"
@@ -45,7 +45,7 @@
     {
       "id": "P2",
       "name": "Korpus T0 skala penuh",
-      "desc": "±2,5 juta token, ±800 dokumen, 6 domain, katalog 1.200 prompt dibekukan.",
+      "desc": "±2,5 juta token, ±800 dokumen, reservoir 6.000 intent + 5 parafrase per intent, batch guru C2/C3 dibuat sekali dan dibekukan.",
       "status": "belum-mulai",
       "output": "Korpus T0 + manifest + tokenizer + test anchor beku",
       "evidence": "belum ada"
@@ -53,7 +53,7 @@
     {
       "id": "P3",
       "name": "Harness training & evaluasi",
-      "desc": "Training loop manual, evaluator metrik, orkestrasi LangGraph, unit test anti-kebocoran.",
+      "desc": "Training loop manual, evaluator (BPB + diversitas + gaya), critic deterministik, auditor campuran/tokenizer, orkestrasi LangGraph dengan routing & fork, unit test anti-kebocoran.",
       "status": "belum-mulai",
       "output": "make pilot hijau, M0 sehat",
       "evidence": "belum ada"
@@ -61,15 +61,15 @@
     {
       "id": "P4",
       "name": "Pra-registrasi dikunci",
-      "desc": "Metrik utama, ambang collapse, uji statistik ditetapkan sebelum run penuh.",
+      "desc": "Metrik utama (anchor_bpb), ambang σ + lantai absolut, uji statistik, tier & seed ditetapkan sebelum run.",
       "status": "belum-mulai",
       "output": "PREREGISTRATION.md",
       "evidence": "belum ada"
     },
     {
       "id": "P5",
-      "name": "Sweep arm A–E",
-      "desc": "6 arm × 3 seed × M0–M6 = 126 run, ±100 GPU-jam.",
+      "name": "Sweep 13 arm / 32 chain",
+      "desc": "Tier 1 konfirmatori (A, A′, B1, C1, C2, D2, 3 seed), Tier 2 sekunder (B2, C3, D1, E, 2 seed), Tier 3 eksploratif (F, B3, G, 4 generasi). ±120 GPU-jam.",
       "status": "belum-mulai",
       "output": "Kurva degenerasi lengkap",
       "evidence": "belum ada"
@@ -221,6 +221,48 @@
       "purpose": "Satu halaman: cara menjalankan ulang dari nol, termasuk versi paket.",
       "phase": "P6",
       "status": "belum-mulai"
+    },
+    {
+      "path": "src/critic.py",
+      "purpose": "Critic deterministik (repetisi, fertilitas, format, checker) + anggaran regenerasi 10%.",
+      "phase": "P3",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "src/audit.py",
+      "purpose": "Audit campuran (mix_tvd, lex_tvd), fertilitas, dan sensitivitas tokenizer A1–A3.",
+      "phase": "P3",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "docs/validity-audit.md",
+      "purpose": "D11: hasil audit tokenizer, campuran, derau seed, dan drift guru.",
+      "phase": "P6",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "docs/teacher-batches.md",
+      "purpose": "Catatan batch korpus guru: kapan dibuat, versi sesi, hash — penangkal drift guru.",
+      "phase": "P2",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "prompts/paraphrases_v1.jsonl",
+      "purpose": "5 parafrase beku per intent (tingkat kebaruan L1).",
+      "phase": "P2",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "runs/graph-log.jsonl",
+      "purpose": "D13: log routing, interrupt, fork, dan biaya per node LangGraph.",
+      "phase": "P3",
+      "status": "belum-mulai"
+    },
+    {
+      "path": "analysis/prompt-study/",
+      "purpose": "D12: sub-studi dosis kebaruan prompt (A vs F vs A′).",
+      "phase": "P6",
+      "status": "belum-mulai"
     }
   ],
   "decisions": [
@@ -328,9 +370,75 @@
           "label": "Rilis semua"
         }
       ]
+    },
+    {
+      "id": "D6",
+      "question": "Critic AI (arm G) dijalankan?",
+      "impact": "Menentukan apakah kita mengukur tradeoff kualitas vs homogenisasi akibat penilai AI, atau hanya memakai filter deterministik.",
+      "status": "menunggu jawabanmu",
+      "options": [
+        {
+          "id": "a",
+          "label": "Jalankan sebagai ablasi (2 seed, 4 generasi)",
+          "default": true
+        },
+        {
+          "id": "b",
+          "label": "Tak perlu, cukup critic deterministik"
+        },
+        {
+          "id": "c",
+          "label": "Dua AI critic independen"
+        }
+      ]
+    },
+    {
+      "id": "D7",
+      "question": "Aturan ambang collapse?",
+      "impact": "Menentukan apa yang disebut 'collapse'. Ambang bulat mudah dibandingkan dengan literatur, tapi peka variansi seed.",
+      "status": "menunggu jawabanmu",
+      "options": [
+        {
+          "id": "a",
+          "label": "σ dari 5 seed M0 + lantai absolut (§10.5)"
+        },
+        {
+          "id": "b",
+          "label": "Tetap 1,5× PPL sederhana"
+        },
+        {
+          "id": "c",
+          "label": "Laporkan keduanya, σ sebagai penentu",
+          "default": true
+        }
+      ]
     }
   ],
   "changelog": [
+    {
+      "date": "2026-11-01",
+      "title": "PLAN.md v0.2 — menutup tiga sumber collapse semu",
+      "detail": "Arm C dipecah C1/C2/C3 dan klaim 'batas atas absolut' dicabut; metrik utama pindah ke anchor_bpb dengan audit tokenizer A1–A3; ambang collapse jadi Δ ≥ max(3σ₀, 0,10 bpb) dari 5 seed M0. Alasan tiap keputusan — termasuk lima usulan yang ditolak — ada di PLAN.md §19.",
+      "evidence": "PLAN.md §2.3, §5.2, §6.4, §10.5, §19"
+    },
+    {
+      "date": "2026-11-01",
+      "title": "Arm diperluas 6 → 13, anggaran dinaikkan 100 → 120 GPU-jam",
+      "detail": "B dipecah B1/B2 + kontrol B3 (matched-unigram); A′ dan F menguji confound pengulangan prompt; G mengukur tradeoff critic AI. Seed bersarang dan pembagian tier supaya daya statistik tidak dibagi rata ke semua arm.",
+      "evidence": "PLAN.md §5.2–5.3, §6.5"
+    },
+    {
+      "date": "2026-11-01",
+      "title": "Sampling campuran & drift guru diformalkan",
+      "detail": "Vektor target per arm, sampler deterministik (dedup, cap 3 dokumen/prompt, kuota largest-remainder), serta audit mix_tvd/lex_tvd tiap generasi. Batch korpus guru dibuat sekali dan dibekukan untuk mencegah drift.",
+      "evidence": "PLAN.md §7.3, §4"
+    },
+    {
+      "date": "2026-11-01",
+      "title": "LangGraph: dari checkpointer menjadi runtime bercabang",
+      "detail": "Routing kondisional (validate/critic/gate), critic dua lapis dengan anggaran 10%, fork/time-travel dari checkpoint, graph_sha disimpan bersama hasil. Model & data tetap tidak bergantung pada framework.",
+      "evidence": "PLAN.md §8"
+    },
     {
       "date": "2026-11-01",
       "title": "PLAN.md: deliverable D10 (dashboard transparansi) ditambahkan",
@@ -377,6 +485,10 @@
     }
   ],
   "bias_notes": [
+    {
+      "title": "Collapse semu: kegagalan desain yang menyamar sebagai temuan",
+      "detail": "Risiko terbesar eksperimen ini bukan gagal menemukan apa pun, melainkan menemukan degradasi yang sebenarnya disebabkan artefak: tokenizer yang memburuk, prompt yang diulang, sampel yang bergeser, ambang yang terlalu ketat, atau guru yang berubah gaya antar batch. v0.2 menambahkan audit untuk masing-masing; setiap audit punya ambang tindakan yang dinyatakan di muka, sehingga 'temuan' tidak bisa lahir dari bug yang tidak diperiksa."
+    },
     {
       "title": "Dashboard ini dilaporkan oleh pihak yang dinilai",
       "detail": "Aku menulis rencana, menulis kode status, dan membangun halaman ini. Kalau aku ingin terlihat bagus, aku bisa memilih metrik yang menguntungkan. Penangkalnya: angka progres hanya boleh berubah bersamaan dengan bukti berkas yang bisa kamu buka di bagian 'Inventaris berkas'."

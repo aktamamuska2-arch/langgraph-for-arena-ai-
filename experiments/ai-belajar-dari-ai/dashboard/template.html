@@ -104,16 +104,26 @@
           <tr><td class="mono">RQ3</td><td>Apakah menyisakan sebagian data T0 menahan penurunan, dan berapa fraksi minimumnya?</td><td>Arm D1 (10%) vs D2 (25%) vs B (akumulasi)</td></tr>
           <tr><td class="mono">RQ4</td><td>Apakah model generasi lanjut mulai menghafal data latihnya?</td><td><code>extraction_rate</code>, <code>canary_leak</code></td></tr>
           <tr><td class="mono">RQ5</td><td>Apakah degradasi menyerang kemampuan rapuh lebih dulu (aritmetika, kode) sebelum bahasa sehari-hari?</td><td>Metrik per-domain</td></tr>
+          <tr><td class="mono">RQ6</td><td><strong>Baru v0.2.</strong> Berapa besar penurunan yang sebenarnya disebabkan pengulangan prompt yang sama, bukan rekursi model?</td><td>Arm A vs F vs A′ (dosis kebaruan)</td></tr>
+          <tr><td class="mono">RQ7</td><td><strong>Baru v0.2.</strong> Apakah collapse bertahan setelah pengaruh frekuensi kata dinetralkan?</td><td>Arm B3 <code>matched-unigram</code></td></tr>
+          <tr><td class="mono">RQ8</td><td><strong>Baru v0.2.</strong> Apakah <em>critic</em> deterministik menunda collapse, dan berapa biaya tokennya?</td><td>Arm E vs A + <code>filter_yield</code></td></tr>
+          <tr><td class="mono">RQ9</td><td><strong>Baru v0.2.</strong> Apakah homogenisasi gaya muncul tanpa penurunan kualitas terukur?</td><td><code>style_div</code>, <code>openers_entropy</code></td></tr>
         </tbody>
       </table>
 
       <h3>Definisi operasional “collapse” (dikunci sebelum run penuh)</h3>
-      <pre><code>anchor_ppl(M_k) &gt;= 1,5 x anchor_ppl(M_0)
-DAN
-(distinct_2 turun &gt;= 30% relatif M_0  ATAU  code_pass@1 turun &gt;= 50% relatif M_0)
+      <pre><code>Baseline: 5 seed M0 -&gt; mu0, sigma0 untuk anchor_bpb
 
-berlaku pada &gt;= 2 dari 3 seed</code></pre>
-      <p class="small muted">Definisi ini sengaja konservatif: butuh dua keluarga metrik turun bersamaan, karena perplexity rata-rata saja bisa tampak stabil sementara keragaman sudah hilang. Detail lengkap ada di <a href="#rencana">PLAN.md §10–11</a>.</p>
+DELTA = anchor_bpb(M_k) - mu0
+
+COLLAPSE bila:
+  DELTA &gt;= max(3*sigma0, 0,10 bpb)          # signifikan vs derau DAN cukup besar
+  DAN salah satu metrik cedera turun:
+      distinct_2 turun &gt;= max(3*sigma0_div, 25%)  ATAU
+      code_pass@1 turun &gt;= 10 poin persentase     ATAU
+      style_div turun &gt;= 3*sigma0_gaya
+  DAN terkonfirmasi pada &gt;= 2/3 seed</code></pre>
+      <p class="small muted">Revisi v0.2: ambang tidak lagi pengali bulat <code>1,5x</code> (peka variansi seed pada model 8 juta parameter), melainkan berbasis derau baseline yang diukur. Metrik utama juga berpindah ke <strong>bits-per-byte</strong> supaya tidak bergantung pada tokenizer. <code>1,5x</code> tetap dilaporkan sebagai pembanding, bukan penentu. Detail: <a href="#rencana">PLAN.md §10.5</a>.</p>
 
       <h3>Literatur yang jadi dasar</h3>
       <ul class="tight">{{LITERATURE}}</ul>
@@ -136,11 +146,15 @@ berlaku pada &gt;= 2 dari 3 seed</code></pre>
         <div class="arrow">→</div>
         <div class="node student"><span class="k">Langkah 5</span><b>Generate T1</b><div class="d"><em>Model siswa</em> menjawab prompt yang sama</div></div>
         <div class="arrow">→</div>
+        <div class="node freeze"><span class="k">v0.2</span><b>Critic</b><div class="d">Filter deterministik sebelum training</div></div>
+<div class="arrow">→</div>
         <div class="node student"><span class="k">Langkah 6</span><b>Latih M1</b><div class="d">Komposisi sesuai arm</div></div>
         <div class="arrow">→</div>
         <div class="node"><span class="k">Langkah 7</span><b>… M6</b><div class="d">Sampai 6 generasi</div></div>
         <div class="arrow">→</div>
         <div class="node freeze"><span class="k">Langkah 8</span><b>Evaluasi</b><div class="d">Semua M0–M6 pada test anchor beku</div></div>
+<div class="arrow">→</div>
+        <div class="node freeze"><span class="k">v0.2</span><b>Gate</b><div class="d">Lanjut / stop / fork / tanya manusia</div></div>
       </div>
       <div class="legend">
         <span><i style="background:#3c4a2a"></i>ditulis AI guru</span>
@@ -162,16 +176,24 @@ berlaku pada &gt;= 2 dari 3 seed</code></pre>
         </tbody>
       </table>
 
-      <h3>Komposisi korpus per arm</h3>
+      <h3>13 arm, 3 tier</h3>
+      <p class="small muted">13 arm, 32 chain, seed bersarang (Tier 2 memakai dua seed pertama Tier 1). Tier 1 konfirmatori (3 seed), Tier 2 sekunder (2 seed), Tier 3 eksploratif (2 seed, 4 generasi).</p>
       <table>
-        <thead><tr><th>Arm</th><th>Data generasi ke-<em>k</em></th><th>Yang diuji</th></tr></thead>
+        <thead><tr><th>Arm</th><th>Data generasi ke-<em>k</em></th><th>Peran</th></tr></thead>
         <tbody>
-          <tr><td class="mono">A · replace</td><td>100% keluaran M(k−1)</td><td>Replikasi protokol collapse klasik</td></tr>
-          <tr><td class="mono">B · accumulate</td><td>T0 + seluruh T1..T(k−1), sampel ukuran tetap</td><td>Apakah akumulasi menahan collapse</td></tr>
-          <tr><td class="mono">C · fixed-teacher</td><td>100% keluaran AI guru (aku)</td><td>Batas atas — pembanding agar penurunan tidak salah disebut akibat “AI”</td></tr>
+          <tr><td class="mono">A · replace-static</td><td>100% keluaran M(k−1), prompt statis</td><td>Baseline replikasi</td></tr>
+          <tr><td class="mono">A′ · replace-dynamic</td><td>100% keluaran M(k−1), intent prompt baru tiap generasi</td><td>Memisahkan efek pengulangan prompt dari rekursi (RQ6)</td></tr>
+          <tr><td class="mono">B1 · accumulate-proportional</td><td>T0 + semua generasi, bobot sama → porsi T0 menyusut 1/(k+1)</td><td>Rezim <em>fixed compute</em> yang realistis</td></tr>
+          <tr><td class="mono">B2 · accumulate-anchor25</td><td>Akumulasi, tapi T0 dipatok 25%</td><td>Memisahkan akumulasi dari dilusi anchor</td></tr>
+          <tr><td class="mono">C1 · teacher-regen</td><td>Keluaran guru, diregenerasi tiap generasi</td><td>Kontrol distilasi (bukan batas atas absolut)</td></tr>
+          <tr><td class="mono">C2 · teacher-frozen-diverse</td><td>Keluaran guru dari satu batch beku bergaya beragam</td><td>Batas atas kondisional tanpa derau regenerasi</td></tr>
+          <tr><td class="mono">C3 · multi-teacher</td><td>Dua distribusi guru digabung</td><td>Apakah keragaman sumber yang melindungi</td></tr>
           <tr><td class="mono">D1 · anchor-10</td><td>90% sintetis + 10% T0</td><td>Fraksi anchor minimum</td></tr>
           <tr><td class="mono">D2 · anchor-25</td><td>75% sintetis + 25% T0</td><td>Fraksi anchor minimum</td></tr>
-          <tr><td class="mono">E · verified-only</td><td>Sintetis yang lolos checker deterministik</td><td>Efek verifikasi</td></tr>
+          <tr><td class="mono">E · verified-critic</td><td>Sintetis yang lolos critic deterministik</td><td>Efek penyaringan data</td></tr>
+          <tr><td class="mono">F · paraphrase</td><td>Seperti A, tapi prompt diparafrase tiap generasi</td><td>Dosis kebaruan prompt</td></tr>
+          <tr><td class="mono">B3 · matched-unigram</td><td>Seperti B1, dengan pembobotan ulang agar frekuensi kata ≈ T0</td><td>Uji: collapse atau cuma pergeseran leksikal?</td></tr>
+          <tr><td class="mono">G · ai-critic</td><td>Sintetis yang dinilai layak oleh AI critic</td><td>Ablasi: menaikkan kualitas atau justru menghomogenkan?</td></tr>
         </tbody>
       </table>
       <p class="small muted">Anggaran adil: setiap model melihat jumlah token latih yang sama, berapa pun besar pool datanya — kalau tidak, arm akumulasi menang hanya karena makan lebih banyak data.</p>
@@ -231,6 +253,15 @@ berlaku pada &gt;= 2 dari 3 seed</code></pre>
         Rencana ini <strong>dinamis</strong> — versinya akan naik setiap kali desain berubah, dan setiap perubahan dicatat di <a href="#log">Riwayat</a>.
       </p>
 
+      <div class="callout" style="margin:0 0 22px">
+        <strong>Apa yang berubah di v0.2.</strong> Tiga celah yang bisa memunculkan <em>collapse semu</em> ditutup:
+        (1) Arm C dipecah jadi C1/C2/C3 dan klaim “batas atas” dicabut;
+        (2) metrik utama pindah ke <em>bits-per-byte</em> + audit tokenizer A1–A3;
+        (3) ambang collapse berbasis σ dari 5 seed M0, bukan pengali bulat.
+        Ditambah: sampling B1/B2/B3 dengan audit campuran, dosis kebaruan prompt (L0/L1/L2), dan orkestrasi LangGraph dengan routing + critic.
+        Alasan tiap keputusan, termasuk usulan yang <em>ditolak</em>, ada di <a href="#rencana">PLAN.md §19 Riwayat</a>.
+      </div>
+
       <nav class="plantoc" aria-label="Daftar isi rencana">{{PLAN_TOC}}</nav>
       <article class="prose">{{PLAN_HTML}}</article>
     </section>
@@ -257,6 +288,7 @@ berlaku pada &gt;= 2 dari 3 seed</code></pre>
           <tr><td>Jawaban aritmetika</td><td>Program (eksekusi ulang)</td><td>Tidak perlu pendapat siapa pun</td></tr>
           <tr><td>Kode yang dihasilkan</td><td>Unit test di sandbox tanpa jaringan</td><td>Benar/salah bisa dieksekusi</td></tr>
           <tr><td>Kepatuhan format</td><td>Skema &amp; parser</td><td>Deterministik</td></tr>
+          <tr><td>Filter data sintetis (v0.2)</td><td>Program: aturan + checker</td><td>Filter deterministik dulu; penilai AI hanya dipakai di arm G <em>untuk diukur efeknya</em></td></tr>
           <tr><td>Kualitas narasi</td><td>Metrik otomatis + aku</td><td><strong>Bias:</strong> tidak ada penilai manusia, dan aku pihak yang berkepentingan</td></tr>
           <tr><td>Kualitas korpus T0</td><td>Aku (sebagai penulis)</td><td><strong>Bias:</strong> menilai pekerjaan sendiri; penangkalnya hanya transparansi berkas</td></tr>
           <tr><td>Status progres</td><td>Aku, lewat status.json</td><td><strong>Bias:</strong> laporan diri; penangkalnya inventaris berkas + hash</td></tr>
