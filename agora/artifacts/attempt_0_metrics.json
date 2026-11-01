@@ -1,38 +1,55 @@
 {
   "attempt": 0,
-  "passed": true,
+  "passed": false,
   "metrics": {
-    "shock_recovery": 0.825964396,
-    "shock_dip": 0.780440925,
-    "abs_growth_tail": 0.001484643,
-    "cv_drift": 0.007380678,
+    "shock_recovery": 0.825285672,
+    "shock_dip": 0.875837065,
+    "abs_growth_tail": 0.001447445,
+    "cv_drift": 0.006187406,
     "pop_drawdown": 0.0,
-    "field_lag1_corr": 0.968832425,
-    "field_peak_share": 0.002159053,
+    "field_lag1_corr": 0.9688846,
+    "field_peak_share": 0.00215637,
     "block_mass_error": 0.0,
     "hatch_cells": 292.0,
-    "giant_component_share": 0.9375,
-    "edges_per_node": 1.625,
+    "giant_component_share": 0.5,
+    "edges_per_node": 1.5625,
     "orphan_fraction": 0.0625,
     "mean_degree": 3.375,
+    "producers": 144.0,
+    "collectors": 32.0,
+    "retailers": 48.0,
+    "syndicates_active": 2.0,
+    "farm_gate_price": 0.557790434,
+    "wholesale_price": 0.711849806,
+    "retail_price": 0.900144594,
+    "marketing_margin": 0.380273468,
+    "chain_loss_share": 0.035511958,
+    "syndicate_take_share": 0.006376697,
+    "hhi_mean": 0.523138799,
+    "vertical_share": 1.0,
+    "max_dependency": 0.564952635,
+    "stockout_rate": 0.030922306,
+    "cpi_dispersion": 0.094390411,
+    "gross_output": 171.886385703,
+    "traded_value": 128326.803095529,
     "mass_balance_error": 0.0,
     "alive_fraction": 1.0,
     "visual_contract_score": 1.0,
-    "duration_seconds": 2.02607269
+    "duration_seconds": 3.712531561
   },
   "detail": {
     "shock": {
-      "baseline_flow": 630.873573661321,
-      "mid_flow": 492.35955561223864,
-      "recovery_flow": 521.0791101846448
+      "baseline_flow": 586.511052884423,
+      "mid_flow": 513.6881193141448,
+      "recovery_flow": 484.0391686979892
     },
     "visual": {
-      "pixel_std": 34.343205860778404,
+      "pixel_std": 34.864329422597415,
       "terrain_classes": 7,
-      "pop_mean_before": 16.427734375,
-      "pop_mean_after": 17.26318359375,
+      "pop_mean_before": 16.519205729166668,
+      "pop_mean_after": 17.28466796875,
       "hatch_cells": 292,
-      "flows": 26,
+      "flows": 25,
       "pulses": 480,
       "checks": {
         "not_blank": true,
@@ -49,7 +66,7 @@
     {
       "id": "C-GRID",
       "metric": "abs_growth_tail",
-      "observed": 0.0014846429462628654,
+      "observed": 0.0014474448856080047,
       "threshold": 0.0045,
       "comparator": "<=",
       "passed": true
@@ -57,7 +74,7 @@
     {
       "id": "C-COHER",
       "metric": "field_lag1_corr",
-      "observed": 0.9688324249138973,
+      "observed": 0.9688846002888527,
       "threshold": 0.55,
       "comparator": ">=",
       "passed": true
@@ -65,15 +82,15 @@
     {
       "id": "N-COMP",
       "metric": "giant_component_share",
-      "observed": 0.9375,
+      "observed": 0.5,
       "threshold": 0.85,
       "comparator": ">=",
-      "passed": true
+      "passed": false
     },
     {
       "id": "N-EDGE",
       "metric": "edges_per_node",
-      "observed": 1.625,
+      "observed": 1.5625,
       "threshold": 0.9,
       "comparator": ">=",
       "passed": true
@@ -81,7 +98,7 @@
     {
       "id": "N-MASS",
       "metric": "mass_balance_error",
-      "observed": 3.2915041439424273e-14,
+      "observed": 5.5761019137110814e-15,
       "threshold": 1e-09,
       "comparator": "<=",
       "passed": true
@@ -97,9 +114,25 @@
     {
       "id": "R-SHOCK",
       "metric": "shock_recovery",
-      "observed": 0.825964395941526,
+      "observed": 0.8252856724822427,
       "threshold": 0.6,
       "comparator": ">=",
+      "passed": true
+    },
+    {
+      "id": "M-MARGIN",
+      "metric": "marketing_margin",
+      "observed": 0.3802734682699628,
+      "threshold": 0.55,
+      "comparator": "<=",
+      "passed": true
+    },
+    {
+      "id": "S-PRED",
+      "metric": "syndicate_take_share",
+      "observed": 0.0063766971146764695,
+      "threshold": 0.1,
+      "comparator": "<=",
       "passed": true
     },
     {

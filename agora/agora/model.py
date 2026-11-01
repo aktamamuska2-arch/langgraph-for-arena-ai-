@@ -35,6 +35,7 @@ from .schemas import (
     ShockSpec,
 )
 from .settlement import Settlement, ShockEffect, settlement_name
+from .supply import SupplyChain
 from .world import WorldData, astar_path, generate_world
 
 PULSE_TTL = 13
@@ -76,6 +77,11 @@ class AgoraModel(mesa.Model):
             self.grid.place_agent(agent, (int(x), int(y)))
             self.settlements[sid] = agent
 
+        # the layered economy on top of the lattice: many producers, pengepul,
+        # penjual and the syndicates that appear when the chain breaks down
+        self.supply = SupplyChain(self)
+        self.supply.seed_inventories()
+
         self.tick_count = 0
         self.pulses: deque[dict[str, Any]] = deque(maxlen=MAX_PULSES)
         self.history: list[dict[str, float]] = []
@@ -87,9 +93,13 @@ class AgoraModel(mesa.Model):
         # audited externally (see metrics.mass_balance)
         self.ledger = {
             name: np.zeros(len(RESOURCES), dtype=np.float64)
-            for name in ("produced", "consumed", "imported", "exported", "spoiled")
+            for name in ("produced", "consumed", "imported", "exported", "spoiled", "diverted")
         }
-        self.initial_stocks = sum(float(s.stocks.sum()) for s in self.settlements.values())
+        # opening stock covers every shelf in the world: granaries *and* the
+        # inventories the chain was primed with, or the ledger would open short
+        self.initial_stocks = sum(float(s.total_stocks().sum()) for s in self.settlements.values())
+        self.initial_stocks += sum(float(c.inventory.sum()) for c in self.supply.collectors.values())
+        self.initial_stocks += sum(float(r.inventory.sum()) for r in self.supply.retailers.values())
 
         self._path_cache: dict[tuple[tuple[int, int], tuple[int, int]], tuple[int, list, float]] = {}
         self.scheduled: list[dict[str, Any]] = [self._shock_record(s) for s in spec.shocks]
@@ -223,9 +233,14 @@ class AgoraModel(mesa.Model):
         return effect
 
     def freight_multiplier(self, edge: TradeEdge) -> float:
-        """Embargoes raise the effective freight rate on affected routes."""
+        """Embargoes and syndicate predation raise the effective freight rate."""
 
         multiplier = 1.0
+        piracy = float(self.spec.supply.piracy)
+        for sid in (edge.src, edge.dst):
+            syndicate = self.supply.syndicates.get(sid)
+            if syndicate is not None and syndicate.power > 0.0:
+                multiplier *= 1.0 + piracy * float(syndicate.power)
         for record in self.active:
             if record["kind"] != "embargo":
                 continue
@@ -366,6 +381,9 @@ class AgoraModel(mesa.Model):
                 continue
             effect = self.shock_effect_at(settlement.x, settlement.y)
             produced = settlement.produce(self.econ, effect)
+            landed = self.supply.route(settlement, produced)
+            settlement.add_stocks(landed)
+            self.supply.update_predation(settlement, float(produced.sum()), float(landed.sum()))
             settlement.consume(self.econ, effect)
             settlement.spoil(self.econ)
             settlement.update_population(self.econ, effect)
@@ -570,6 +588,8 @@ class AgoraModel(mesa.Model):
             "flows": flows,
             "pulses": pulses,
             "network": self.network_summary(),
+            "macro": self.supply.macro(),
+            "agents": self.supply.snapshot(),
             "history": self.history[-160:],
             "shocks": [ShockEvent(**{k: r[k] for k in ShockEvent.model_fields}).model_dump() for r in self.active],
             "events": list(self.event_log)[-12:],

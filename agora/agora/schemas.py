@@ -232,6 +232,68 @@ class ShockSpec(Frozen):
     description: str = ""
 
 
+class SupplySpec(Frozen):
+    """The vertical chain: producers -> pengepul -> penjual -> households.
+
+    Every margin is expressed as a *share of the retail price* rather than as an
+    absolute spread. That keeps the consumer price identical to the scarcity
+    price the settlement already computes, so the demographic and labour
+    dynamics are untouched while the value chain below them becomes explicit.
+    """
+
+    producers_per_settlement: int = Field(default=10, ge=1, le=40)
+    collectors_per_settlement: int = Field(default=2, ge=0, le=6)
+    retailers_per_settlement: int = Field(default=3, ge=0, le=8)
+
+    margin_gate: float = Field(default=0.18, ge=0.0, le=0.6)
+    margin_wholesale: float = Field(default=0.12, ge=0.0, le=0.6)
+    margin_retail: float = Field(default=0.10, ge=0.0, le=0.6)
+
+    loss_gate: float = Field(default=0.010, ge=0.0, le=0.2)
+    loss_handling: float = Field(default=0.015, ge=0.0, le=0.2)
+    loss_retail: float = Field(default=0.010, ge=0.0, le=0.2)
+
+    collector_throughput_mult: float = Field(default=2.5, ge=1.0, le=8.0)
+    retailer_outlet_mult: float = Field(default=2.0, ge=1.0, le=8.0)
+    collector_ship_rate: float = Field(default=0.45, gt=0.0, le=1.0)
+
+    # ownership: a power-law draw so one firm usually dominates a resource node
+    ownership_tail: float = Field(default=1.7, ge=0.0, le=4.0)
+    vertical_threshold: float = Field(default=0.28, ge=0.0, le=1.0)
+    vertical_wedge: float = Field(default=0.22, ge=0.0, le=0.8)
+    vertical_withhold: float = Field(default=0.12, ge=0.0, le=0.5)
+
+    # predation
+    syndicate_entry: float = Field(default=0.075, ge=0.0, le=0.5)
+    syndicate_exit: float = Field(default=0.055, ge=0.0, le=0.5)
+    syndicate_cap: float = Field(default=0.85, ge=0.0, le=1.0)
+    syndicate_threshold: float = Field(default=0.55, ge=0.0, le=2.0)
+    syndicate_diversion: float = Field(default=0.20, ge=0.0, le=0.8)
+    syndicate_fee: float = Field(default=0.15, ge=0.0, le=0.8)
+    piracy: float = Field(default=0.55, ge=0.0, le=2.0)
+    fragility_penalty: float = Field(default=0.55, ge=0.0, le=1.0)
+
+    @property
+    def chain_efficiency(self) -> float:
+        """Nominal share of gross output that reaches a household.
+
+        Used by the carrying capacity so that the land's food ceiling is the
+        ceiling *after* the chain has taken its cut - the physical loss and the
+        demographic ceiling have to agree or the logistic settles against a
+        target the chain can never deliver.
+        """
+
+        return (1.0 - self.loss_gate) * (1.0 - self.loss_handling) * (1.0 - self.loss_retail)
+
+    @property
+    def marketing_margin(self) -> float:
+        """``1 - farm_gate/retail`` at the nominal margins."""
+
+        return 1.0 - (
+            (1.0 - self.margin_retail) * (1.0 - self.margin_wholesale) * (1.0 - self.margin_gate)
+        )
+
+
 class ExperimentSpec(Frozen):
     """A complete runnable experiment: geography + economy + scripted shocks."""
 
@@ -239,6 +301,7 @@ class ExperimentSpec(Frozen):
     title: str = "Emergent spatial economy"
     world: WorldSpec = Field(default_factory=WorldSpec)
     economy: EconomySpec = Field(default_factory=EconomySpec)
+    supply: SupplySpec = Field(default_factory=SupplySpec)
     horizon: int = Field(default=420, ge=20, le=5000)
     settle_ticks: int = Field(default=40, ge=1, le=500)
     record_every: int = Field(default=5, ge=1, le=100)
@@ -363,6 +426,8 @@ class ValidationReport(BaseModel):
         "mass_imbalance",
         "visual_contract",
         "instability",
+        "supply_chain",
+        "syndication",
     ] = "none"
     results: list[GateResult] = Field(default_factory=list)
     metrics: dict[str, float] = Field(default_factory=dict)
@@ -426,6 +491,35 @@ class ShockEvent(BaseModel):
     magnitude: float
     start_tick: int
     end_tick: int
+
+
+class MacroSnapshot(BaseModel):
+    """The macroscopic observables of the layered economy.
+
+    This is what makes the model *macro* rather than just multi-agent: household
+    prices, the margin stack, concentration, and the share of value that never
+    reaches a household because it was lost or taken.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    producers: int
+    collectors: int
+    retailers: int
+    syndicates_active: int
+    farm_gate_price: float
+    wholesale_price: float
+    retail_price: float
+    marketing_margin: float
+    chain_loss_share: float
+    syndicate_take_share: float
+    hhi_mean: float
+    vertical_share: float
+    max_dependency: float
+    stockout_rate: float
+    cpi_dispersion: float
+    gross_output: float
+    traded_value: float
 
 
 class SettlementSnapshot(BaseModel):

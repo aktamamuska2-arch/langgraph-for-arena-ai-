@@ -254,12 +254,19 @@ class MarketEngine:
                     served |= edge.weights >= econ.edge_min_weight
             if served.all():
                 continue
+            inbound = sum(
+                1 for (_src, dst) in model.edges if dst == buyer.sid
+            )
             initiated = 0
             # staple food is the survival-critical channel; wood and ore are
             # sourced opportunistically by the seller pass. Restricting the
             # initiative keeps the safety net without letting it saturate the
-            # graph and drown out the gravity kernel's distance decay.
-            for resource in (0,):
+            # graph and drown out the gravity kernel's distance decay. The one
+            # exception is an outright orphan: a settlement with no supplier at
+            # all will chase whatever it lacks most, or it stays outside the
+            # economy for the rest of the run purely because nobody sells to it.
+            wanted = (0,) if inbound else tuple(int(r) for r in np.argsort(-deficit)[:1])
+            for resource in wanted:
                 if served[resource] or initiated >= econ.buyer_initiative:
                     continue
                 options: list[tuple[float, int, int]] = []

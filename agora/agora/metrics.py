@@ -107,7 +107,12 @@ def field_metrics(model: AgoraModel) -> dict[str, float]:
 def mass_balance(model: AgoraModel) -> float:
     """Relative error of the physical ledger identity."""
 
-    final = sum(float(s.stocks.sum()) for s in model.settlements.values())
+    final = sum(float(s.total_stocks().sum()) for s in model.settlements.values())
+    supply = getattr(model, "supply", None)
+    if supply is not None:
+        # inventories held by pengepul and penjual are part of the world's stock
+        final += sum(float(c.inventory.sum()) for c in supply.collectors.values())
+        final += sum(float(r.inventory.sum()) for r in supply.retailers.values())
     ledger = model.ledger
     expected = (
         model.initial_stocks
@@ -116,6 +121,7 @@ def mass_balance(model: AgoraModel) -> float:
         + ledger["imported"].sum()
         - ledger["exported"].sum()
         - ledger["spoiled"].sum()
+        - ledger["diverted"].sum()
     )
     scale = max(abs(expected), abs(model.initial_stocks), 1.0)
     return float(abs(final - expected) / scale)
@@ -260,6 +266,7 @@ def run_study(spec: ExperimentSpec, with_shock: bool = True) -> Study:
             "orphan_fraction": network_metrics(model)["orphan_fraction"],
         }
     )
+    metrics.update(model.supply.macro())
     metrics["mass_balance_error"] = mass_balance(model)
     metrics["alive_fraction"] = float(
         sum(1 for s in model.settlements.values() if s.alive) / max(len(model.settlements), 1)
@@ -374,6 +381,20 @@ DEFAULT_GATES: list[Gate] = [
         description="trade volume must recover to 60% of its pre-shock level",
     ),
     Gate(
+        id="M-MARGIN",
+        metric="marketing_margin",
+        comparator="<=",
+        threshold=0.55,
+        description="the pengepul/penjual layer must not capture more than 55% of the retail price",
+    ),
+    Gate(
+        id="S-PRED",
+        metric="syndicate_take_share",
+        comparator="<=",
+        threshold=0.10,
+        description="predation must stay marginal in a world whose chain is not broken",
+    ),
+    Gate(
         id="C-STABLE",
         metric="pop_drawdown",
         comparator="<=",
@@ -383,6 +404,8 @@ DEFAULT_GATES: list[Gate] = [
 ]
 
 FAILURE_BY_GATE = {
+    "M-MARGIN": "supply_chain",
+    "S-PRED": "syndication",
     "C-GRID": "non_convergence",
     "C-COHER": "non_convergence",
     "C-STABLE": "instability",

@@ -29,6 +29,14 @@ CAPTIONS = {
     460: "t=460  mature network, paved routes",
 }
 
+SHOCK_TICKS = (200, 240, 270, 320)
+SHOCK_CAPTIONS = {
+    200: "t=200  calm: no organisation, no arcs",
+    240: "t=240  drought + embargo: stockout, then entry",
+    270: "t=270  the rackets widen the margin",
+    320: "t=320  the chain recovers, the rackets linger",
+}
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
@@ -45,6 +53,32 @@ def main(argv: list[str] | None = None) -> int:
             model.step()
         frames.append((tick, render_frame(model, scale=5, hud=False)))
 
+    _filmstrip(frames, CAPTIONS, Path(args.out))
+
+    # the second strip is the same world with a broken chain: it exists to show
+    # that the red arcs are not decoration but a response to a measured shock
+    stressed = AgoraModel(spec)
+    for _ in range(200):
+        stressed.step()
+    exporter = max(
+        (s for s in stressed.settlements.values() if s.alive), key=lambda s: float(s.endowment[0])
+    )
+    frames = [(200, render_frame(stressed, scale=5, hud=False))]
+    stressed.inject_shock(
+        kind="drought", x=exporter.x, y=exporter.y, radius=26.0, magnitude=0.95, duration=90
+    )
+    stressed.inject_shock(
+        kind="embargo", x=exporter.x, y=exporter.y, radius=30.0, magnitude=0.9, duration=70
+    )
+    for tick in SHOCK_TICKS[1:]:
+        while stressed.tick_count < tick:
+            stressed.step()
+        frames.append((tick, render_frame(stressed, scale=5, hud=False)))
+    _filmstrip(frames, SHOCK_CAPTIONS, Path(args.out).with_name("chain.png"))
+    return 0
+
+
+def _filmstrip(frames, captions, out: Path) -> None:
     width, height = frames[0][1].size
     pad = 10
     sheet = Image.new("RGB", (width * 2 + pad * 3, height * 2 + pad * 3 + 26 * 2), (6, 11, 16))
@@ -54,13 +88,10 @@ def main(argv: list[str] | None = None) -> int:
         x = pad + col * (width + pad)
         y = pad + row * (height + pad + 26)
         sheet.paste(image, (x, y))
-        draw.text((x + 4, y + height + 6), CAPTIONS[tick], fill=(150, 190, 200))
-
-    out = Path(args.out)
+        draw.text((x + 4, y + height + 6), captions[tick], fill=(150, 190, 200))
     out.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(out)
     print(f"wrote {out} ({sheet.size[0]}x{sheet.size[1]})")
-    return 0
 
 
 if __name__ == "__main__":

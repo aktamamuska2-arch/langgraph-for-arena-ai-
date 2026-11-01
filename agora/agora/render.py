@@ -123,9 +123,11 @@ def render_frame(model: AgoraModel, scale: int = 9, hud: bool = True) -> Image.I
     image = Image.composite(hatch_layer, image, hatch_alpha)
 
     draw = ImageDraw.Draw(image, "RGBA")
+    _draw_agents(draw, model, scale)
     _draw_pulses(draw, model, scale)
     _draw_flows(draw, model, scale)
     _draw_settlements(draw, model, scale)
+    _draw_syndicates(draw, model, scale)
     if hud:
         _draw_hud(draw, model, image.size)
     return image
@@ -168,6 +170,74 @@ def _draw_pulses(draw: ImageDraw.ImageDraw, model: AgoraModel, scale: int) -> No
         draw.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], outline=(*colour, alpha), width=1)
 
 
+def _draw_agents(draw: ImageDraw.ImageDraw, model: AgoraModel, scale: int) -> None:
+    """The layered economy: producer ticks, the pengepul ring, the syndicate arc.
+
+    Drawn under the settlement markers so a node still reads as a node: the
+    producer count is what tells you a settlement is really a cluster of firms,
+    and the red arc is the only thing on the map that appears *because* the
+    chain is broken.
+    """
+
+    supply = getattr(model, "supply", None)
+    if supply is None:
+        return
+    firms = supply.firms
+    for (sid, resource), node in supply.by_node.items():
+        settlement = model.settlements.get(sid)
+        if settlement is None or not settlement.alive:
+            continue
+        cx = settlement.x * scale + scale / 2
+        cy = settlement.y * scale + scale / 2
+        for fid in node:
+            firm = firms[fid]
+            angle = resource * 2.1 + firm.share * 6.4
+            radius = (0.62 + 0.5 * firm.share) * scale
+            px = cx + math.cos(angle) * radius
+            py = cy + math.sin(angle) * radius
+            size = (3 if firm.vertical else 1.6) * max(scale / 9.0, 0.6)
+            colour = (255, 178, 74, 240) if firm.vertical else (255, 196, 92, 110)
+            draw.rectangle([px - size, py - size, px + size, py + size], fill=colour)
+    for retailer in supply.retailers.values():
+        settlement = model.settlements.get(retailer.sid)
+        if settlement is None or not settlement.alive:
+            continue
+        cx = settlement.x * scale + scale / 2
+        cy = settlement.y * scale + scale / 2
+        radius = 0.95 * scale
+        draw.ellipse(
+            [cx - radius, cy - radius, cx + radius, cy + radius],
+            outline=(127, 211, 255, 90),
+            width=max(1, scale // 9),
+        )
+
+def _draw_syndicates(draw: ImageDraw.ImageDraw, model: AgoraModel, scale: int) -> None:
+    """Active rackets, drawn on top: the one layer that exists because of a failure."""
+
+    supply = getattr(model, "supply", None)
+    if supply is None:
+        return
+    for syndicate in supply.syndicates.values():
+        if not syndicate.active:
+            continue
+        settlement = model.settlements.get(syndicate.sid)
+        if settlement is None or not settlement.alive:
+            continue
+        cx = settlement.x * scale + scale / 2
+        cy = settlement.y * scale + scale / 2
+        radius = (1.0 + 1.4 * syndicate.power) * scale
+        alpha = int(140 + 115 * min(syndicate.power, 1.0))
+        width = max(3, int(scale * 0.22))
+        for start_angle, end_angle in ((20, 120), (200, 300)):
+            draw.arc(
+                [cx - radius, cy - radius, cx + radius, cy + radius],
+                start=start_angle,
+                end=end_angle,
+                fill=(255, 72, 72, alpha),
+                width=width,
+            )
+
+
 def _draw_settlements(draw: ImageDraw.ImageDraw, model: AgoraModel, scale: int) -> None:
     alive = [s for s in model.settlements.values() if s.alive]
     peak = max((s.population for s in alive), default=1.0)
@@ -208,6 +278,8 @@ def _draw_hud(draw: ImageDraw.ImageDraw, model: AgoraModel, size: tuple[int, int
         f"LINKS {int(summary['nodes']) and int(summary['edges']):>3d}",
         f"TRADE {summary['total_flow']:8.1f}",
         f"ROADS {int(summary['roads_upgraded']):>3d}",
+        f"PROD {len(getattr(model, 'supply', None).firms if getattr(model, 'supply', None) else []):>4d}",
+        f"SYND {sum(1 for z in model.supply.syndicates.values() if z.active):>4d}",
     ]
     pad = 10
     width = 128

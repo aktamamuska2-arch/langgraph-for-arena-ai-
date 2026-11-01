@@ -11,19 +11,26 @@ goods — those are all outputs.
 
 The project is also a **build pipeline**: a LangGraph state machine
 (`Planner → Spatial‑Economic Model Synthesizer → Sandbox Visual Tester →
-Self‑Correction`) compiles the world, measures it against eight gates, and
+Self‑Correction`) compiles the world, measures it against ten gates, and
 repairs its own mis‑tuning before signing off. The loop starts from a
 deliberately parsimonious hypothesis, discovers it is too tight, and widens it:
 
 ```
 [planner]      world 96x64 seed 20261101 -> 16 sites, land 42.55%, critical radius 9.85
 [synthesizer]  attempt 0: compiled spec (radius=9.85, partners=8, growth=0.0160)
-[tester]       attempt 0: FAIL (7/8 gates) failing=['N-COMP']
-[reflector]    attempt 0 failed as network_fragmentation -> 3 patches
-[synthesizer]  attempt 1: compiled spec (radius=17.73, partners=10)
-[tester]       attempt 1: PASS (8/8 gates)
+[tester]       attempt 0: FAIL (9/10 gates) failing=['N-COMP']
+[reflector]    attempt 0 failed as network_fragmentation -> 1 patch
+[synthesizer]  attempt 1: compiled spec (radius=17.73, partners=8)
+[tester]       attempt 1: PASS (10/10 gates)
 [finalizer]    verdict PASS_WITH_RETRIES after 2 attempt(s)
 ```
+
+Underneath the lattice sits a **layered economy**: every settlement's endowment is
+owned by a power‑law population of *producers*, moved by *pengepul* (collectors),
+sold by *penjual* (retailers), and — when the chain breaks — taxed by *sindikat*
+who are not scripted but **emerge from the stress index and disappear when it
+falls**. Vertically integrated producers hold back supply from the intermediaries
+that depend on them, and the marketing margin widens as a measured consequence.
 
 ![Atlas: the trade network emerging over 460 ticks](docs/atlas.png)
 
@@ -35,13 +42,14 @@ deliberately parsimonious hypothesis, discovers it is too tight, and widens it:
 2. [Quickstart](#quickstart)
 3. [The interactive console](#the-interactive-console)
 4. [The model, mathematically](#the-model-mathematically)
-5. [The build pipeline](#the-build-pipeline)
-6. [Gates: what "correct" means here](#gates-what-correct-means-here)
-7. [Self‑correction and the fault matrix](#self-correction-and-the-fault-matrix)
-8. [HTTP API](#http-api)
-9. [Tests](#tests)
-10. [Repository layout](#repository-layout)
-11. [Design notes, audit findings and limitations](#design-notes-audit-findings-and-limitations)
+5. [The layered economy](#the-layered-economy)
+6. [The build pipeline](#the-build-pipeline)
+7. [Gates: what "correct" means here](#gates-what-correct-means-here)
+8. [Self‑correction and the fault matrix](#self-correction-and-the-fault-matrix)
+9. [HTTP API](#http-api)
+10. [Tests](#tests)
+11. [Repository layout](#repository-layout)
+12. [Design notes, audit findings and limitations](#design-notes-audit-findings-and-limitations)
 
 ---
 
@@ -60,6 +68,11 @@ deliberately parsimonious hypothesis, discovers it is too tight, and widens it:
 | Pulses | `model._pulse` | production, trade, road, shock, discovery and scarcity events ring the map |
 | Flow lines | `frame.flows` + canvas | animated dashes follow the actual A\* path, coloured by the dominant resource |
 | Shocks | `model.inject_shock` | seven kinds, injectable live from the browser |
+| Producer firms | `supply.Firm` | each resource node is split among a power‑law tail of owners; HHI decides vertical integration |
+| Pengepul (collectors) | `supply.Collector` | buffers with throughput and an inventory; their dependency on one producer is measured, not assumed |
+| Penjual (retailers) | `supply.Retailer` | the last hop before the household, with its own outlet and stockout |
+| Sindikat | `supply.Syndicate` | rent extraction that *appears* under stress: diverts flow as a booked loss, taxes intermediaries, raises freight |
+| Marketing margin | `supply.macro` | farm‑gate → wholesale → retail, with a wedge that widens under concentration |
 
 ---
 
@@ -105,7 +118,8 @@ pin the inspector.
 
 **The inspector** — population against capacity, wealth, partner count, stock
 bars against the settlement's target buffer, local prices, and its labour split.
-This is the whole local view: a settlement can only see this much.
+This is the whole local view: a settlement can only see this much — which is the
+point, since the chain above it is not in anyone's field of view.
 
 **Inject shock** — pick one of seven shocks, then click the map to place it (or
 tick *world‑wide*). `esc` cancels. The shock lands on the simulation
@@ -120,6 +134,19 @@ immediately and you can watch the network reorganise:
 | `plague` | added mortality |
 | `embargo` | freight on affected routes multiplied by up to 4× |
 | `road_collapse` | wipes the road network inside the radius |
+
+**The agents on the map** — producers are drawn as amber ticks orbiting their
+settlement (larger and brighter when the firm is vertically integrated), the
+pengepul/penjual layer as a pale ring, and an active **sindikat** as a red arc
+whose thickness follows its power. The arc is the only thing on the map that
+appears *because* the chain is broken, so a shock first shows up as stockout, then
+as arcs.
+
+**The value‑chain panel** — six KPIs (producers, pengepul, penjual, active
+sindikat, marketing margin, chain loss) and four measurement rows: vertical
+share, maximum dependency of a pengepul on one producer, syndicate take share
+and stockout rate. It reads the same `macro` dictionary the gates read, so the
+console cannot flatter the model.
 
 **Live KPIs** — population, trade links, cumulative volume moved, road upgrades,
 connected core share, mean degree, a population/betweenness sparkline and an
@@ -462,6 +489,181 @@ silently producing a ten-times-inflated friction coefficient.
 
 ---
 
+## The layered economy
+
+Everything above is the *spatial* model: sixteen settlements that trade because
+their endowments differ. That is macroscopic in space but microscopic in
+structure — one aggregate "producer" per settlement, six different actors frozen
+into a scalar. The economy underneath is now a chain of firms:
+
+```
+firm (producer)  ->  pengepul (collector)  ->  [inter-settlement trade]  ->  penjual (retailer)  ->  household
+        ^                                            ^
+        |-- sindikat divert a share of the flow -----|
+        |-- vertically integrated firm withholds -->  |
+```
+
+The market of §§4–10 is unchanged: it still prices, discovers partners with the
+gravity kernel and moves goods only when the premium beats freight. What changed
+is *who* owns the surplus and *what happens to it before and after the border
+crossing*. The chain is not a second price system — every hop moves physical
+mass and books a loss; the competitive reference price is still derived from
+scarcity, and the marketing margin is what the layering does to it.
+
+### 13. Ownership is a power law, and concentration is measured
+
+For each settlement $i$ and resource $r$, the endowment is split into
+$n_{ir} = \text{producers} \cdot L_{ir}/\sum_r L_{ir}$ firms (at least one),
+with shares drawn from a Pareto tail and shuffled:
+
+$$
+s_{k} \;=\; \frac{k^{-\theta}}{\sum_{m} m^{-\theta}}, \qquad \theta = 1.7,
+$$
+
+$$
+\mathrm{HHI}_{ir} \;=\; \sum_{k} s_{k}^{2}, \qquad
+\text{vertical}_{ir} \;=\; \mathbb{1}\!\left[\mathrm{HHI}_{ir} \ge \tau_v\right],
+\quad \tau_v = 0.28 .
+$$
+
+A node with three equal owners has $\mathrm{HHI} = 1/3$; one with a single
+owner has $1$. The dominant firm is flagged vertical **because the draw was
+concentrated**, not because a flag was set: across the world
+`hhi_mean = 0.52`, `vertical_share = 1.0` (every settlement has at least one
+dominant owner in some resource), and `tests/test_supply.py` asserts that the
+shares inside every node sum to exactly one and that every flag has an HHI above
+the threshold.
+
+### 14. The price ladder
+
+Three markups carry the good from the farm gate to the household shelf. With
+nominal margins $\mu_g = 0.18$ (pengepul), $\mu_w = 0.12$ and $\mu_s = 0.10$
+(penjual), and the competitive price $\bar p$ from §4:
+
+$$
+p_{\text{gate}} = \bar p\,(1-\mu_g),\qquad
+p_w = \frac{p_{\text{gate}}}{1-\mu_w},\qquad
+p_r = \frac{p_w}{1-\mu_s},
+$$
+
+$$
+\text{marketing margin} \;=\; 1 - \frac{p_{\text{gate}}}{p_r} \;=\; 0.3506 ,
+$$
+
+which is the share of the retail price that is *not* the producer's. Observed
+in the calm run: gate 0.575, wholesale 0.732, retail 0.923 per unit of the
+scarcity price — a 0.377 margin, slightly above nominal because concentration
+adds a wedge (§15).
+
+### 15. Vertical integration is an outcome, not a setting
+
+Two consequences of concentration are modelled, both measurable:
+
+**Withholding.** A vertical producer holds back
+
+$$
+\lambda_{ir} \;=\; \text{withhold}\cdot\frac{\mathrm{HHI}_{ir}-\tau_v}{1-\tau_v},
+\qquad \text{withhold} = 0.12 ,
+$$
+
+of its output. The withheld mass is **not destroyed** — it sits in the firm's
+shelf and enters the chain later — which is precisely why the ledger still
+closes to $10^{-14}$; a "loss" that is really a stock would be a conservation
+bug wearing a costume.
+
+**Dependency.** Each pengepul's concentration is
+
+$$
+D_c \;=\; \frac{\max_{f \in \text{catchment}(c)} s_f}{\sum_{f} s_f} \in (0,1],
+$$
+
+and the dominant upstream's wedge passes into the downstream price:
+
+$$
+\mu^{\text{realised}} \;=\; \mu^{\text{nominal}}\left(1 + \text{wedge}\cdot\frac{\mathrm{HHI}-\tau_v}{1-\tau_v}\right),
+\qquad \text{wedge} = 0.22 .
+$$
+
+Observed `max_dependency = 0.565`: the most dependent pengepul buys 57 % of its
+intake from a single producer. That is the "producer who controls a resource and
+influences the chain below it" — the influence is a number in the frame, not a
+sentence in the docs.
+
+### 16. Sindikat are a symptom, not an actor with a script
+
+The user requirement was blunt: *few normally, many when the chain is unstable*.
+So entry is driven by a stress index built from what the chain is doing, not by
+a timer:
+
+$$
+\sigma_i(t+1) = 0.82\,\sigma_i(t) + 0.18\,\tilde\sigma_i(t),
+\qquad
+\tilde\sigma_i = 1.6\,\widehat{\text{spread}} + 1.4\,\widehat{\text{stockout}} + 0.6\,\widehat{\text{scarcity}},
+$$
+
+where each hat is the raw term clipped to $[0,1]$ — one famine settlement must
+not be able to finance an organisation on its own. Then, per tick and per
+settlement:
+
+$$
+\Pr[\text{entry}] = \begin{cases} 0.075 & \sigma_i > 0.55 \\ 0 & \text{otherwise}\end{cases},
+\qquad
+\dot z = -0.055\,z \quad (\text{decay when the stress passes}),
+$$
+
+with power capped at $z_{\max} = 0.85$. An active syndicate does three things,
+each of a different *kind*:
+
+| Instrument | Effect | Bookkeeping |
+|---|---|---|
+| diversion $0.20\,z$ of flow | physical goods leave the chain | **loss** → `chain_loss["diverted"]` **and** `ledger["diverted"]` |
+| fee $0.15\,z$ on intermediaries | cash moves between agents | **transfer** → `syndicate.fees`, no ledger entry |
+| piracy raises freight | $\times(1 + 0.55\,z\,e^{-\text{distance}/12})$ | cost, not mass |
+
+That distinction is the audit: a rent that diverts goods consumes matter, a rent
+that taxes cash does not. Only the first touches the conservation identity.
+
+In a calm world the population is **0 → 1**: a single settlement falls behind,
+breeds one weak racket (power 0.28, take 0.2 % of flow) and no more. Break the
+chain — a 0.95 drought at radius 26 plus a 0.9 embargo at radius 30, injected
+after 200 calm ticks — and the population responds endogenously:
+
+| tick | active | take share | margin | stockout | mean power |
+|---|---|---|---|---|---|
+| 200 | 0 | 0.005 | 0.377 | 0.034 | 0.00 |
+| 221 | 0 | 0.004 | 0.377 | 0.179 | 0.00 |
+| 241 | 5 | 0.014 | 0.390 | 0.184 | 0.11 |
+| 261 | 8 | 0.023 | 0.399 | 0.055 | 0.16 |
+| 281 | 8 | 0.034 | 0.408 | 0.059 | 0.29 |
+| 310 | 8 | 0.064 | 0.402 | 0.029 | 0.24 |
+
+![The same island with a broken chain: stockout first, then entry](docs/chain.png)
+
+Order matters and it is the order the user asked for: **stockout first**
+(0.034 → 0.179), *then* entry (0 → 5), *then* margin widening (0.377 → 0.408),
+*then* the chain recovering while the rackets persist. Nothing schedules the
+syndicates; they are downstream of a number.
+
+### 17. Conservation in a layered economy — and the bug that proved the point
+
+Every hop is a physical move, so the chain is the hardest place to keep the
+$10^{-9}$ identity of §11. It did not hold at first, and the failure is worth
+writing down because the wrong fix (a parameter patch) would have hidden it:
+
+> `SupplyChain.route()` accumulated losses in a **scalar** `lost`, then wrote
+> `self.model.ledger["diverted"] += lost`. The ledger is a per‑resource array of
+> length 3, so numpy **broadcast the scalar into all three slots**, booking every
+> loss three times. Measured mass balance: **2.449**. Population then grew on
+> mass that did not exist: 1020 → 3103 over 300 ticks, monotone.
+
+The fix is one line of shape discipline — `lost = np.zeros(3)` and
+`lost[r] += …` at every accumulation site — and the identity returns to
+**1.1 × 10⁻¹⁴**. `tests/test_supply.py` now pins both halves: the chain
+conserves mass, *and* `ledger["diverted"].sum()` equals the sum of the explicit
+`chain_loss` buckets, so a future scalar cannot creep back in unnoticed.
+
+---
+
 ## The build pipeline
 
 ```
@@ -492,40 +694,48 @@ All state crossing node boundaries is Pydantic v2 (`Blueprint`, `Gate`,
 `ValidationReport`, `Patch`, `Reflection`, `ArtifactRecord`, `FinalReport`,
 `Directive`, …), all frozen with `extra="forbid"`.
 
-### Why the first attempt used to fail — and no longer does
+### Why the first attempt still needs one repair
 
 The planner starts at exactly the geometric critical radius, the tightest radius
 at which a connected graph is even *possible*. Geometry is not economics: a link
 requires a settlement with a **complementary endowment** inside the horizon, not
-merely a neighbour. Before the audit, seller-initiated search at radius 9.85
-produced a giant component of 0.44, `N-COMP` failed, and the reflector widened
-the market to 17.73 on the second attempt.
+merely a neighbour.
 
-That whole retry existed to compensate for a *missing search direction*. Once
-discovery also runs buyer-initiated (§6), the market closes at the critical
-radius itself — giant component 0.9375 — and the pipeline now returns `PASS` on
-one attempt. The retry loop is still there, still hard-budgeted, and still
-proven to work: `tests/test_pipeline.py::test_pipeline_self_heals_a_fragmented_market`
-injects a radius of 4.0 and asserts the reflector measures the fragmentation,
-patches the radius and recovers. Removing the *need* for a retry is a better
-outcome than needing one.
+At radius 9.85 a calm 300‑tick run does close — giant component 0.94 — but the
+study continues through its shock, and a network that only just connected is one
+pruned corridor away from splitting in two. The final state reads 0.50, `N-COMP`
+fails, and the reflector widens the market to 17.73, where the component is
+exactly 1.00. That is the loop doing its job, and it is honest about the
+fragility rather than papering over it: **the critical radius is the smallest
+radius at which connectivity is geometrically possible, not the radius at which
+it is robust.** The buyer pass removed the *structural* orphan (a settlement that
+owned nothing in demand used to stay outside forever); it cannot remove bridge
+fragility, which is a property of the geometry.
+
+The retry budget is still hard, and the repair path is still proven:
+`tests/test_pipeline.py::test_pipeline_self_heals_a_fragmented_market` injects a
+radius of 4.0 and asserts the reflector measures the fragmentation, patches the
+radius and recovers. `scripts/fault_matrix.py` does the same with three more
+faults, including one the reflector **refuses** to patch.
 
 ---
 
 ## Gates: what "correct" means here
 
-Eight gates, evaluated on every attempt. Results from the committed run
+Ten gates, evaluated on every attempt. Results from the committed run
 (`artifacts/final_report.json`):
 
 | Gate | Metric | Observed | Criterion | Result |
 |---|---|---|---|---|
-| `C-GRID` | `abs_growth_tail` | 0.00148 | ≤ 0.0045 | PASS |
-| `C-COHER` | `field_lag1_corr` | 0.96883 | ≥ 0.55 | PASS |
-| `N-COMP` | `giant_component_share` | 0.93750 | ≥ 0.85 | PASS |
-| `N-EDGE` | `edges_per_node` | 1.62500 | ≥ 0.90 | PASS |
-| `N-MASS` | `mass_balance_error` | 3.29e‑14 | ≤ 1e‑09 | PASS |
+| `C-GRID` | `abs_growth_tail` | 0.00152 | ≤ 0.0045 | PASS |
+| `C-COHER` | `field_lag1_corr` | 0.96908 | ≥ 0.55 | PASS |
+| `N-COMP` | `giant_component_share` | 1.00000 | ≥ 0.85 | PASS |
+| `N-EDGE` | `edges_per_node` | 2.00000 | ≥ 0.90 | PASS |
+| `N-MASS` | `mass_balance_error` | 3.89e‑14 | ≤ 1e‑09 | PASS |
 | `V-CONTRACT` | `visual_contract_score` | 1.00000 | ≥ 0.85 | PASS |
-| `R-SHOCK` | `shock_recovery` | 0.82596 | ≥ 0.60 | PASS |
+| `R-SHOCK` | `shock_recovery` | 0.75348 | ≥ 0.60 | PASS |
+| `M-MARGIN` | `marketing_margin` | 0.38026 | ≤ 0.55 | PASS |
+| `S-PRED` | `syndicate_take_share` | 0.00607 | ≤ 0.10 | PASS |
 | `C-STABLE` | `pop_drawdown` | 0.00000 | ≤ 0.35 | PASS |
 
 **Grid convergence (`C-GRID`, `C-COHER`, `C-STABLE`).** The lattice must reach a
@@ -547,6 +757,14 @@ show at least five terrain classes, must have *grown* its population shading
 since the study began, must contain hatch bands, must have every flow anchored
 on land, and must carry live pulses. Seven binary checks; the score is the pass
 fraction.
+
+**The chain (`M-MARGIN`, `S-PRED`).** The layering must not become a rent
+extractor: the marketing margin has to stay under 0.55 (nominal 0.35 plus a
+concentration wedge), and predation must stay a symptom — under 10 % of gross
+flow diverted in the EMA. Both are computed from the *current* state (exponential
+moving averages), not from a cumulative total that the calm opening would
+dominate, and both are wired into the reflector's failure classes
+(`supply_chain`, `syndication`).
 
 **Resilience (`R-SHOCK`).** The tester injects a magnitude‑0.85 drought on the
 dominant food exporter for 55 ticks and measures trade volume in 40‑tick
@@ -609,7 +827,7 @@ stays smooth regardless of poll rate.
 ## Tests
 
 ```bash
-python -m pytest tests -q      # 95 passed in ~110 s
+python -m pytest tests -q      # 114 passed in ~200 s
 ```
 
 | File | What it proves |
@@ -619,13 +837,16 @@ python -m pytest tests -q      # 95 passed in ~110 s
 | `test_network.py` | links only form after a discovery pass, arbitrage invariant, decay/pruning, roads lower cost, embargo suppresses trade, reproducibility |
 | `test_pipeline.py` | graph topology and cycle, both routers, retry ceiling, blueprint completeness, an injected fragmented market actually self‑heals, artifacts are hashed |
 | `test_theory.py` | the maths as propositions: the kernel's elasticity is exactly $-\gamma$; masses are symmetric and scale-invariant; PPML recovers known parameters; $\nu^*$ is derived and equalises long-run marginal revenue with no corner; $K$ is independent of $N$ and of the labour mix; technology saturates; the field reaches its fixed point; roads depreciate and stay bounded; a severe shock does not prune the network; the ledger holds to 1e-12; the reflector refuses to patch a conservation leak |
+| `test_supply.py` | the layered economy: the census, shares and HHI, the price ladder ordering, the chain conserves mass, withholding keeps its stock, syndicates are dormant when calm and multiply under stress (then retreat), power is capped, predation raises freight and is booked as loss, the macro snapshot is complete and finite, chain efficiency reaches the carrying capacity, the frame carries the chain |
 | `test_render.py` | frame size, non‑blank, shading grows, hatch tiers present, flows land‑anchored, payload bounds |
 | `test_web.py` | full HTTP contract incl. transport controls, seek, shocks, PNG snapshot, seed reproducibility, NaN‑free JSON |
 
-Two of those tests exist because they caught real bugs during development: the
-`ore_discovery` shock was creating matter outside the ledger, and the population
-choropleth was being renormalised by whichever settlement happened to lead,
-erasing visible growth.
+Several of those tests exist because they caught real bugs during development:
+the `ore_discovery` shock was creating matter outside the ledger, the population
+choropleth was being renormalised by whichever settlement happened to lead
+(erasing visible growth), and the chain layer triple‑counted every loss through
+an accidental numpy broadcast (§17) — which now has a dedicated test asserting
+that `ledger["diverted"]` equals the sum of the explicit loss buckets.
 
 ---
 
@@ -637,6 +858,7 @@ agora/
 │   ├── schemas.py        # every Pydantic v2 contract (specs, artifacts, telemetry)
 │   ├── world.py          # noise, biomes, provinces, siting, A*, territorial yield
 │   ├── settlement.py     # the Settlement agent (Mesa)
+│   ├── supply.py         # producers, pengepul, penjual, sindikat: the layered chain
 │   ├── market.py         # gravity kernel, two-pass discovery, arbitrage, decay
 │   ├── calibration.py    # PPML estimation of (alpha, beta, gamma) + distance profile
 │   ├── model.py          # the ticking lattice, roads, shocks, frame serialisation
@@ -654,7 +876,7 @@ agora/
 │   ├── fault_matrix.py   # injects faults, proves the loop repairs them
 │   ├── render_atlas.py   # the README filmstrip
 │   └── serve.py          # console launcher
-├── tests/                # 95 tests
+├── tests/                # 114 tests
 ├── artifacts/            # frames, metrics, blueprint, final report
 └── docs/atlas.png
 ```

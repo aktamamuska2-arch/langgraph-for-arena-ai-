@@ -90,6 +90,7 @@
   .kpi .v { font-size: 17px; color: var(--ink); }
   .kpi .v.accent { color: var(--accent); }
   .kpi .v.amber { color: var(--amber); }
+  .kpi .v.danger { color: var(--danger); }
 
   .panel { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
   .panel h3 {
@@ -138,6 +139,9 @@
         <span><i class="swatch" style="background:var(--ore)"></i>ore</span>
         <span><i class="swatch" style="background:var(--amber)"></i>population</span>
         <span><i class="swatch" style="background:var(--accent)"></i>settlement</span>
+        <span><i class="swatch" style="background:var(--amber)"></i>produsen</span>
+        <span><i class="swatch" style="background:#7fd3ff"></i>pengepul</span>
+        <span><i class="swatch" style="background:var(--danger)"></i>sindikat</span>
       </div>
     </section>
 
@@ -150,6 +154,24 @@
           <div class="kpi"><div class="k">road upgrades</div><div class="v" id="kpi-roads">—</div></div>
           <div class="kpi"><div class="k">connected core</div><div class="v" id="kpi-giant">—</div></div>
           <div class="kpi"><div class="k">mean degree</div><div class="v" id="kpi-degree">—</div></div>
+        </div>
+
+        <div class="panel" id="macro">
+          <h3>supply chain <span id="macro-agents">—</span></h3>
+          <div class="kpis">
+            <div class="kpi"><div class="k">farm gate</div><div class="v" id="m-gate">—</div></div>
+            <div class="kpi"><div class="k">retail</div><div class="v" id="m-retail">—</div></div>
+            <div class="kpi"><div class="k">chain margin</div><div class="v amber" id="m-margin">—</div></div>
+            <div class="kpi"><div class="k">chain loss</div><div class="v" id="m-loss">—</div></div>
+            <div class="kpi"><div class="k">concentration</div><div class="v" id="m-hhi">—</div></div>
+            <div class="kpi"><div class="k">syndicates</div><div class="v" id="m-synd">—</div></div>
+          </div>
+          <div class="row" style="margin-top:6px">
+            <span class="muted">vertical producers</span><span id="m-vert">—</span>
+          </div>
+          <div class="row"><span class="muted">max dependency</span><span id="m-dep">—</span></div>
+          <div class="row"><span class="muted">syndicate take</span><span id="m-take">—</span></div>
+          <div class="row"><span class="muted">households unserved</span><span id="m-stock">—</span></div>
         </div>
 
         <div class="panel">
@@ -293,6 +315,7 @@
     drawRoads(f, W, H);
     drawFlows(f);
     drawPulses(f);
+    drawAgents(f);
     drawSettlements(f);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     if (state.hover) drawTooltip(state.hover);
@@ -459,6 +482,40 @@
     ctx.restore();
   }
 
+  // the layered economy: producers orbit their settlement, pengepul and penjual
+  // sit on the shelf ring, and syndicates bleed red arcs around a captured node
+  function drawAgents(f) {
+    if (!f.agents) return;
+    ctx.save();
+    for (const a of f.agents) {
+      const cx = a.x + 0.5, cy = a.y + 0.5;
+      if (a.k === "firm") {
+        const ang = (a.r * 2.1 + a.w * 6.4) + f.tick * 0.004;
+        const rad = 0.62 + 0.5 * a.w;
+        const px = cx + Math.cos(ang) * rad, py = cy + Math.sin(ang) * rad;
+        ctx.fillStyle = a.v ? "rgba(255,178,74,.95)" : "rgba(255,196,92,.55)";
+        const sz = a.v ? 0.20 : 0.12;
+        ctx.fillRect(px - sz, py - sz, sz * 2, sz * 2);
+      } else if (a.k === "collector") {
+        // a pengepul: the ring thickens with how much of its intake comes from
+        // a single producer, so dependency is visible before it is read
+        ctx.beginPath(); ctx.arc(cx, cy, 0.78, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,150,90,${0.22 + 0.5 * a.w})`;
+        ctx.lineWidth = 0.04 + 0.10 * a.w; ctx.stroke();
+      } else if (a.k === "retail") {
+        ctx.beginPath(); ctx.arc(cx, cy, 0.95, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(127,211,255,.35)"; ctx.lineWidth = 0.05; ctx.stroke();
+      } else if (a.k === "syndicate") {
+        ctx.beginPath();
+        ctx.arc(cx, cy, 0.9 + 1.1 * a.w, 0.4, 1.5 + 0.6 * a.w);
+        ctx.strokeStyle = `rgba(255,96,96,${0.35 + 0.5 * a.w})`;
+        ctx.lineWidth = 0.10 + 0.16 * a.w;
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
   function drawTooltip(s) {
     const rect = canvas.getBoundingClientRect();
     tooltip.style.display = "block";
@@ -482,6 +539,24 @@
     document.getElementById("kpi-giant").textContent = (n.giant_component_share * 100).toFixed(0) + "%";
     document.getElementById("kpi-degree").textContent = n.mean_degree.toFixed(2);
     document.getElementById("tick").textContent = f.tick;
+
+    const m = f.macro;
+    if (m) {
+      document.getElementById("macro-agents").textContent =
+        `${m.producers.toFixed(0)} prod · ${m.collectors.toFixed(0)} pengepul · ${m.retailers.toFixed(0)} penjual`;
+      document.getElementById("m-gate").textContent = m.farm_gate_price.toFixed(2);
+      document.getElementById("m-retail").textContent = m.retail_price.toFixed(2);
+      document.getElementById("m-margin").textContent = (m.marketing_margin * 100).toFixed(0) + "%";
+      document.getElementById("m-loss").textContent = (m.chain_loss_share * 100).toFixed(1) + "%";
+      document.getElementById("m-hhi").textContent = m.hhi_mean.toFixed(2);
+      const synd = document.getElementById("m-synd");
+      synd.textContent = m.syndicates_active.toFixed(0);
+      synd.className = "v" + (m.syndicates_active > 0 ? " danger" : "");
+      document.getElementById("m-vert").textContent = (m.vertical_share * 100).toFixed(0) + "% of nodes";
+      document.getElementById("m-dep").textContent = (m.max_dependency * 100).toFixed(0) + "%";
+      document.getElementById("m-take").textContent = (m.syndicate_take_share * 100).toFixed(2) + "%";
+      document.getElementById("m-stock").textContent = (m.stockout_rate * 100).toFixed(1) + "%";
+    }
 
     drawSpark(f.history);
 

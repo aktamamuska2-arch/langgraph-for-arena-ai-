@@ -98,7 +98,10 @@ class Settlement(GridAgent):
         # convergence window and says nothing about the model's fixed point.
         self.tech = 0.0
         self.population = float(0.45 * self._carrying_capacity(econ) * rng.uniform(0.85, 1.15))
-        self.stocks = (0.75 * self.target_stock(econ)).astype(np.float64)
+        # opening stock is a bit above the buffer: part of it is immediately
+        # handed to the chain (pengepul and penjual shelves), and a world that
+        # starts with every granary below its own target has nothing to trade
+        self.stocks = (1.55 * self.target_stock(econ)).astype(np.float64)
         # Neumaier compensation term: keeps the ledger exact to ~1 ulp of the
         # final stock instead of drifting with every add/subtract
         self.stocks_comp = np.zeros(len(RESOURCES), dtype=np.float64)
@@ -202,7 +205,9 @@ class Settlement(GridAgent):
         labour = np.power(np.maximum(self.labor, 1e-4), econ.labor_exponent)
         roads = float(self.model.road_factor_at((self.x, self.y)))
         output = self.endowment * labour * (1.0 + self.tech) * roads * mod
-        self.add_stocks(output)
+        # production no longer lands in the granary directly: it is sold down the
+        # supply chain first (producer -> pengepul -> penjual -> household) and
+        # only what survives that route is added back as stock
         self.model.ledger["produced"] += output
         self.produced = output
         self.food_output_memory = (1.0 - econ.capacity_labor_memory) * self.food_output_memory + (
@@ -315,7 +320,15 @@ class Settlement(GridAgent):
         # road access is trade infrastructure, not soil fertility: it belongs in
         # production and in transport cost, never in the land's food ceiling
         keep = 1.0 + float(econ.spoilage) * float(econ.target_coverage_ticks)
-        food = self.endowment[0] * (1.0 + self.tech) / (max(econ.food_per_capita, 1e-9) * keep)
+        # and the chain eats a slice before anything reaches a mouth, so the
+        # demographic ceiling and the physical delivery have to agree
+        efficiency = float(self.model.spec.supply.chain_efficiency) * (
+            1.0 - float(self.model.spec.supply.syndicate_diversion) * 0.15
+        )
+        food = (
+            self.endowment[0] * (1.0 + self.tech) * efficiency
+            / (max(econ.food_per_capita, 1e-9) * keep)
+        )
         return float(econ.base_capacity + max(0.0, food))
 
     def update_population(self, econ: EconomySpec, effect: ShockEffect | None = None) -> None:
