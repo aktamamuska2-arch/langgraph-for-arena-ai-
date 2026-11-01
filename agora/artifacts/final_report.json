@@ -1,5 +1,5 @@
 {
-  "run_id": "ASEOWS-001-20261101T114915",
+  "run_id": "ASEOWS-001-20261101T115244",
   "verdict": "PASS_WITH_RETRIES",
   "experiment_id": "ASEOWS-001",
   "blueprint_id": "BP-ASEOWS-001",
@@ -9,7 +9,7 @@
     "passed": true,
     "exit_code": 0,
     "timed_out": false,
-    "duration_seconds": 2.662204772000223,
+    "duration_seconds": 2.933453431000089,
     "failure_class": "none",
     "results": [
       {
@@ -94,7 +94,7 @@
       "mass_balance_error": 5.842178032615685e-14,
       "alive_fraction": 1.0,
       "visual_contract_score": 1.0,
-      "duration_seconds": 2.662204772000223
+      "duration_seconds": 2.933453431000089
     },
     "stdout_tail": "8 gates evaluated on attempt 1",
     "stderr_tail": "",
@@ -139,7 +139,7 @@
     {
       "path": "/home/user/langgraph-for-arena-ai-/agora/artifacts/attempt_0_metrics.json",
       "role": "gate metrics",
-      "sha256": "411b325edf6e3e35558967a2fd8fe66d86670ce7ebd3c5889f94ee952991fd44",
+      "sha256": "c3b4b616caeaf776b3bdd95858e064660e3eab5df38f66934a26cae9ebf3edda",
       "bytes": 2669
     },
     {
@@ -151,17 +151,17 @@
     {
       "path": "/home/user/langgraph-for-arena-ai-/agora/artifacts/attempt_1_metrics.json",
       "role": "gate metrics",
-      "sha256": "21bda7fba1dd644fe28a6b1b26d6ce127a8d3d0404cf56af340b4597093fb634",
+      "sha256": "a343d14e1a1bec8c15372766f7b86027a240fbd6f4af9aff83c06aa7e3dbfaf0",
       "bytes": 2675
     },
     {
       "path": "/home/user/langgraph-for-arena-ai-/agora/artifacts/blueprint.json",
       "role": "blueprint",
-      "sha256": "16593ad753291dfb306a1fe00150e416b1ec6c7788612bb3af23b4f0fa6bcd30",
+      "sha256": "8e8c1f65cbacb1b4d9501fc9d0bcb6a3d31b277d824dae71a93084715f54ddd2",
       "bytes": 10251
     }
   ],
-  "generated_at": "2026-11-01T11:49:15.163273Z",
+  "generated_at": "2026-11-01T11:52:44.881570Z",
   "notes": [
     "critical radius 9.85 derived from the settlement MST",
     "final discovery radius 17.73",

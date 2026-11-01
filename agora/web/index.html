@@ -405,7 +405,7 @@
   function drawPulses(f) {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    const palette = { production: "#ffd08a", trade: "#6ce2ff", road: "#ffe9aa", shock: "#ff6060", discovery: "#ba8cff" };
+    const palette = { production: "#ffd08a", trade: "#6ce2ff", road: "#ffe9aa", shock: "#ff6060", discovery: "#ba8cff", scarcity: "#ff7c70" };
     for (const p of f.pulses) {
       const t = clamp(p.age / 13, 0, 1);
       const radius = (p.r + 2.6 * t) * 0.9;

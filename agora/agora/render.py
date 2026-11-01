@@ -162,6 +162,7 @@ def _draw_pulses(draw: ImageDraw.ImageDraw, model: AgoraModel, scale: int) -> No
             "road": (255, 236, 170),
             "shock": (255, 96, 96),
             "discovery": (186, 140, 255),
+            "scarcity": (255, 124, 112),
         }.get(pulse["kind"], (255, 255, 255))
         cx, cy = pulse["x"] * scale + scale / 2, pulse["y"] * scale + scale / 2
         draw.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], outline=(*colour, alpha), width=1)

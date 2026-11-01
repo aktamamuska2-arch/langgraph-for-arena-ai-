@@ -343,6 +343,17 @@ class AgoraModel(mesa.Model):
             settlement.update_population(self.econ, effect)
             if t % 3 == 0:
                 settlement.adapt_labour(self.econ)
+            # consumption-side signal: a settlement running its granary down
+            # glows red, the visual counterpart of the production pulse
+            granary_target = settlement.target_stock(self.econ)
+            if settlement.stocks[0] < 0.30 * granary_target[0] and (t + settlement.sid) % 7 == 0:
+                self._pulse(
+                    settlement.x,
+                    settlement.y,
+                    radius=1.0,
+                    kind="scarcity",
+                    strength=float(np.clip(settlement.unmet_food + 0.35, 0.0, 1.0)),
+                )
             # harvest pulses are staggered per settlement so the map breathes
             # instead of flashing in unison
             if float(produced.sum()) > 1.2 and (t + settlement.sid * 3) % 11 == 0:

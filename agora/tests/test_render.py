@@ -88,3 +88,24 @@ def test_frame_payload_is_bounded(default_spec):
     assert len(frame["history"]) <= 160
     for flow in frame["flows"]:
         assert 2 <= len(flow["p"]) <= 26
+
+
+def test_scarcity_pulses_fire_when_granaries_run_dry(default_spec):
+    """Consumption-side events must be visible, not just production."""
+
+    model = AgoraModel(default_spec)
+    for _ in range(60):
+        model.step()
+    # a food-poor settlement cannot feed itself, so scarcity is real rather than
+    # a one-tick dip that its own fields instantly repair
+    victim = min(model.settlements.values(), key=lambda s: float(s.endowment[0]))
+    victim.endowment[0] = 0.0
+    model.pulses.clear()
+    for _ in range(14):
+        victim.stocks[0] = 0.0  # keep it starving across the staggered window
+        model.step()
+        victim.endowment[0] = 0.0
+    kinds = {p["kind"] for p in model.pulses}
+    assert "scarcity" in kinds, kinds
+    frame = model.frame()
+    assert any(p["k"] == "scarcity" for p in frame["pulses"])

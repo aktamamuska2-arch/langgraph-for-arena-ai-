@@ -57,7 +57,7 @@ deliberately parsimonious hypothesis, discovers it is too tight, and widens it:
 | Spatial arbitrage | `market.execute` | a link only moves goods when `p_j − p_i > τ·c_ij` |
 | Road self‑organisation | `model.on_trade` | sustained cargo flow lowers the transport cost on the route it uses |
 | Choropleth + hatching | `model.pop_field`, `web/index.html` | population renders as shading intensity with density hatching bands |
-| Pulses | `model._pulse` | production, trade, road, shock and discovery events ring the map |
+| Pulses | `model._pulse` | production, trade, road, shock, discovery and scarcity events ring the map |
 | Flow lines | `frame.flows` + canvas | animated dashes follow the actual A\* path, coloured by the dominant resource |
 | Shocks | `model.inject_shock` | seven kinds, injectable live from the browser |
 
@@ -73,7 +73,7 @@ pip install -r requirements.txt          # numpy, networkx, mesa, fastapi, uvico
 
 python scripts/run_workflow.py           # compile the world, run the gates, write artifacts/
 python scripts/serve.py                  # interactive console on http://localhost:8010
-python -m pytest tests -q                # 69 tests
+python -m pytest tests -q                # 70 tests
 ```
 
 `run_workflow.py` prints the build log, every gate and the verdict, and writes
@@ -444,7 +444,7 @@ stays smooth regardless of poll rate.
 ## Tests
 
 ```bash
-python -m pytest tests -q      # 69 passed
+python -m pytest tests -q      # 70 passed
 ```
 
 | File | What it proves |
@@ -487,7 +487,7 @@ agora/
 │   ├── fault_matrix.py   # injects faults, proves the loop repairs them
 │   ├── render_atlas.py   # the README filmstrip
 │   └── serve.py          # console launcher
-├── tests/                # 69 tests
+├── tests/                # 70 tests
 ├── artifacts/            # frames, metrics, blueprint, final report
 └── docs/atlas.png
 ```
