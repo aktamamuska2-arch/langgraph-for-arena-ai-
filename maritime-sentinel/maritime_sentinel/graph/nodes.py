@@ -824,9 +824,11 @@ def make_finalizer(context: RunContext) -> Callable[[State], dict[str, Any]]:
                 "retry_count",
                 "reflection_trail",
                 "test_report",
-                "verdict",
             )
         }
+        # ``state`` is the *pre-node* slice, so the verdict computed above must be
+        # written explicitly or the snapshot would say PENDING forever.
+        snapshot["verdict"] = verdict
         snapshot["final_report"] = payload
         (run_dir / "state_snapshot.json").write_text(json.dumps(snapshot, indent=2, default=str))
         return {

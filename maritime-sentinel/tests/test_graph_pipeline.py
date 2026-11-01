@@ -90,6 +90,8 @@ def test_workflow_heals_and_emits_hashed_artifacts(tmp_path, scenario, project_r
 
     run_dir = context.run_dir()
     assert (run_dir / "final_report.json").exists()
+    snapshot = json.loads((run_dir / "state_snapshot.json").read_text())
+    assert snapshot["verdict"] == state["verdict"] != "PENDING"
     final = json.loads((run_dir / "final_report.json").read_text())
     assert final["verdict"] == state["verdict"]
     assert final["attempts"] == state["retry_count"] + 1
