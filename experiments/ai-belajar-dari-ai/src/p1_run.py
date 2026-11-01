@@ -72,13 +72,39 @@ def fit_bytes(text: str, n: int) -> str:
     return out.decode("utf-8", errors="ignore")
 
 
+def read_syn(path: Path) -> list[str] | None:
+    """Baca korpus sintetis; kembalikan None bila berkas rusak/terpotong.
+
+    Ini bukan kehati-hatian teoretis: uji asap menemukan berkas .jsonl yang tertulis
+    sebagian (127.947 dari 154.322 byte) setelah proses dihentikan saat menulis. Tanpa
+    validasi, run panjang akan gagal di tengah atau — lebih buruk — memakai korpus cacat.
+    """
+    if not path.exists():
+        return None
+    try:
+        rows = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    return [r["text"] for r in rows] if rows else None
+
+
+def write_syn(path: Path, texts: list[str]) -> None:
+    tmp = path.with_suffix(".tmp")
+    with tmp.open("w", encoding="utf-8") as fh:
+        for t in texts:
+            fh.write(json.dumps({"text": t, "bytes": len(t.encode("utf-8"))}, ensure_ascii=False) + "\n")
+    tmp.replace(path)  # atomik: tidak ada keadaan setengah jadi
+
+
 def generate_syn(model: TinyGPT, docs: list[dict], n_bytes: int, tag: str, out_dir: Path) -> list[str]:
     """Hasilkan dokumen sintetis sampai >= n_bytes; simpan + kembalikan teksnya."""
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"{tag}.jsonl"
+    cached = read_syn(path)
+    if cached is not None:
+        return cached
     if path.exists():
-        rows = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
-        return [r["text"] for r in rows]
+        log(f"    PERINGATAN: {path.name} rusak/terpotong -> dibangun ulang")
     texts: list[str] = []
     seen: set[str] = set()
     total, i = 0, 0
@@ -101,9 +127,7 @@ def generate_syn(model: TinyGPT, docs: list[dict], n_bytes: int, tag: str, out_d
         if i > len(docs) * 40:  # pengaman anti-loop
             log(f"    PERINGATAN: pengaman generasi aktif pada {total} byte")
             break
-    with path.open("w", encoding="utf-8") as fh:
-        for t in texts:
-            fh.write(json.dumps({"text": t, "bytes": len(t.encode("utf-8"))}, ensure_ascii=False) + "\n")
+    write_syn(path, texts)
     log(f"    sintetis {tag}: {len(texts)} dok, {total} byte, {time.perf_counter()-t0:.1f}s")
     return texts
 
@@ -173,6 +197,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--stage", choices=["baseline", "chains", "all"], default="all")
     ap.add_argument("--limit", type=int, default=0, help="batasi jumlah model (uji asap)")
+    ap.add_argument("--generations", type=int, default=0, help="batasi jumlah generasi (mis. 2 = bertahap)")
     ap.add_argument("--smoke", action="store_true", help="perkecil semua ukuran; menulis ke runs/p1_smoke")
     args = ap.parse_args()
 
@@ -197,6 +222,10 @@ def main() -> int:
         P.BATCH_SIZE = 8
         P.N_SYN_RATIO = 0.05
         log("MODE ASAP: semua angka diperkecil; hasil TIDAK sahih")
+
+    if args.generations:
+        P.GENERATIONS = args.generations
+        log(f"generasi dibatasi ke {P.GENERATIONS} (mode bertahap)")
 
     torch.set_num_threads(2)
     t0 = t0_text()
@@ -243,9 +272,10 @@ def main() -> int:
                 for gen in range(1, P.GENERATIONS + 1):
                     key = f"{arm}-{seed}-g{gen}"
                     if key in done:
-                        if gen > 1 and (SYN / f"{label}-s{seed}" / f"gen{gen-1}.jsonl").exists():
-                            syn[gen - 1] = [json.loads(l)["text"] for l in
-                                            (SYN / f"{label}-s{seed}" / f"gen{gen-1}.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+                        if gen > 1:
+                            got = read_syn(SYN / f"{label}-s{seed}" / f"gen{gen-1}.jsonl")
+                            if got:
+                                syn[gen - 1] = got
                         prev = torch.load(CKPT / f"{label}-{seed}-g{gen}.pt", map_location="cpu", weights_only=False)
                         continue
                     if args.limit and made >= args.limit:
