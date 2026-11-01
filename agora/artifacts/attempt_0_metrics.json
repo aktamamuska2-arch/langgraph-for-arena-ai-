@@ -1,38 +1,38 @@
 {
   "attempt": 0,
-  "passed": false,
+  "passed": true,
   "metrics": {
-    "shock_recovery": 1.134806288,
-    "shock_dip": 1.507917436,
-    "abs_growth_tail": 0.002906959,
-    "cv_drift": 0.006070252,
+    "shock_recovery": 0.825964396,
+    "shock_dip": 0.780440925,
+    "abs_growth_tail": 0.001484643,
+    "cv_drift": 0.007380678,
     "pop_drawdown": 0.0,
-    "field_lag1_corr": 0.977029969,
-    "field_peak_share": 0.001597324,
+    "field_lag1_corr": 0.968832425,
+    "field_peak_share": 0.002159053,
     "block_mass_error": 0.0,
-    "hatch_cells": 600.0,
-    "giant_component_share": 0.3125,
-    "edges_per_node": 0.9375,
-    "orphan_fraction": 0.125,
-    "mean_degree": 2.0,
+    "hatch_cells": 292.0,
+    "giant_component_share": 0.9375,
+    "edges_per_node": 1.625,
+    "orphan_fraction": 0.0625,
+    "mean_degree": 3.375,
     "mass_balance_error": 0.0,
     "alive_fraction": 1.0,
     "visual_contract_score": 1.0,
-    "duration_seconds": 1.476381935
+    "duration_seconds": 2.02607269
   },
   "detail": {
     "shock": {
-      "baseline_flow": 176.67045863014124,
-      "mid_flow": 266.4044650004506,
-      "recovery_flow": 200.48674742179537
+      "baseline_flow": 630.873573661321,
+      "mid_flow": 492.35955561223864,
+      "recovery_flow": 521.0791101846448
     },
     "visual": {
-      "pixel_std": 34.88614025394021,
+      "pixel_std": 34.343205860778404,
       "terrain_classes": 7,
-      "pop_mean_before": 24.478841145833332,
-      "pop_mean_after": 25.9833984375,
-      "hatch_cells": 600,
-      "flows": 15,
+      "pop_mean_before": 16.427734375,
+      "pop_mean_after": 17.26318359375,
+      "hatch_cells": 292,
+      "flows": 26,
       "pulses": 480,
       "checks": {
         "not_blank": true,
@@ -49,7 +49,7 @@
     {
       "id": "C-GRID",
       "metric": "abs_growth_tail",
-      "observed": 0.0029069594110492803,
+      "observed": 0.0014846429462628654,
       "threshold": 0.0045,
       "comparator": "<=",
       "passed": true
@@ -57,7 +57,7 @@
     {
       "id": "C-COHER",
       "metric": "field_lag1_corr",
-      "observed": 0.977029968707489,
+      "observed": 0.9688324249138973,
       "threshold": 0.55,
       "comparator": ">=",
       "passed": true
@@ -65,15 +65,15 @@
     {
       "id": "N-COMP",
       "metric": "giant_component_share",
-      "observed": 0.3125,
+      "observed": 0.9375,
       "threshold": 0.85,
       "comparator": ">=",
-      "passed": false
+      "passed": true
     },
     {
       "id": "N-EDGE",
       "metric": "edges_per_node",
-      "observed": 0.9375,
+      "observed": 1.625,
       "threshold": 0.9,
       "comparator": ">=",
       "passed": true
@@ -81,7 +81,7 @@
     {
       "id": "N-MASS",
       "metric": "mass_balance_error",
-      "observed": 8.631657449996408e-15,
+      "observed": 3.2915041439424273e-14,
       "threshold": 1e-09,
       "comparator": "<=",
       "passed": true
@@ -97,7 +97,7 @@
     {
       "id": "R-SHOCK",
       "metric": "shock_recovery",
-      "observed": 1.134806288364901,
+      "observed": 0.825964395941526,
       "threshold": 0.6,
       "comparator": ">=",
       "passed": true

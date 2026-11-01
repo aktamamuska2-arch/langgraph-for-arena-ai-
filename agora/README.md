@@ -41,7 +41,7 @@ deliberately parsimonious hypothesis, discovers it is too tight, and widens it:
 8. [HTTP API](#http-api)
 9. [Tests](#tests)
 10. [Repository layout](#repository-layout)
-11. [Design notes and limitations](#design-notes-and-limitations)
+11. [Design notes, audit findings and limitations](#design-notes-audit-findings-and-limitations)
 
 ---
 
@@ -158,17 +158,39 @@ $$
 $\ell$ is the labour share, $\theta$ accumulated knowledge from trade contact,
 $R$ the road multiplier at the settlement cell, $\sigma$ the shock modifier.
 
-### 3. Labour reallocation (decentralised)
+### 3. Labour reallocation (decentralised, and *derived*)
+
+A settlement is a price maker in its own local market. Because $p \propto S^{-\epsilon}$
+and at the steady state stock is proportional to output, revenue behaves like
+$Q^{\,1-\epsilon}$, and with $Q = E\,\ell^{\kappa}$ the revenue curvature is
+$m = \kappa(1-\epsilon) = 0.429$. Maximising $\sum_r p_r E_r^{1-\epsilon}\ell_r^{m}$
+subject to $\sum_r \ell_r = 1$ gives the exponent directly:
 
 $$
-\ell_i^r \;\leftarrow\; (1-\lambda)\,\ell_i^r + \lambda\,
-\frac{\big(p_i^r E_i^r\big)^{\nu}}{\sum_s \big(p_i^s E_i^s\big)^{\nu}},
-\qquad \lambda = 0.25,\; \nu = 2.2
+\ell_i^r \;\leftarrow\; (1-\lambda)\,\ell_i^r \;+\; \lambda\;
+\frac{\big(p_i^r\,(E_i^r)^{1-\epsilon}\big)^{\nu^*}}
+     {\sum_s \big(p_i^s\,(E_i^s)^{1-\epsilon}\big)^{\nu^*}},
+\qquad
+\boxed{\;\nu^* = \frac{1}{1-\kappa(1-\epsilon)} = 1.751\;}
+,\quad \lambda = 0.25
 $$
 
-Labour drifts toward the locally most valuable activity, with inertia. Only
-*local* prices enter — this is why specialisation is emergent rather than
-assigned.
+Two things are worth spelling out, because both were wrong before the audit:
+
+* **Why not $1/(1-\kappa) = 4.545$?** That is the FOC *with exogenous prices*. With
+  identical curvature across activities it is degenerate: it always picks a
+  corner, so a settlement would put 100% of its workers into one activity and
+  nothing at all into the rest. Explicitly modelling the price the settlement
+  gets for its own output removes the corner and keeps every activity alive.
+* **Which marginal product is equalised?** The *long-run* one,
+  $p_r E_r^{1-\epsilon} m \,\ell_r^{m-1}$. The instantaneous
+  $p_r\kappa E_r\ell_r^{\kappa-1}$ is deliberately **not** equalised: equalising
+  it would be correct only if the settlement could sell unlimited output at the
+  quoted price.
+
+`Settlement.labour_kkt_residual` reports the dispersion of the long-run marginal
+revenue among unconstrained activities. On a 300-tick run it sits at 0.16
+(mean) and no activity ever falls to a corner.
 
 ### 4. Scarcity pricing
 
@@ -184,16 +206,15 @@ pinned at the floor when a granary is full and at the ceiling when it is empty �
 which is exactly what the ore market looks like in a world with only three
 mining settlements.
 
-### 5. Gravity routing kernel
+### 5. Gravity routing kernel (structural)
 
-This is the core of the trade model. For a candidate directed link $i \to j$ in
-resource $r$:
+For a candidate directed link $i \to j$ in resource $r$:
 
 $$
 \boxed{\;
 A_{ij}^{r} \;=\; G\;
 \frac{\big(S_i^r\big)^{\alpha}\,\big(D_j^r\big)^{\beta}}
-     {\big(d_{ij}+d_0\big)^{\gamma}}
+     {\big(d_{ij}+d_0\big)^{\gamma}\;\big(\Pi_i^r\big)^{w}\big(P_j^r\big)^{w}}
 \;\cdot\; e^{-\tau\,c_{ij}}
 \;\cdot\;\big(1+\mu\,m_{ij}\big)
 \;}
@@ -206,17 +227,42 @@ $$
 | $D_j^r$ | ≥ 0 | destination **deficit** = target buffer − stock |
 | $d_{ij}$ | cells | Euclidean separation |
 | $d_0$ | 3.0 | softening offset, keeps nearby pairs finite |
-| $\alpha,\beta$ | 0.85, 0.95 | mass elasticities (destination scarcity bites slightly harder) |
-| $\gamma$ | 1.35 | distance decay — super‑linear, the classic gravity result |
-| $c_{ij}$ | cost | terrain‑weighted cost of the cheapest A\* route (water impassable, hills 3.8×, mountains 7.5×) |
+| $\alpha=\beta$ | 1.0, 1.0 | mass elasticities — **symmetric by construction** |
+| $\gamma$ | 1.35 | distance decay, super-linear |
+| $\Pi_i^r$ | > 0 | origin's *outward* resistance: $\sum_k D_k^r (d_{ik}+d_0)^{-\gamma}$ |
+| $P_j^r$ | > 0 | destination's *inward* resistance: $\sum_k S_k^r (d_{jk}+d_0)^{-\gamma}$ |
+| $w$ | 1.0 | resistance weight |
+| $c_{ij}$ | cost | terrain-weighted cost of the cheapest A\* route |
 | $\tau$ | 0.012 | freight friction per unit of $c$ |
-| $m_{ij}$ | ≥ 0 | repeat‑partner memory, +0.05 per successful trade, capped at 6 |
-| $\mu$ | 0.45 | memory weight — trust is worth up to 3.7× raw gravity |
+| $m_{ij}$ | ≥ 0 | repeat-partner memory, +0.05 per successful trade, capped at 6 |
+| $\mu$ | 0.45 | memory weight |
 
-The two exponents mean a link is attractive when the *pair* is complementary:
-a huge surplus is worth little if the destination does not need it.
+**Why symmetric masses.** The old kernel used $\alpha = 0.85$, $\beta = 0.95$, on the
+intuition that "destination scarcity bites slightly harder". There is no theory
+behind that tilt, and it biases every link toward large buyers. Structural
+gravity (Anderson & van Wincoop, 2003) has the exporter's capacity and the
+importer's demand enter with the *same* exponent; `GravitySpec` now refuses to
+build with $\alpha \ne \beta$.
 
-### 6. Link selection is *competitive*, not thresholded
+**Why multilateral resistance.** $\Pi$ and $P$ are what a raw gravity kernel
+lacks. Dividing by them turns the bilateral mass into a *share* of the commerce
+an agent can actually expect, so the score is invariant to a global rescaling of
+the economy and a small settlement is not automatically outscored by a big one.
+It is also what makes $\gamma$ identifiable in the first place: omitting
+resistance pushes the whole distance effect into the coefficient on $d_{ij}$.
+
+**What the kernel can and cannot explain.** On a 96 × 64 lattice with sixteen
+sites, $c_{ij}$ is nearly proportional to $d_{ij}$ and the endowment field is
+spatially autocorrelated — neighbouring settlements sit on similar land and
+therefore have *less* to trade. The realised distance profile is consequently
+dominated by comparative advantage, not by distance decay: the extensive margin
+does decay (link density 0.44 → 0.22 from the nearest to the farthest band),
+while volume per link does not, because volume is set by the arbitrage condition
+in §8 rather than by the kernel. That is why the kernel is validated
+*structurally* (the closed-form elasticity is exactly $-\gamma$, tested) and
+*econometrically* (§12), not by regressing raw flows on distance.
+
+### 6. Discovery runs two passes
 
 An absolute threshold would either connect everything or nothing, depending on
 the world's scale. Instead each settlement ranks its candidates **relative to
@@ -227,22 +273,45 @@ A_{ij}^{r} \;\ge\; \max\!\left(A_{\min},\; \kappa \cdot \max_{k} A_{ik}^{r}\righ
 \qquad A_{\min}=0.02,\; \kappa = 0.32,
 $$
 
-capped at `max_partners` partners per settlement. This is what makes the network
-sparse and structured instead of a complete graph, and it is entirely local: the
-normaliser is the settlement's own best option.
+capped at `max_partners` partners per settlement.
 
-### 7. Edge weights
+That is the **seller pass**, and on its own it makes connectivity a privilege of
+whoever happens to own a surplus. A settlement that owns nothing in demand was
+unreachable and stayed an orphan forever — artificial fragmentation produced
+purely by the *direction of search*, which is exactly the failure the old
+pipeline kept "repairing" by inflating the discovery radius.
+
+So discovery has a second, **buyer-initiated** pass: a settlement with an
+unserved staple-food deficit solicits its best supplier directly. Food is the
+survival-critical channel, so that is where the initiative is spent; wood and
+ore are sourced opportunistically by the seller pass. With both passes the
+market closes at the *critical radius* itself (`giant_component_share = 0.94` at
+radius 9.85), which is why the pipeline now reaches `PASS` on its first attempt
+instead of needing the retry loop to widen the market.
+
+### 7. Edge weights and relationship hysteresis
 
 $$
-w_{ij}^{r}(t+1) \;=\; \max\!\left(w_{ij}^{r}(t)\,e^{-\delta},\;
+w_{ij}^{r}(t+1) \;=\; \max\!\left(w_{ij}^{r}(t)\,e^{-\delta/(1+\eta\,m_{ij})},\;
 \min\!\left(4,\; 2\,\frac{A_{ij}^{r}}{\max_k A_{ik}^{r}}\right)\right),
-\qquad \delta = 0.035 \;\text{(i.e. } e^{-\delta}=0.965\text{)}
+\qquad \delta = 0.035
 $$
 
-Weights decay every tick and are only refreshed by a discovery pass. A link
-whose weight drops below `edge_min_weight = 0.06`, or that stays idle longer
-than `edge_max_idle = 24` ticks, is pruned. **The network has to be maintained
-by real exchange** — it is not a static proximity graph.
+Weights decay every tick and are only refreshed by a discovery pass. Two things
+keep the graph from over-pruning under a shock:
+
+* **decay is slowed by relationship capital** — the exponent is divided by
+  $1+\eta m_{ij}$ ($\eta = 0.5$), so a long-standing partner loses weight less
+  than half as fast;
+* **the idle grace period scales with trust** — a link is pruned after
+  `edge_max_idle · (1 + 0.75 m_{ij})` idle ticks, up to four times the base.
+
+Trade relationships are hysteretic: they survive adverse spells and re-form
+along existing channels instead of being rebuilt after every drought. Tested
+directly: a 70-tick drought at magnitude 0.9 on the dominant food exporter must
+not cost the network more than a quarter of its links, and here it *gains*
+edges, because the shock opens new arbitrage margins while the old links are
+still in their grace period.
 
 ### 8. Spatial arbitrage condition (the actual trade rule)
 
@@ -261,33 +330,84 @@ $q(1-\ell_{\text{transit}})$, $\ell = 0.04$; freight $\tau c q$ is burned. The
 margin $p_j - p_i$ therefore funds the transport sector, and a route only
 survives as long as the price gap it exploits does.
 
-### 9. Infrastructure feedback
+### 9. Infrastructure feedback (bounded by construction)
 
 $$
 \sum_{t} q_{ij}(t) > \Theta \;\Longrightarrow\;
-\rho_{c} \leftarrow \min(3, \rho_c + 0.34)\ \ \forall c \in \text{path}_{ij},
+\rho_c \leftarrow \rho_c + g\left(1 - \frac{\rho_c}{\rho_{\max}}\right)
+\ \ \forall c \in \text{path}_{ij},
 \qquad
-c_{xy} \;=\; \frac{c^0_{xy}}{1 + 0.34\,\rho_{xy}}
+\dot\rho_c = -\,\delta_\rho\,\rho_c
 $$
 
-$\Theta = 55$ units of cumulative flow. Paving a route lowers its cost, which
-raises its gravity score, which attracts more flow — the positive feedback that
-turns a footpath into a road. `roads_upgraded` counts these events.
+$$
+c_{xy} \;=\; \frac{c^0_{xy}}{1 + 0.34\,\rho_{xy}},
+\qquad \Theta = 55,\; g = 0.34,\; \rho_{\max}=3,\; \delta_\rho = 0.0018
+$$
 
-### 10. Demography
+The old rule was a ratchet: $\rho \leftarrow \min(3, \rho + 0.34)$, so once a cell
+was paved it stayed paved forever and the only thing stopping the
+gravity → road → gravity feedback from running away was the numeric cap. Two
+changes make the loop genuinely bounded and give it a stationary point:
+
+* **logistic upgrade** — each qualifying pass closes a fixed fraction of the
+  remaining gap, so the marginal return to traffic falls as the road improves;
+* **depreciation** — road capital is a stock that traffic maintains. Without it
+  there is no equilibrium, only a ladder.
+
+Equilibrium is now a flow: a route carrying $f$ units/tick absorbs $gf/\Theta$ of
+upgrade per tick against $\delta_\rho \rho$ of decay, so $\rho^* \approx
+g f / (\Theta \delta_\rho)$. Busy corridors settle near the cap, quiet ones fade
+back to dirt — and a test asserts that a network with no traffic at all loses at
+least a quarter of its peak road stock within 300 ticks.
+
+### 10. Demography (logistic, with a fixed point)
 
 $$
-\dot N_i = N_i\Big[\rho\,\sigma(\text{food})\big(1 - N_i/K_i\big) - \delta_m\Big],
+\dot N_i = N_i\Big[\rho\,\hat\sigma_i\big(1 - N_i/K_i\big) - \delta_m\Big],
 \qquad
-K_i = K_0 + 9 E_i^{\text{food}}(1+\theta_i) + 14 R_i
+\boxed{\;K_i = K_0 + \frac{E_i^{\text{food}}\,(1+\theta_i)}
+{c^{\text{food}}\,\big(1 + \sigma_{\text{spoil}}\,T_{\text{cov}}\big)}\;}
 $$
 
 $$
-\sigma(\text{food}) = \mathrm{clip}\!\left(\frac{S_i^{\text{food}}/\bar S_i^{\text{food}} - 0.15}{0.85},\,0,\,1.25\right)
+\hat\sigma_i \leftarrow (1-a)\,\hat\sigma_i + a\,\mathrm{clip}\!\left(
+\frac{S_i^{\text{food}}/\bar S_i^{\text{food}} - 0.15}{0.85},\,0,\,1.25\right),
+\qquad a = 0.35
 $$
 
-Food security gates fecundity; capacity tracks food endowment, knowledge and
-road access. A settlement below 1.2 people is abandoned.
+Four separate defects were fixed here, each of which had been hiding behind the
+gate's normalisation window:
+
+1. **$K$ depended on the state it regulates.** The old heuristic
+   (`base + 9·endowment + 14·roads`) under-shot the food-feasible ceiling by 3–6×
+   on large settlements, and once the audit started feeding the *habitual* labour
+   share into $K$, $K$ simply chased $N$ and the logistic had no fixed point at
+   all. $K$ is now the land's own capability at full food labour: independent of
+   population, of the current labour mix, and of roads (road access is trade
+   infrastructure and belongs in production and freight cost, not in soil
+   fertility).
+2. **Storage losses were ignored.** The granary loses $\sigma_{\text{spoil}} = 0.02$
+   of its stock per tick and the buffer is $T_{\text{cov}} = 26$ ticks of
+   consumption, so a fraction $\sigma T_{\text{cov}} = 0.52$ of gross output never
+   reaches a mouth. Dividing by $1 + \sigma T_{\text{cov}}$ is what brings $K$
+   down onto the observed population instead of three times above it.
+3. **Technology was unbounded in time.** $\theta \mathrel{+}= g\ln(1+V)$ keeps
+   climbing until a hard cap, so $K$ keeps climbing too and the population can
+   only ever chase a moving target — the field never converges. Adoption is now a
+   Bass/Rogers curve toward a finite frontier,
+   $\dot\theta = g\,(1+\ln(1+V))\,(\theta_{\max}-\theta)$, and it runs on a
+   timescale (~30 ticks) well inside demographic turnover (~70 ticks), which is
+   the timescale separation a stationary state requires.
+4. **Households reacted to raw granary noise.** Fecundity now uses an adaptive
+   expectation $\hat\sigma$, which damps the sawtooth without degrading the
+   choropleth: lag-1 autocorrelation stays at 0.97.
+
+Convergence is no longer an artefact of normalising over a growing series. Over
+400 ticks the field reaches $N/K = 0.69$ — the analytic fixed point
+$N^* = K(1-\delta_m/\rho)$ — $K$ is frozen to one part in $10^6$, and the tail
+exponential rate is $1.5\times10^{-3}$/tick against the $4.5\times10^{-3}$
+criterion.
 
 ### 11. Conservation (the invariant everything else rests on)
 
@@ -299,9 +419,46 @@ S_{\text{end}} \;=\; S_{\text{start}} + Q - C + M_{\text{in}} - M_{\text{out}} -
 \;\pm\; 10^{-13}.
 $$
 
-This holds to ~6 × 10⁻¹⁴ relative error over 460 ticks and 16 settlements, and
-is enforced as the `N-MASS` gate. Shocks that create matter (`ore_discovery`)
-must book it as production — a test caught exactly that bug.
+Two engine-property changes make that identity hold at machine precision rather
+than by luck:
+
+* **Neumaier-compensated accumulation.** Plain `stocks += delta` loses an ulp per
+  operation, and with ~2 × 10⁴ units of ledger and 400 ticks the naive error
+  ($\approx$ eps × magnitude) sits at 1e-11 — *below* the 1e-9 gate only because
+  the magnitude is small. Each stock now carries its own rounding-error term, so
+  the error is pinned at the precision of the final value rather than growing
+  with the number of operations.
+* **`math.fsum` in the audit.** The ledger is summed exactly, so the reported
+  residual is a property of the simulation and not of the summation order.
+
+This is an engine property, never a parameter. A conservation failure is a hard
+`FAILED_NEEDS_REVIEW`: see §_Self-correction_.
+
+---
+
+### 12. Calibrating the kernel
+
+`agora/calibration.py` fits $(\\alpha,\\beta,\\gamma)$ by **Poisson
+pseudo-maximum-likelihood** (Santos Silva & Tenreyro, 2006) on the realised
+seller–buyer pairs, zeros included:
+
+$$
+\\mathbb{E}\big[q_{ij}\\big] = \\exp\\!\Big(c + a\\ln S_i + b\\ln D_j - g\\ln(d_{ij}+d_0)\\Big)
+$$
+
+PPML rather than OLS-in-logs because most ordered pairs never trade, and dropping
+the zeros throws away the extensive margin — the margin the kernel actually
+governs. Validated on synthetic data generated by the kernel itself: with 700
+pairs and ≈ 12 units per pair it recovers $\\hat\\gamma = 1.35 \\pm 0.02$. On the
+lattice it returns $\\hat\\gamma$ with a standard error of ~0.35 and attenuated
+masses, which is the honest statement: the kernel sets *which* links open, while
+the arbitrage rule sets *how much* flows, so flow-based identification is weak in
+a sixteen-node world.
+
+$\\tau$ is deliberately **held at its prior** rather than estimated. On a lattice
+the cheapest path is nearly proportional to separation, so fitting $\\tau$ and
+$\\gamma$ together is an identification failure — and the code raises rather than
+silently producing a ten-times-inflated friction coefficient.
 
 ---
 
@@ -335,15 +492,23 @@ All state crossing node boundaries is Pydantic v2 (`Blueprint`, `Gate`,
 `ValidationReport`, `Patch`, `Reflection`, `ArtifactRecord`, `FinalReport`,
 `Directive`, …), all frozen with `extra="forbid"`.
 
-### Why the first attempt is *supposed* to fail
+### Why the first attempt used to fail — and no longer does
 
-The planner deliberately starts at exactly the geometric critical radius. That
-is the tightest radius at which a connected graph is even *possible*. But
-geometry is not economics: a link requires a settlement with a **complementary
-endowment** inside the horizon, not merely a neighbour. At radius 9.85 the
-realised giant component is 0.44 → `N-COMP` fails → the reflector widens to
-17.73 and the network connects (0.94). The parsimonious hypothesis is measured,
-rejected and corrected — which is the entire point of the loop.
+The planner starts at exactly the geometric critical radius, the tightest radius
+at which a connected graph is even *possible*. Geometry is not economics: a link
+requires a settlement with a **complementary endowment** inside the horizon, not
+merely a neighbour. Before the audit, seller-initiated search at radius 9.85
+produced a giant component of 0.44, `N-COMP` failed, and the reflector widened
+the market to 17.73 on the second attempt.
+
+That whole retry existed to compensate for a *missing search direction*. Once
+discovery also runs buyer-initiated (§6), the market closes at the critical
+radius itself — giant component 0.9375 — and the pipeline now returns `PASS` on
+one attempt. The retry loop is still there, still hard-budgeted, and still
+proven to work: `tests/test_pipeline.py::test_pipeline_self_heals_a_fragmented_market`
+injects a radius of 4.0 and asserts the reflector measures the fragmentation,
+patches the radius and recovers. Removing the *need* for a retry is a better
+outcome than needing one.
 
 ---
 
@@ -354,13 +519,13 @@ Eight gates, evaluated on every attempt. Results from the committed run
 
 | Gate | Metric | Observed | Criterion | Result |
 |---|---|---|---|---|
-| `C-GRID` | `abs_growth_tail` | 0.00291 | ≤ 0.0045 | PASS |
-| `C-COHER` | `field_lag1_corr` | 0.97710 | ≥ 0.55 | PASS |
+| `C-GRID` | `abs_growth_tail` | 0.00148 | ≤ 0.0045 | PASS |
+| `C-COHER` | `field_lag1_corr` | 0.96883 | ≥ 0.55 | PASS |
 | `N-COMP` | `giant_component_share` | 0.93750 | ≥ 0.85 | PASS |
-| `N-EDGE` | `edges_per_node` | 1.43750 | ≥ 0.90 | PASS |
-| `N-MASS` | `mass_balance_error` | 5.84e‑14 | ≤ 1e‑09 | PASS |
+| `N-EDGE` | `edges_per_node` | 1.62500 | ≥ 0.90 | PASS |
+| `N-MASS` | `mass_balance_error` | 3.29e‑14 | ≤ 1e‑09 | PASS |
 | `V-CONTRACT` | `visual_contract_score` | 1.00000 | ≥ 0.85 | PASS |
-| `R-SHOCK` | `shock_recovery` | 1.09206 | ≥ 0.60 | PASS |
+| `R-SHOCK` | `shock_recovery` | 0.82596 | ≥ 0.60 | PASS |
 | `C-STABLE` | `pop_drawdown` | 0.00000 | ≤ 0.35 | PASS |
 
 **Grid convergence (`C-GRID`, `C-COHER`, `C-STABLE`).** The lattice must reach a
@@ -444,7 +609,7 @@ stays smooth regardless of poll rate.
 ## Tests
 
 ```bash
-python -m pytest tests -q      # 70 passed
+python -m pytest tests -q      # 95 passed in ~110 s
 ```
 
 | File | What it proves |
@@ -452,7 +617,8 @@ python -m pytest tests -q      # 70 passed
 | `test_world.py` | terrain codes, land fraction in envelope, no edge‑touching sites, determinism across processes, A\* never crosses water |
 | `test_economy.py` | price clamps, monotone gravity kernel, labour normalisation, **exact** mass balance (also under every shock kind), population convergence, bounded granaries |
 | `test_network.py` | links only form after a discovery pass, arbitrage invariant, decay/pruning, roads lower cost, embargo suppresses trade, reproducibility |
-| `test_pipeline.py` | graph topology and cycle, both routers, retry ceiling, blueprint completeness, the run actually self‑heals, artifacts are hashed, reflector refuses a conservation defect |
+| `test_pipeline.py` | graph topology and cycle, both routers, retry ceiling, blueprint completeness, an injected fragmented market actually self‑heals, artifacts are hashed |
+| `test_theory.py` | the maths as propositions: the kernel's elasticity is exactly $-\gamma$; masses are symmetric and scale-invariant; PPML recovers known parameters; $\nu^*$ is derived and equalises long-run marginal revenue with no corner; $K$ is independent of $N$ and of the labour mix; technology saturates; the field reaches its fixed point; roads depreciate and stay bounded; a severe shock does not prune the network; the ledger holds to 1e-12; the reflector refuses to patch a conservation leak |
 | `test_render.py` | frame size, non‑blank, shading grows, hatch tiers present, flows land‑anchored, payload bounds |
 | `test_web.py` | full HTTP contract incl. transport controls, seek, shocks, PNG snapshot, seed reproducibility, NaN‑free JSON |
 
@@ -471,7 +637,8 @@ agora/
 │   ├── schemas.py        # every Pydantic v2 contract (specs, artifacts, telemetry)
 │   ├── world.py          # noise, biomes, provinces, siting, A*, territorial yield
 │   ├── settlement.py     # the Settlement agent (Mesa)
-│   ├── market.py         # gravity kernel, discovery, arbitrage, decay
+│   ├── market.py         # gravity kernel, two-pass discovery, arbitrage, decay
+│   ├── calibration.py    # PPML estimation of (alpha, beta, gamma) + distance profile
 │   ├── model.py          # the ticking lattice, roads, shocks, frame serialisation
 │   ├── metrics.py        # convergence/network/visual metrics + gate evaluation
 │   ├── render.py         # headless cartographic renderer (PIL)
@@ -487,14 +654,36 @@ agora/
 │   ├── fault_matrix.py   # injects faults, proves the loop repairs them
 │   ├── render_atlas.py   # the README filmstrip
 │   └── serve.py          # console launcher
-├── tests/                # 70 tests
+├── tests/                # 95 tests
 ├── artifacts/            # frames, metrics, blueprint, final report
 └── docs/atlas.png
 ```
 
 ---
 
-## Design notes and limitations
+## Design notes, audit findings and limitations
+
+### What the audit changed
+
+The spatial-economy module was rebuilt against a six-part numeric audit of a
+320-tick run. Every row below is a *measured* defect, the structural change that
+closed it, and the test that now holds it shut.
+
+| # | Measured on the old engine | Diagnosis | Fix | Now |
+|---|---|---|---|---|
+| 1 | realised $\partial\ln q/\partial\ln d = -2.358$ while the kernel implied $-1.35$ ($R^2=0.37$) | a raw, size‑biased kernel; no multilateral resistance; flow regressed without controlling for masses | structural kernel with $\Pi$, $P$; $\alpha=\beta$ enforced; PPML calibrator with mass controls | kernel elasticity exact ($-\gamma$, tested); $\hat\gamma = 1.35\pm0.02$ on synthetic data |
+| 2 | FOC implied $\nu = 1/(1-\kappa)=4.545$ but the code used $\nu=2.2$; MRP dispersion mean 0.431 / max 0.829 | a tuned exponent with no derivation, and the wrong marginal condition | revenue curvature $m=\kappa(1-\epsilon)$ ⇒ $\nu^* = 1.751$; long‑run marginal revenue equalised | KKT residual 0.16, zero corner solutions, exact equalisation among unconstrained activities |
+| 3 | edges 23 → 26 after a magnitude‑0.9 drought | none — pruning was already tolerant | hysteresis made explicit and tested (trust slows decay, extends grace) | a 70‑tick severe drought costs < 25 % of links; here it gains them |
+| 4 | 12 upgrades, max level 2.72/3, 7 in the last 100 ticks | a ratchet with no equilibrium — only the numeric cap bounded it | logistic upgrade + road depreciation ($\rho^* = gf/(\Theta\delta_\rho)$) | bounded, stationary, decays to < 75 % when traffic stops |
+| 5 | $K$ under‑shot the food‑feasible ceiling 3–6× (Katora 70.3 vs 81.3); tail $dN/dt = +10.1$ with **0** sign flips over 40 ticks | $K$ was an ad‑hoc sum, storage losses were ignored, technology never saturated, and $K$ was being fed back into itself | $K$ from land capability net of storage loss, exogenous to $N$; logistic technology diffusion; adaptive expectations on food security | $N/K = 0.69$ = the analytic fixed point; $K$ frozen to $10^{-6}$; tail rate $1.5\times10^{-3}$/tick |
+| 6 | $\sum$ error 2.96e‑11 against a ledger of 2.18e4 (cancellation ratio 1.36e‑15) | naive accumulation; the error grows with the number of operations | Neumaier‑compensated stock updates + `math.fsum` ledger audit | 3.3e‑14 relative, error independent of run length |
+
+The one thing the audit did *not* support was "the network over‑prunes under
+shocks" — it did not. Changing $\mu$ or $\delta$ to fix a non‑problem would have
+been exactly the kind of patch this refactor exists to remove, so the hysteresis
+that was already implicit was made explicit and given a test instead.
+
+### Notes
 
 **Why Mesa.** The settlement is a real `mesa.space.Agent` on a `MultiGrid`, and
 the model is a `mesa.Model` with a seeded RNG. Mesa's scheduler is not used for
@@ -515,9 +704,17 @@ components and density for the network gates.
   mountain or hill province, so most settlements sit at the ore price ceiling
   ($6\times$ base) permanently. That is a real feature of an island economy with
   three mines, but it means the ore corridor carries far less volume than food.
-- **Trade is seller‑initiated.** Discovery runs from the surplus side. A
-  settlement that needs something but has nothing to sell is never the one that
-  opens the link. Barter asymmetry is realistic but not modelled.
+- **The kernel is not identified from the realised network.** With sixteen
+  nodes, a candidate horizon narrow in log‑distance, and endowments that are
+  spatially autocorrelated, the distance signal in the *observed* link set is
+  weak and partly reversed: neighbours sit on similar land and therefore trade
+  less. The kernel's own elasticity is exact and tested, the comparative statics
+  are monotone, and §12 ships a PPML calibrator — but a claim of the form "the
+  data identify $\gamma$" would be false, so it is not made.
+- **The intensive margin is set by arbitrage, not by gravity.** Gravity decides
+  *which* links open; the price gap and the freight bill decide how much flows
+  through them. Volume‑based gravity regressions therefore recover attenuated
+  masses — which is what `calibrate_gravity` reports rather than hides.
 - **No money stock.** Wealth is bookkeeping; it does not buy anything. There is
   arbitrage profit and freight cost, but no capital accumulation channel.
 - **Shocks are exogenous.** The seven kinds modify parameters over a radius and

@@ -64,6 +64,7 @@ class AgoraModel(mesa.Model):
         self.cost = self.base_cost.copy()
         self.road_epoch = 0
         self.roads_upgraded = 0
+        self._road_refresh_in = 10
 
         self.settlements: dict[int, Settlement] = {}
         self.edges: dict[tuple[int, int], TradeEdge] = {}
@@ -278,6 +279,29 @@ class AgoraModel(mesa.Model):
             total += float(self.cost[y1, x1]) * step
         return total
 
+    def _maintain_roads(self) -> None:
+        """Infrastructure is a stock: it depreciates unless traffic maintains it.
+
+        Without depreciation the road layer is a ratchet - once a cell is paved
+        it stays paved forever, which makes the gravity->road->gravity feedback
+        unbounded in practice and only bounded by the numeric cap. Depreciating
+        the stock makes `rho*` an equilibrium of traffic, not a one-way ladder.
+        """
+
+        dep = float(self.econ.road_depreciation)
+        if dep > 0.0 and self.road_level.any():
+            self.road_level *= 1.0 - dep
+            self._road_refresh_in -= 1
+            if self._road_refresh_in <= 0:
+                self._rebuild_cost()
+                self.road_epoch += 1
+                self._road_refresh_in = 10
+
+    def road_stock(self) -> np.ndarray:
+        """Normalised road capital per cell (0..1 of the cap)."""
+
+        return self.road_level / max(float(self.econ.road_max), 1.0)
+
     def _rebuild_cost(self) -> None:
         gain = 1.0 + self.econ.road_gain * self.road_level
         updated = np.where(np.isfinite(self.base_cost), self.base_cost / gain, np.inf)
@@ -292,11 +316,15 @@ class AgoraModel(mesa.Model):
             buyer = self.settlements[edge.dst]
             self._pulse(buyer.x, buyer.y, radius=1.0, kind="trade", strength=min(1.0, volume / 2.0))
         if edge.cum_flow >= self.econ.road_threshold and edge.path:
-            upgrade = float(self.econ.road_gain)
+            # logistic upgrade: each pass closes a fixed fraction of the remaining
+            # gap to the cap, so agglomeration gains diminish instead of ratcheting
+            gain = float(self.econ.road_gain)
+            cap = float(self.econ.road_max)
             changed = False
             for x, y in edge.path:
-                if self.road_level[y, x] < self.econ.road_max:
-                    self.road_level[y, x] = float(min(self.econ.road_max, self.road_level[y, x] + upgrade))
+                level = float(self.road_level[y, x])
+                if level < cap - 1e-6:
+                    self.road_level[y, x] = level + gain * (1.0 - level / cap)
                     changed = True
             edge.cum_flow -= self.econ.road_threshold
             if changed:
@@ -341,6 +369,8 @@ class AgoraModel(mesa.Model):
             settlement.consume(self.econ, effect)
             settlement.spoil(self.econ)
             settlement.update_population(self.econ, effect)
+            settlement.decay_trust(self.econ)
+            settlement.advance_tech(self.econ)
             if t % 3 == 0:
                 settlement.adapt_labour(self.econ)
             # consumption-side signal: a settlement running its granary down
@@ -373,6 +403,7 @@ class AgoraModel(mesa.Model):
                 edge.weights *= 0.92
         self.market.execute(self)
         self.market.decay(self)
+        self._maintain_roads()
 
         if t % self.spec.record_every == 0:
             self._record()
@@ -453,7 +484,12 @@ class AgoraModel(mesa.Model):
         reference = max(float(np.mean([s.capacity for s in alive])), 1.0)
         yy, xx = np.mgrid[0 : self.height, 0 : self.width]
         for settlement in alive:
-            level = float(np.clip(settlement.population / reference, 0.02, 1.0))
+            # saturating tone map instead of a hard clip: with heterogeneous
+            # carrying capacity a linear scale saturates at 255 on the largest
+            # nodes, so growth stops being visible and every big settlement
+            # renders identically white
+            level = float(1.0 - math.exp(-max(settlement.population, 0.0) / reference))
+            level = max(level, 0.02)
             sigma = 1.5 + 2.6 * level
             influence = np.exp(-(((xx - settlement.x) ** 2 + (yy - settlement.y) ** 2) / (2 * sigma**2)))
             field = np.maximum(field, influence.astype(np.float32) * (0.35 + 0.65 * level))

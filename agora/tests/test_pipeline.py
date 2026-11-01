@@ -79,16 +79,44 @@ def test_blueprint_carries_the_math(pipeline_result):
     assert any("gravity" in e.latex.lower() or "A_{ij}" in e.latex for e in blueprint.equations)
 
 
-def test_pipeline_self_heals_at_least_once(pipeline_result):
-    """The planner's geometric radius is deliberately too tight; the loop fixes it."""
+def test_pipeline_reaches_its_verdict_without_wasted_retries(pipeline_result):
+    """The buyer-initiated discovery pass removed the fragmentation the roadmap
+    used to need a retry for, so the loop should now close on its first attempt."""
 
-    assert pipeline_result["reflections"], "the first attempt should have been rejected"
-    first = pipeline_result["reflections"][0]
-    assert first.failure_class == "network_fragmentation"
-    assert first.patches, "the reflector must emit a patch"
-    assert any(p.pointer == "economy.discovery_radius" for p in first.patches)
-    final_radius = pipeline_result["spec"].economy.discovery_radius
-    assert final_radius > pipeline_result["blueprint"].critical_radius
+    report = pipeline_result["report"]
+    assert report.passed
+    assert report.attempt == len(pipeline_result["reflections"])
+    if not pipeline_result["reflections"]:
+        assert pipeline_result["verdict"] == "PASS"
+        assert pipeline_result["spec"].economy.discovery_radius >= pipeline_result["blueprint"].critical_radius
+
+
+def test_pipeline_self_heals_a_fragmented_market(tmp_path):
+    """Injected proof that the healing cycle still works end to end.
+
+    A radius pinned at a third of the critical radius fragments the market; the
+    reflector must measure it, classify it as ``network_fragmentation``, patch
+    the radius and recover inside the retry budget.
+    """
+
+    directive = Directive(horizon=420, settle_ticks=40, max_retries=3)
+    state = initial_state(directive)
+    state["output_dir"] = str(tmp_path / "fragmented")
+    state["patches"] = [
+        Patch(
+            pointer="economy.discovery_radius",
+            previous=18.8,
+            updated=4.0,
+            rationale="injected: an over-local market scan",
+        )
+    ]
+    result = dict(build_graph().invoke(state))
+    reflections = result["reflections"]
+    assert reflections, "a fragmented market must be rejected at least once"
+    assert reflections[0].failure_class == "network_fragmentation"
+    assert any(p.pointer == "economy.discovery_radius" for p in reflections[0].patches)
+    assert result["verdict"] == "PASS_WITH_RETRIES"
+    assert result["spec"].economy.discovery_radius > 4.0
 
 
 def test_artifacts_are_written_and_hashed(pipeline_result):

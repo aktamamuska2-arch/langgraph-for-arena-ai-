@@ -1,7 +1,7 @@
 {
   "blueprint_id": "BP-ASEOWS-001",
   "experiment_id": "ASEOWS-001",
-  "created_at": "2026-11-01T11:52:40.323937Z",
+  "created_at": "2026-11-01T13:11:38.219727Z",
   "objective": "Compile a 2D lattice world of autonomous settlements whose trade network self-organises from local surplus/deficit scans, and prove the result converges and stays connected.",
   "equations": [
     {

@@ -75,16 +75,42 @@ class WorldSpec(Frozen):
 class GravitySpec(Frozen):
     """Parameters of the market-discovery gravity model.
 
-    ``A_ij = G * S_i^alpha * D_j^beta / (d_ij + d0)^gamma * exp(-tau * c_ij) * (1 + mu * m_ij)``
+    Structural form (Anderson & van Wincoop, 2003), specialised to a lattice::
+
+        A_ij = G * (S_i)^alpha * (D_j)^beta
+               / [ (d_ij + d0)^gamma * (Pi_i)^w * (P_j)^w ]
+               * exp(-tau * c_ij) * (1 + mu * m_ij)
+
+    ``Pi`` (outward multilateral resistance) is the seller's access to rival
+    buyers and ``P`` (inward) the buyer's menu of rival suppliers. Dividing by
+    them turns the raw bilateral score into a *share* of the trade an agent can
+    actually expect, which removes the spurious size bias of an unnormalised
+    gravity kernel and makes the score comparable across worlds.
+
+    ``alpha == beta`` by default: in structural gravity the exporter's supply
+    capacity and the importer's demand enter symmetrically, so the earlier
+    0.85/0.95 tilt is gone.
     """
 
     scale: Positive = 1.0
-    alpha: Positive = 0.85  # surplus elasticity
-    beta: Positive = 0.95  # deficit elasticity
+    alpha: Positive = 1.0  # surplus (exporter capacity) elasticity
+    beta: Positive = 1.0  # deficit (importer demand) elasticity
     gamma: Positive = 1.35  # distance decay exponent
     d0: Positive = 3.0  # distance offset in cells (keeps short hops finite)
     tau: float = Field(default=0.012, ge=0.0, le=0.5)  # transport-cost friction
     memory_bonus: float = Field(default=0.45, ge=0.0, le=3.0)  # repeat-partner trust `mu`
+    mr_weight: float = Field(default=1.0, ge=0.0, le=2.0)  # multilateral-resistance exponent `w`
+    mr_floor: float = Field(default=1e-3, gt=0.0, le=1.0)  # numerical guard for Pi, P
+
+    @model_validator(mode="after")
+    def _symmetric_masses(self) -> Self:
+        if abs(self.alpha - self.beta) > 1e-9:
+            raise ValueError(
+                "alpha must equal beta: an asymmetric mass exponent biases trade "
+                "toward large buyers and manufactures fragmentation (see README, "
+                "§4 'why the masses are symmetric')"
+            )
+        return self
 
 
 class EconomySpec(Frozen):
@@ -98,7 +124,11 @@ class EconomySpec(Frozen):
     edge_decay: float = Field(default=0.965, ge=0.80, le=1.0)
     edge_min_weight: float = Field(default=0.06, ge=0.0, le=1.0)
     edge_max_idle: int = Field(default=24, ge=4, le=400)
+    trust_decay: float = Field(default=0.999, ge=0.9, le=1.0)
+    trust_grace: float = Field(default=0.75, ge=0.0, le=4.0)
+    trust_halflife_decay: float = Field(default=0.5, ge=0.0, le=1.0)
     max_partners: int = Field(default=8, ge=1, le=24)
+    buyer_initiative: int = Field(default=2, ge=0, le=8)
     trade_fraction: float = Field(default=0.45, gt=0.0, le=1.0)
     transfer_loss: Fraction = 0.04
     spoilage: Fraction = 0.02
@@ -108,8 +138,9 @@ class EconomySpec(Frozen):
     # production
     labor_exponent: float = Field(default=0.78, gt=0.0, le=2.0)
     labor_inertia: float = Field(default=0.25, ge=0.0, le=1.0)
-    labor_sharpness: float = Field(default=2.2, gt=0.0, le=10.0)
-    tech_gain: float = Field(default=0.0015, ge=0.0, le=0.1)
+    labor_sharpness: float | None = Field(default=None, gt=0.0, le=40.0)
+    tech_gain: float = Field(default=0.03, ge=0.0, le=0.5)
+    tech_ceiling: float = Field(default=1.6, ge=0.0, le=5.0)
 
     # consumption & demography
     food_per_capita: Positive = 0.020
@@ -130,6 +161,9 @@ class EconomySpec(Frozen):
     road_threshold: Positive = 55.0
     road_gain: float = Field(default=0.34, ge=0.0, le=0.9)
     road_max: int = Field(default=3, ge=0, le=6)
+    road_depreciation: float = Field(default=0.0018, ge=0.0, le=0.05)
+    security_memory: float = Field(default=0.35, ge=0.0, le=0.95)
+    capacity_labor_memory: float = Field(default=0.02, gt=0.0, le=0.5)
 
     @field_validator("base_price")
     @classmethod
@@ -140,10 +174,39 @@ class EconomySpec(Frozen):
             raise ValueError("prices must be positive")
         return v
 
+    @property
+    def effective_curvature(self) -> float:
+        """Curvature of the *revenue* function, not of the production function.
+
+        A settlement is a price maker in its own local market: ``p_r ∝ S_r^{-eps}``
+        and, at the steady state, stock is proportional to output, so revenue
+        behaves like ``Q_r^{1-eps}`` and ``Q_r = E_r l_r^{kappa}`` therefore
+        behaves like ``l_r^{kappa(1-eps)}``.
+        """
+
+        return self.labor_exponent * (1.0 - self.price_elasticity)
+
+    @property
+    def sharpness(self) -> float:
+        """Revenue-maximising reallocation sharpness, derived from the FOC.
+
+        Maximising ``sum_r p_r E_r^{1-eps} l_r^{m}`` subject to ``sum_r l_r = 1``
+        (with ``m = effective_curvature``) gives ``l_r ∝ (p_r E_r^{1-eps})^{1/(1-m)}``.
+        The exponent is therefore *derived*: an under-sharp value leaves labour
+        misallocated, while ``1/(1-kappa)`` (the FOC with exogenous prices) is
+        degenerate and collapses onto a corner solution.
+        """
+
+        if self.labor_sharpness is not None:
+            return float(self.labor_sharpness)
+        return 1.0 / (1.0 - self.effective_curvature)
+
     @model_validator(mode="after")
     def _sane(self) -> Self:
         if self.price_ceiling <= self.price_floor:
             raise ValueError("price_ceiling must exceed price_floor")
+        if self.labor_exponent >= 1.0:
+            raise ValueError("labor_exponent must be < 1 for diminishing returns")
         return self
 
 
