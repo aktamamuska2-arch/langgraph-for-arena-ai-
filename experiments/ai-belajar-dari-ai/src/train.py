@@ -21,19 +21,20 @@ def train_model(
     steps: int = C.TRAIN_STEPS,
     log_every: int = 50,
     verbose: bool = False,
+    cfg: "XSConfig | None" = None,
+    batch: int | None = None,
 ) -> tuple[TinyGPT, dict]:
+    """P0 memakai default (cfg=None, batch=None) -> perilaku identik."""
+    if cfg is None:
+        cfg = XSConfig(block_size=C.BLOCK_SIZE, n_layer=C.N_LAYER, n_head=C.N_HEAD, d_model=C.D_MODEL)
+    batch = batch or C.BATCH_SIZE
+    block = cfg.block_size
     torch.manual_seed(seed)
     torch.set_num_threads(2)
     data = _encode(text)
-    if len(data) < C.BLOCK_SIZE * 4:
+    if len(data) < block * 4:
         raise ValueError("korpus terlalu kecil untuk training")
 
-    cfg = XSConfig(
-        block_size=C.BLOCK_SIZE,
-        n_layer=C.N_LAYER,
-        n_head=C.N_HEAD,
-        d_model=C.D_MODEL,
-    )
     model = TinyGPT(cfg)
     opt = torch.optim.AdamW(model.parameters(), lr=C.LR, weight_decay=0.01, betas=(0.9, 0.95))
     g = torch.Generator().manual_seed(seed + 1)
@@ -50,12 +51,12 @@ def train_model(
         for pg in opt.param_groups:
             pg["lr"] = lr
 
-        ix = torch.randint(len(data) - C.BLOCK_SIZE - 1, (C.BATCH_SIZE,), generator=g)
-        x = torch.stack([data[i : i + C.BLOCK_SIZE] for i in ix])
-        y = torch.stack([data[i + 1 : i + 1 + C.BLOCK_SIZE] for i in ix])
+        ix = torch.randint(len(data) - block - 1, (batch,), generator=g)
+        x = torch.stack([data[i : i + block] for i in ix])
+        y = torch.stack([data[i + 1 : i + 1 + block] for i in ix])
 
         _, loss_sum = model(x, y)
-        loss = loss_sum / (C.BATCH_SIZE * C.BLOCK_SIZE)
+        loss = loss_sum / (batch * block)
         opt.zero_grad(set_to_none=True)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), C.GRAD_CLIP)
@@ -71,7 +72,7 @@ def train_model(
         "final_loss": losses[-1],
         "mean_loss_last50": sum(losses[-50:]) / min(50, len(losses)),
         "first_loss": losses[0],
-        "tokens_seen": steps * C.BATCH_SIZE * C.BLOCK_SIZE,
+        "tokens_seen": steps * batch * block,
         "elapsed_s": round(elapsed, 1),
         "corpus_sha": sha256_bytes(text.encode("utf-8")),
         "n_params": model.n_params,

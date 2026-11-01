@@ -221,6 +221,36 @@ def decide(row: dict, base: dict) -> dict:
     }
 
 
+# ------------------------------------------------------------------ agregasi seed
+def aggregate(rs: list[dict]) -> dict:
+    """Rata-ratakan baris dari seed berbeda pada (label, generasi) yang sama.
+
+    Tanpa ini, `decide()` akan memilih SATU baris seed secara sembarang dan membuang
+    4/5 data — padahal 5 seed ada justru untuk meredam derau. Cacat ini ditemukan
+    sebelum ada satu pun model rantai dilatih (2026-11-01) dan diperbaiki di sini.
+    """
+    ev: dict[str, float] = {}
+    for k in ("anchor_bpb", "arith_acc", "degenerate_rate", "truncated_rate", "ttr",
+              "near_dup_rate", "answer_entropy", "distinct2", "repetition_rate", "mean_bytes"):
+        vals = [r["eval"][k] for r in rs if isinstance((r.get("eval") or {}).get(k), (int, float))]
+        if vals:
+            ev[k] = round(statistics.mean(vals), 6)
+    ev["arith_n"] = min((r["eval"].get("arith_n") or 0) for r in rs)
+    sd = statistics.stdev([r["eval"]["anchor_bpb"] for r in rs]) if len(rs) > 1 else 0.0
+    return {"arm": rs[0]["arm"], "gen": rs[0].get("gen"), "model": f"rata-rata {len(rs)} seed",
+            "eval": ev, "seed": None, "sd_bpb": round(sd, 6), "n_seed": len(rs)}
+
+
+def by_generation(rows: list[dict]) -> dict[str, dict[int, dict]]:
+    groups: dict[tuple, list[dict]] = {}
+    for r in rows:
+        groups.setdefault((str(r["arm"]), int(r.get("gen") or 0)), []).append(r)
+    out: dict[str, dict[int, dict]] = {}
+    for (lbl, gen), rs in groups.items():
+        out.setdefault(lbl, {})[gen] = aggregate(rs)
+    return out
+
+
 # ------------------------------------------------------------------ keluaran
 def analyse(rows: list[dict], title: str, source: str) -> str:
     base_rows = [r for r in rows if str(r.get("arm")) in ("baseline", "M0", "base")]
@@ -247,26 +277,31 @@ def analyse(rows: list[dict], title: str, source: str) -> str:
             L.append(f"| `{k}` | {v['mean']:.4f} | {v['sd']:.4f} | `{v['label']}` |")
         else:
             L.append(f"| `{k}` | – | – | `tidak tersedia` |")
-    L += ["", "## Keputusan per arm (generasi terakhir tiap rantai)", "",
+    agg = by_generation(chains)
+    L += ["", "## Keputusan per arm (generasi terakhir tiap rantai, dirata-ratakan antar-seed)", "",
           "| label | n | bpb akhir | Delta | CI95 atas | label keputusan | kelompok cedera |",
           "| --- | --- | --- | --- | --- | --- | --- |"]
-    for lbl, rs in sorted(by_label.items()):
-        last = max(rs, key=lambda r: r.get("gen") or 0)
+    for lbl, gens in sorted(agg.items()):
+        last = gens[max(gens)]
         d = decide(last, base)
-        L.append(f"| {lbl} | {len(rs)} | {d['bpb']:.4f} | {d['delta']:+.4f} | {d['ci_upper']:+.4f} | "
+        L.append(f"| {lbl} | {last['n_seed']} | {d['bpb']:.4f} | {d['delta']:+.4f} | {d['ci_upper']:+.4f} | "
                  f"**{d['label']}** | {d['kelompok_menyala']}/{d['kelompok_informatif']} |")
-    L += ["", "## Pemantauan berurutan (screening, bukan klaim)", "",
-          "| label | gen | Delta | ambang pantau | lewat? |", "| --- | --- | --- | --- | --- |"]
-    for lbl, rs in sorted(by_label.items()):
-        for r in sorted(rs, key=lambda x: x.get("gen") or 0):
+    L += ["", "## Pemantauan berurutan (screening, bukan klaim; rata-rata antar-seed)", "",
+          "| label | gen | bpb | sd antar-seed | Delta | ambang pantau | lewat? |",
+          "| --- | --- | --- | --- | --- | --- | --- |"]
+    for lbl, gens in sorted(agg.items()):
+        for gen in sorted(gens):
+            r = gens[gen]
             delta = r["eval"]["anchor_bpb"] - base["mu0"]
-            L.append(f"| {lbl} | {r.get('gen')} | {delta:+.4f} | {base['thr_monitor']:.4f} | "
-                     f"{'ya' if delta >= base['thr_monitor'] else 'tidak'} |")
+            L.append(f"| {lbl} | {gen} | {r['eval']['anchor_bpb']:.4f} | {r['sd_bpb']:.4f} | {delta:+.4f} | "
+                     f"{base['thr_monitor']:.4f} | {'ya' if delta >= base['thr_monitor'] else 'tidak'} |")
     L += ["", "## Batas tafsir", "",
           "- `inconclusive` berarti data tidak memisahkan collapse dari stabil; itu bukan hasil negatif.",
           "- `watch` berarti ambang terlewati tanpa kelompok cedera terukur; itu bukan collapse.",
           "- Metrik berlabel `at_floor`/`uninformative` dikeluarkan dari corroboration dan tidak "
           "boleh dibaca sebagai ketiadaan cedera (PREREG §6.1).",
+          "- Keputusan dihitung dari rata-rata antar-seed pada (label, generasi); sd antar-seed dilaporkan",
+          "  terpisah agar penyebaran tidak tersembunyi di balik rata-rata.",
           "- Tren antar-generasi bersifat deskriptif; P1 tidak berdaya untuk uji tren inferensial."]
     return "\n".join(L) + "\n"
 

@@ -819,6 +819,22 @@ Default-ku di kolom kanan; kalau tidak dijawab, aku pakai default dan mencatatny
 
 ## 19. Riwayat versi
 
+### v0.7 — 2026-11-01 (amandemen v1.3 + baseline P1 dijalankan di sandbox)
+
+| # | Perubahan | Alasan | Bukti |
+| --- | --- | --- | --- |
+| 28 | Pra-registrasi naik ke **v1.3**: profil model 2,0 jt -> **0,97 jt** parameter (d_model 112, 6 lapis), anggaran token 9,2 jt -> **2.223.176** (1 epoch). Hipotesis, ambang, arm, 5 seed, dan 6 generasi **tidak berubah** | 2 jt parameter = 29 jam latih di sandbox 2 inti; 0,97 jt muat. Pengguna meratifikasi opsi "grid penuh" agar kehilangan daya uji seminimal mungkin | `PREREGISTRATION.md` v1.3 sha256 `40194966…`, §15 |
+| 29 | KV-cache: `TinyGPT.forward_cached` + `src/gen_fast.py` (paritas logits 4,8e-7) | Generasi tanpa cache 108 tok/s -> P1 mustahil. Dengan cache **4.547-6.244 tok/s**, biaya generasi turun dari 85% ke ~30% anggaran | benchmark terdokumentasi di PREREG §15 |
+| 30 | `src/p1_config.py`, `src/p1_eval.py`, `src/p1_run.py`: 4 metrik R8 yang belum ada (`truncated_rate`, `ttr`, `near_dup_rate`, `answer_entropy`), runner berlabel buta, dapat dilanjutkan | Tanpa ini `make analyze-check` menolak dengan benar | uji asap 8 model/50 detik di `runs/p1_smoke/` |
+| 31 | Baseline 5 seed dilatih: bpb 3,2412 / 3,2395 / 3,2603 / 3,2219 / 3,2353 | Gerbang §4: sigma0 = **0,0138** < 0,030 -> eskalasi 5 seed tambahan tidak aktif. thr_confirm = 0,0600, MDE80 = 0,0727 | `runs/p1/metrics.jsonl` |
+| 32 | **Cacat mesin analisis diperbaiki:** `--run` mengambil SATU baris seed secara sembarang, membuang 4/5 data. Kini agregasi rata-rata antar-seed + sd dilaporkan | Dengan grid 5 seed, cacat ini akan menghasilkan keputusan dari satu undian | `analysis/p1_analyze.py`, `--fixture` tetap jalan |
+| 33 | **Cacat instrumen diperbaiki:** `degenerate_rate` identik dengan `truncated_rate` (0,8056 vs 0,8056) karena prompt sudah memuat `<A>`. Didefinisikan ulang: jawaban < 10 byte. 5 baseline dievaluasi ulang dengan checkpoint yang sama (bpb tidak berubah) | F1 dan F2 kolinier berarti G1 hanya punya satu sinyal | `src/p1_eval.py`; angka lama 0,741-0,870 -> 0,083-0,176 |
+| 34 | Koreksi proyeksi: **95 model**, bukan 65 seperti yang kutawarkan (arm C dilatih ulang tiap generasi). Proyeksi 8,1 jam, masih <= 36 jam -> gate §10 menetapkan 6 generasi | Hitungan saya salah saat menawarkan opsi; dikoreksi sebelum rantai dimulai | laporan ke pengguna |
+| 35 | Yang jatuh ke lantai dinyatakan: `arith_acc` 0/60 -> `at_floor`; `near_dup_rate` 0,0 sd 0 -> `uninformative`; `answer_entropy` 1,0 (jenuh pada 5 sampel) | Dasar aturan sadar-lantai: metrik mati dikeluarkan, bukan dianggap "tidak cedera". Tersisa 3 kelompok informatif (G1, G2, G3); G4 hilang | `--check` |
+
+Status P1: **baseline selesai**, gerbang anggaran lulus. Rantai 90 model (5 seed x 3 arm x 6
+generasi) belum dijalankan dan menunggu perintah eksplisit.
+
 ### v0.6 — 2026-11-01 (T2 v1.2 diratifikasi, analisis & blinding siap)
 
 | # | Perubahan | Alasan | Bukti |

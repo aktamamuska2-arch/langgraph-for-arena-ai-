@@ -95,6 +95,47 @@ class TinyGPT(nn.Module):
         )
         return logits, loss
 
+    # ---------------------------------------------------------------- KV cache
+    @staticmethod
+    def _heads(x: torch.Tensor, n_head: int) -> torch.Tensor:
+        b, t, d = x.shape
+        return x.view(b, t, n_head, d // n_head).transpose(1, 2)
+
+    @torch.no_grad()
+    def forward_cached(self, idx: torch.Tensor, past: list | None = None):
+        """Satu langkah dengan cache K/V. Memakai bobot MHA yang sama persis.
+
+        past[i] = (k, v) per lapisan, bentuk (b, h, T, hd). Bila None, mulai dari posisi 0.
+        Mengembalikan (logits, past_baru).
+        """
+        b, t = idx.shape
+        start = 0 if past is None else past[0][0].shape[2]
+        if start + t > self.cfg.block_size:
+            raise ValueError("cache melebihi block_size; panggil ulang dengan jendela yang digeser")
+        n_head = self.cfg.n_head
+        pos = torch.arange(start, start + t, device=idx.device)
+        x = self.tok(idx) + self.pos(pos)[None, :, :]
+        new_past = []
+        for i, blk in enumerate(self.blocks):
+            h = blk.ln1(x)
+            qkv = F.linear(h, blk.attn.in_proj_weight, blk.attn.in_proj_bias)
+            q, k, v = qkv.chunk(3, dim=-1)
+            q, k, v = self._heads(q, n_head), self._heads(k, n_head), self._heads(v, n_head)
+            if past is not None:
+                k = torch.cat([past[i][0], k], dim=2)
+                v = torch.cat([past[i][1], v], dim=2)
+            new_past.append((k, v))
+            att = q @ k.transpose(-2, -1) / math.sqrt(q.shape[-1])
+            if t > 1:
+                T = k.shape[2]
+                mask = torch.triu(torch.full((t, T), float("-inf"), device=idx.device), diagonal=start + 1)
+                att = att + mask
+            att = F.softmax(att, dim=-1)
+            a = (att @ v).transpose(1, 2).reshape(b, t, -1)
+            x = x + blk.attn.out_proj(a)
+            x = x + blk.mlp(blk.ln2(x))
+        return self.head(self.ln_f(x)), new_past
+
     @torch.no_grad()
     def generate(
         self,

@@ -3,18 +3,18 @@
     "project": "AI Belajar dari AI — Dashboard Transparansi",
     "headline": "Model bahasa dari nol, data seluruhnya dari AI, diuji sebagai risiko. Per 1 Nov 2026: P0 dijalankan (16 model), gate-nya gagal mendeteksi degradasi, R8 dirancang dan dikunci — kini v1.2 dengan gerbang korpus terkalibrasi yang LULUS, antarmuka uji manusia (make ui) yang metriknya sudah diverifikasi, penganalisis R8, dan blinding yang komitmennya terkunci sebelum satu model P1 pun dilatih.",
     "read_me_first": "Dashboard ini dibuat oleh AI yang sama yang menulis rencananya. Artinya ini bukan laporan independen. Karena itu setiap angka di sini bisa kamu cocokkan dengan berkas aslinya: hash SHA-256 tiap berkas tercantum, inventaris berkas dihitung langsung dari disk saat dashboard dibangun, dan setiap klaim punya perintah verifikasinya sendiri. Kalau ada yang tidak cocok, AI-nya yang salah, bukan berkasnya.",
-    "plan_version": "0.3.1",
+    "plan_version": "0.7",
     "plan_status": "rencana v0.3 + hasil pilot P0 (bukti mekanisme, bukan temuan)",
     "branch": "arena/43651650-langgraph-for-arena-ai",
     "updated": "2026-11-01"
   },
   "progress": {
     "plan_pct": 100,
-    "implementation_pct": 46,
-    "models_trained": 16,
-    "tokens_generated": 749133,
+    "implementation_pct": 54,
+    "models_trained": 21,
+    "tokens_generated": 960420,
     "runs_completed": 1,
-    "checkpoints": 16,
+    "checkpoints": 21,
     "lines_of_experiment_code": 3968
   },
   "phases": [
@@ -84,10 +84,26 @@
     },
     {
       "id": "P1",
-      "name": "P1 Pilot diperluas (belum dijalankan)",
-      "desc": "Menunggu eksekusi di executor offline: baseline 5 seed, 3 arm (A, B1, C) x 5 seed x 6 generasi, T0 non-templat >= 2 MB yang harus lulus 5 gerbang, evaluasi 40 item aritmetika, analisis buta. Aturan sudah dikunci; tidak ada parameter yang boleh berubah saat run.",
-      "status": "belum-mulai",
-      "output": "Grafik pertama: kualitas vs generasi (skala mini)",
+      "name": "Pra-registrasi v1.3 + infrastruktur R8",
+      "desc": "Amandemen anggaran v1.3 (0,97 jt param, 1 epoch) diratifikasi; KV-cache 20-40x; evaluator 4 metrik R8; runner berlabel buta dan dapat dilanjutkan.",
+      "status": "selesai",
+      "output": "PREREG v1.3 + p1_run.py",
+      "evidence": "sha256 40194966…, uji asap 8 model"
+    },
+    {
+      "id": "P1.1",
+      "name": "Baseline P1 (5 seed)",
+      "desc": "Gerbang §4: sigma0 = 0,0138 (< 0,030, eskalasi tidak aktif). thr_confirm 0,0600 bpb, MDE80 0,0727 bpb.",
+      "status": "selesai",
+      "output": "5 model + sigma0",
+      "evidence": "runs/p1/metrics.jsonl"
+    },
+    {
+      "id": "P1.2",
+      "name": "Rantai P1 (90 model)",
+      "desc": "5 seed x 3 arm x 6 generasi di sandbox. Proyeksi 8,1 jam dari laju terukur 183 s/model + 60 peristiwa generasi 667 KB.",
+      "status": "menunggu-perintah",
+      "output": "rantai + generasi",
       "evidence": "belum ada"
     },
     {
@@ -623,6 +639,12 @@
   "changelog": [
     {
       "date": "2026-11-01",
+      "title": "PLAN v0.7 — P1 dipindah ke sandbox dengan amandemen v1.3",
+      "detail": "Pengguna membatalkan syarat executor offline. KV-cache menurunkan biaya generasi ~20-40x sehingga grid penuh 95 model masuk anggaran 8,1 jam (bukan 189 jam). Amandemen v1.3 dikunci sebelum model P1 pertama: 0,97 jt parameter, 1 epoch. Dua cacat diperbaiki sebelum data rantai ada: agregasi seed di mesin analisis, dan degenerate_rate yang ternyata salinan truncated_rate.",
+      "evidence": "PREREG v1.3 sha256 40194966…; runs/p1/metrics.jsonl; PLAN v0.7 #28-35"
+    },
+    {
+      "date": "2026-11-01",
       "title": "PLAN.md v0.3 — ambang collapse diganti setelah kalibrasi",
       "detail": "Simulasi menunjukkan aturan v0.2 (3σ̂ + lantai 0,10) memberi FWER studi 8,5% pada σ=0,06, dan 11,4% tanpa lantai — bukan 0,3%. Penyebab: variansi selisih σ²(1+1/5), σ̂ hanya 4 derajat bebas, dan 180 uji tanpa koreksi. Aturan primer diganti R7 (Bonferroni + selang prediksi, lantai 0,03); MDE80 (0,078–0,233 bpb) wajib dilaporkan.",
       "evidence": "PLAN.md §10.5, §11, analysis/calibration_results.md"
@@ -708,6 +730,10 @@
   ],
   "claims": [
     {
+      "claim": "Baseline P1 (5 seed) selesai; sigma0 = 0,0138 bpb dan ambang konfirmatori 0,0600 bpb.",
+      "verify": "cd experiments/ai-belajar-dari-ai && /home/user/.venv/bin/python analysis/p1_analyze.py --check"
+    },
+    {
       "claim": "Pra-registrasi v1.2 utuh dan hash-nya cocok (termasuk riwayat v1.0 dan v1.1).",
       "verify": "make -C experiments/ai-belajar-dari-ai prereg-verify && cat experiments/ai-belajar-dari-ai/ops/prereg.lock.json"
     },
@@ -765,6 +791,10 @@
     }
   ],
   "bias_notes": [
+    {
+      "title": "Profil komputasi P1 diubah karena batas sandbox, bukan karena pilihan metodologis",
+      "detail": "Versi 1.3 mengubah profil SETELAH terukur bahwa 2 jt parameter butuh 29 jam latih. Perubahan diratifikasi pengguna dan dikunci sebelum model P1 pertama, tetapi tekanan 'agar muat' tetap merupakan alasan eksternal: model 0,97 jt punya lantai kemampuan lebih tinggi daripada yang dipra-registrasi, dan itu harus dibaca saat menafsirkan hasil aritmetika (0/60, at_floor)."
+    },
     {
       "title": "Ambang T2 v1.2 tetap hasil kalibrasi setelah melihat data",
       "detail": "Kelipatan 1,50/1,40/1,35 ditetapkan setelah saya melihat angka korpus P1 dan P0. Ratifikasi manusia membuatnya sah sebagai koreksi pra-data, bukan berarti bebas bias: kalau korpus ini kebetulan mirip templat, ambangnya akan menutupi. Penangkalnya ada di laporan audit — seluruh angka mentah (P1, P0, manusia) ditampilkan berdampingan, dan T2 tetap bisa gagal kalau korpus memburuk."

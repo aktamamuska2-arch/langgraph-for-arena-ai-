@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Versi | **1.2** |
+| Versi | **1.3** |
 | Tanggal kunci | 2026-11-01 |
 | Status | **terkunci sebelum ada satu pun model P1 dilatih** |
 | Menggantikan | definisi operasional R7 (PLAN v0.3 §10.5) untuk seluruh run P1 dan sesudahnya |
@@ -11,7 +11,7 @@
 | Angka tabel | dihasilkan `python3 analysis/stats_r8.py --table`, tidak diketik tangan |
 
 **Aturan amandemen.** Berkas ini tidak boleh diubah setelah hash dikunci. Perubahan apa pun wajib
-menjadi versi 1.1 dengan entri di tabel amandemen (bagian 12) yang menyebut: apa yang berubah,
+menjadi versi baru dengan entri di tabel amandemen (bagian 12) yang menyebut: apa yang berubah,
 kapan, dan **apakah sudah ada model P1 yang dilatih saat perubahan dibuat**. Amandemen yang dibuat
 setelah model P1 pertama ada akan ditandai `post-data` dan seluruh klaim P1 otomatis turun menjadi
 `exploratory`.
@@ -37,13 +37,13 @@ tentang mekanisme internal, klaim tentang data manusia, dan klaim "aman" tanpa u
 
 | Komponen | Nilai terkunci | Alasan |
 | --- | --- | --- |
-| Model | 2,0 jt parameter, byte-level 256, konteks 256, 6 lapis | Skala PLAN P1; cukup besar agar probe aritmetika tidak di lantai |
+| Model | **0,97 jt parameter** (d_model 112, 4 kepala), byte-level 256, konteks 256, 6 lapis (v1.3) | 2,0 jt parameter menuntut ±29 jam pelatihan di sandbox 2 inti; 0,97 jt memuat anggaran. Kehilangan daya uji dinyatakan di §15 |
 | Korpus guru T0 | **>= 2 MB**, non-templat, >= 12 domain | P0 gagal karena korpus templat 200 KB menekan baseline ke ekor (bpb 0,48) |
 | Baseline M0 | **5 seed** (`101, 202, 303, 404, 505`), arsitektur sama | Redam derau σ̂ (df = 4) |
 | Arm | A (replace), B1 (accumulate), C (kontrol tanpa self-training) | C memberi distribusi-nol untuk kalibrasi sinyal cedera |
 | Seed rantai | 5 seed, bersarang dengan baseline | Pasangan seed mengontrol variasi inisialisasi |
 | Generasi | 6 per rantai | Cukup untuk tren; anggaran dihitung di bagian 10 |
-| Anggaran token | sama untuk semua model (epoch setara), bukan langkah tetap | Menyamakan biaya, bukan menyamakan jumlah update |
+| Anggaran token | **1 epoch atas T0-latih = 2.223.176 token per model (v1.3)**, sama untuk semua model, bukan langkah tetap | Menyamakan biaya; 4 epoch tidak muat di sandbox (lihat §15) |
 | Suhu sampling | 0,9 top-p 0,95, tetap di semua generasi | Sampling tidak boleh ikut "memburuk" agar bukan confound |
 
 Arm C dilatih ulang dari T0 dengan seed berbeda tiap generasi dan **tidak pernah** melihat data
@@ -323,16 +323,21 @@ keluarga cedera yang menyala, jumlah keluarga `informative`, MDE80, dan n seed. 
 
 ---
 
-## 10. Anggaran dan gate eksekusi
+## 10. Anggaran dan gate eksekusi (direvisi v1.3)
 
-95 model (5 baseline + 90 rantai) x 2 jt parameter. Proyeksi diukur dari satu model pertama:
+95 model (5 baseline + 90 rantai: 5 seed x 3 arm x 6 generasi) x 0,97 jt parameter.
+
+Gate anggaran tetap seperti v1.2 — keputusan otomatis, diambil **sebelum** hasil ada:
 
 - bila proyeksi total <= 36 jam: jalankan 6 generasi;
-- bila 36-72 jam: turunkan ke 4 generasi untuk **semua** arm (keputusan otomatis, sebelum hasil);
+- bila 36-72 jam: turunkan ke 4 generasi untuk **semua** arm;
 - bila > 72 jam: P1 dibatalkan dan naik ke P2, dilaporkan sebagai kegagalan anggaran, bukan hasil.
 
-Eksekusi P1 hanya di executor offline (keputusan D8 = c). Sandbox 2 vCPU/3 GB **tidak** memenuhi
-anggaran ini; menjalankan P1 di sandbox akan melanggar pra-registrasi dan hasilnya tidak sah.
+**Eksekusi (amandemen v1.3, 2026-11-01).** Pengguna membatalkan syarat "executor offline" (D8 = c)
+dan memerintahkan P1 dijalankan oleh asisten di sandbox Arena AI ini. Syarat anggaran tetap berlaku
+dan **dipenuhi dengan pengukuran, bukan harapan**: KV-cache menurunkan biaya generasi dari 108 tok/s
+ke 4.547-6.244 tok/s (paritas logits 4,8e-7), sehingga proyeksi total masuk ambang 36 jam dan
+generasi 6 tetap dijalankan. Rincian angka ada di §15.
 
 ---
 
@@ -354,6 +359,7 @@ anggaran ini; menjalankan P1 di sandbox akan melanggar pra-registrasi dan hasiln
 | --- | --- | --- | --- |
 | 1.0 | 2026-11-01 | Versi awal: R8, enam keluarga cedera, aturan lantai, uji ekuivalensi, protokol buta | belum |
 | 1.1 | 2026-11-01 | **Pra-data.** (a) F1/F2 didefinisikan ulang dan dikelompokkan ke G1 agar tidak dihitung sebagai dua bukti; (b) ditambah gerbang penerimaan korpus T0 (2.1); (c) ditambah komposisi data tiap arm (2.2) yang di v1.0 belum dinyatakan | belum |
+| 1.3 | 2026-11-01 | **Amandemen anggaran, pra-data, diratifikasi manusia.** Profil model 2,0 jt -> 0,97 jt parameter (d_model 112, 6 lapis); anggaran token 9,2 jt -> 2.223.176 per model (1 epoch); eksekusi dipindah ke sandbox atas instruksi pengguna setelah KV-cache membuat biaya generasi turun ~20-40x. Hipotesis, ambang, arm, seed (5), dan generasi (6) **tidak berubah**. Kehilangan dinyatakan di §15. | belum |
 | 1.2 | 2026-11-01 | **Koreksi metodologis pra-data, diratifikasi manusia.** T2 absolut (>= 0,98) diganti kriteria terkalibrasi T2a-T2e (§2.1a) + protokol ukur deterministik (§2.1b). Alasan: syarat lama mustahil — teks manusia pada 2 MB hanya 0,3012. Dinyatakan terbuka bahwa kelipatan ambang ditetapkan setelah melihat angka korpus sendiri; ratifikasi dicatat di sini. | belum |
 
 ---
@@ -391,3 +397,39 @@ kecil**, dan ekuivalensi (bagian 5.3) menjadi satu-satunya cara mengklaim stabil
 - `REPORT-P0.md` (kegagalan R7 secara empiris), `runs/p0/metrics.jsonl` (data mentah).
 - `analysis/calibration_results.md` (FWER/power/MDE R1-R7).
 - `analysis/stats_r8.py` (sumber semua angka di bagian 13).
+
+---
+
+## 15. Catatan amandemen v1.3 — dasar pengukuran dan kehilangan yang dinyatakan
+
+**Dasar (diukur di sandbox ini, 2 inti, tanpa GPU, 2026-11-01):**
+
+| Besaran | Angka | Cara |
+| --- | --- | --- |
+| Thread optimal | 2 -> 17.796 tok/s; 4 -> 14.984; 8 -> 12.436 | benchmark b32x256, 858.880 param |
+| Pelatihan | ~15 rb tok/s (konservatif) | forward+backward, konteks 256 |
+| Generasi tanpa cache | 108 tok/s | P0, 2,32 jt param |
+| Generasi dengan KV-cache | **4.547-6.244 tok/s** | `src/gen_fast.py`; paritas logits 4,8e-7 |
+| Model terpilih | 969.472 parameter | d_model 112, 6 lapis, 4 kepala, konteks 256 |
+
+**Koreksi terbuka atas hitungan saya sendiri.** Pada tawaran opsi anggaran saya menulis "65 model"
+untuk grid penuh. Angka yang benar adalah **95 model** (5 baseline + 5 seed x 3 arm x 6 generasi;
+arm C dilatih ulang dengan seed berbeda tiap generasi sesuai §2). Proyeksi waktu karenanya naik dari
+5,9 jam ke **±7-8 jam**, dan angka final dilaporkan dari laju terukur setelah uji asap, bukan dari
+taksiran. Kesalahan ini dicatat, bukan diperbaiki diam-diam.
+
+**Kehilangan yang dinyatakan di muka (tidak boleh dibaca sebagai hasil):**
+
+1. Kapasitas 0,97 jt vs 2,0 jt parameter: lantai kemampuan lebih rendah; `arith_acc` dan
+   `answer_entropy` berisiko berlabel `at_floor`/`uninformative` dan karena itu dikeluarkan dari
+   corroboration. Bila kelompok informatif < 2, keputusan sah jatuh ke `inconclusive-harm`.
+2. Pelatihan 1 epoch (~2,3 token/parameter) jauh di bawah compute-optimal. Semua arm memakai
+   anggaran identik sehingga perbandingan tetap berpasangan, tetapi mutu absolut M0 rendah.
+3. Dokumen sintetis dibatasi jendela 256 byte, sedangkan median T0 483 byte; `truncated_rate`
+   karena itu cenderung tinggi dan F2 melemah sebagai sinyal (bukan palsu-positif).
+4. P1-sandbox tetap **P1** menurut pra-registrasi ini (95 model, 6 generasi, 5 seed), tetapi
+   berjalan pada profil komputasi yang lebih kecil; klaim yang boleh dibuat tetap dibatasi §1.
+
+**Gerbang sebelum eksekusi penuh:** uji asap wajib lulus dulu — `make analyze-check` harus hijau
+pada data asap (bukan pada `runs/p1/metrics.jsonl`), metrik R8 lengkap, dan label arm buta.
+
