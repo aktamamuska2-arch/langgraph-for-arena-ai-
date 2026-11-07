@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Arena Showroom #7 — Humanoid Dance Stage</title>
+  </head>
+  <body>
+    <canvas id="stage"></canvas>
+
+    <div class="vignette" aria-hidden="true"></div>
+
+    <!-- LOADING -->
+    <div id="loader" class="loader">
+      <div class="loader__inner">
+        <div class="loader__spinner"></div>
+        <div class="loader__title">ARENA SHOWROOM</div>
+        <div class="loader__sub" id="loader-progress">menyiapkan panggung…</div>
+      </div>
+    </div>
+
+    <div id="ui" class="ui">
+      <header class="hud hud--top">
+        <div class="brand">
+          <span class="brand__mark"></span>
+          <div>
+            <h1>Arena Showroom <em>#7</em></h1>
+            <p>Humanoid Basic Animation Set · engine koreografi prosedural</p>
+          </div>
+        </div>
+        <div class="stats">
+          <div class="stat"><span id="stat-fps">–</span><small>fps</small></div>
+          <div class="stat"><span id="stat-bones">–</span><small>bone</small></div>
+          <div class="stat"><span id="stat-clips">–</span><small>clip</small></div>
+        </div>
+      </header>
+
+      <!-- PLAYLIST -->
+      <aside class="panel panel--left">
+        <div class="panel__head">
+          <h2>Set list</h2>
+          <span class="chip" id="playing-tag">idle</span>
+        </div>
+        <ul id="playlist" class="playlist"></ul>
+
+        <div class="panel__sub">Clip asli model</div>
+        <div id="clip-chips" class="chips"></div>
+
+        <div class="panel__sub">Kamera</div>
+        <div class="chips" id="camera-chips">
+          <button class="chip chip--btn is-on" data-cam="hero">Hero</button>
+          <button class="chip chip--btn" data-cam="front">Depan</button>
+          <button class="chip chip--btn" data-cam="side">Samping</button>
+          <button class="chip chip--btn" data-cam="close">Close-up</button>
+          <button class="chip chip--btn" data-cam="top">Atas</button>
+        </div>
+        <div class="toggle-row">
+          <button class="chip chip--btn" id="btn-orbit">Orbit otomatis</button>
+          <button class="chip chip--btn" id="btn-skeleton">Skeleton</button>
+          <button class="chip chip--btn" id="btn-medley">Auto medley</button>
+        </div>
+      </aside>
+
+      <!-- MOTION QA -->
+      <aside class="panel panel--right" id="qa-panel">
+        <div class="panel__head">
+          <h2>Motion QA</h2>
+          <span class="chip chip--live">live</span>
+        </div>
+        <div class="score">
+          <div class="score__ring" id="score-ring">
+            <span id="score-value">–</span>
+            <small>skor</small>
+          </div>
+          <div class="score__meta">
+            <div><b id="qa-dance">–</b></div>
+            <div id="qa-pose" class="muted">–</div>
+          </div>
+        </div>
+        <div id="qa-bars" class="bars"></div>
+        <div class="qa-notes" id="qa-notes"></div>
+      </aside>
+
+      <!-- TRANSPORT -->
+      <footer class="hud hud--bottom">
+        <div class="transport">
+          <button class="tbtn" id="btn-prev" title="Sebelumnya (←)">◀◀</button>
+          <button class="tbtn tbtn--main" id="btn-play" title="Play / Pause (spasi)">❚❚</button>
+          <button class="tbtn" id="btn-next" title="Berikutnya (→)">▶▶</button>
+          <button class="tbtn" id="btn-restart" title="Ulangi (R)">⟲</button>
+        </div>
+
+        <div class="beats" id="beats" aria-hidden="true"></div>
+
+        <div class="sliders">
+          <label>
+            <span>Intensitas</span>
+            <input id="slider-intensity" type="range" min="0" max="1.4" step="0.01" value="1" />
+            <output id="out-intensity">1.00</output>
+          </label>
+          <label>
+            <span>Tempo</span>
+            <input id="slider-speed" type="range" min="0.5" max="1.6" step="0.01" value="1" />
+            <output id="out-speed">1.00×</output>
+          </label>
+        </div>
+      </footer>
+
+      <div class="hint">
+        <kbd>drag</kbd> putar · <kbd>scroll</kbd> zoom · <kbd>klik kanan</kbd> geser ·
+        <kbd>spasi</kbd> play · <kbd>1–4</kbd> dance · <kbd>R</kbd> ulang
+      </div>
+
+      <div class="credit">
+        Model: <a href="https://sketchfab.com/3d-models/humanoid-basic-animation-set-a2fc1a30e8064fdcb0384fdd7716e869" target="_blank" rel="noopener">“Humanoid Basic Animation Set”</a>
+        oleh Snorki · lisensi
+        <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY-4.0</a>
+        · koreografi &amp; QA dibuat prosedural di tiga.js
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

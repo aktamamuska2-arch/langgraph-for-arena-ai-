@@ -1,0 +1,19 @@
+{
+  "name": "arena-showroom",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Showroom interaktif: humanoid animation set + choreography engine prosedural",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "eval": "node eval/evaluate.js"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.0"
+  }
+}
