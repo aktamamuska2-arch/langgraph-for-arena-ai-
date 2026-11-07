@@ -78,11 +78,17 @@ function floorTexture() {
 }
 
 export function createShowroom(canvas) {
-  const renderer = new THREE.WebGLRenderer({
-    canvas,
-    antialias: true,
-    powerPreference: 'high-performance',
-  });
+  // Pesan jelas kalau browser tidak memberi konteks WebGL (jangan biarkan blank).
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      powerPreference: 'high-performance',
+    });
+  } catch (err) {
+    throw new Error(`WebGL gagal dibuat (${err.message}). Preview showroom butuh WebGL aktif.`);
+  }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = true;

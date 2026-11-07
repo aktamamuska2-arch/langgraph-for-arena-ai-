@@ -4,6 +4,25 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Arena Showroom #7 — Humanoid Dance Stage</title>
+    <script>
+      // Pelaporan error runtime: kalau WebGL/modul gagal, jangan biarkan loader
+      // berputar tanpa penjelasan — tampilkan pesannya di overlay.
+      window.__showFatal = function (msg) {
+        var sub = document.getElementById('loader-progress');
+        var title = document.querySelector('.loader__title');
+        var loader = document.getElementById('loader');
+        console.error('[showroom]', msg);
+        if (!loader || loader.classList.contains('is-hidden')) return;
+        if (title) title.textContent = 'GAGAL MEMULAI';
+        if (sub) sub.textContent = String(msg).slice(0, 220);
+      };
+      window.addEventListener('error', function (e) {
+        window.__showFatal((e.message || 'error') + (e.filename ? ' @ ' + e.filename.split('/').pop() : ''));
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        window.__showFatal((e.reason && e.reason.message) || e.reason || 'promise ditolak');
+      });
+    </script>
   </head>
   <body>
     <canvas id="stage"></canvas>
