@@ -94,7 +94,7 @@ telapak tetap di tempat.
 
 ---
 
-## Iterasi 3 — final
+## Iterasi 3 — fisika pijakan
 
 | dance | energi | slip | lantai | jerk | seam | balance | ritme | skor |
 |---|---|---|---|---|---|---|---|---|
@@ -113,12 +113,79 @@ telapak tetap di tempat.
 | robot-pop | 96 | 100 | 97 | 97 | 83 | 100 | 50 |
 
 Ringkasan: slip rata-rata **0.42 → 0.02 m/s**, sol tidak lagi menembus lantai
-(sisa ≤ 5 mm), loop nyaris sempurna (semua ≤ 3 mm), dan semua dance punya
+(sisa ≤ 5 mm), loop nyaris sempurna (semua ≤ 6 mm), dan semua dance punya
 rentang gerak tangan > 0.9 m.
 
 Rhythm `wave-rider` sengaja rendah: dance ini legato — aksen datang sebagai
 gelombang halus, bukan hentakan. Oskilator `pulse` per ketukan sudah ditambahkan,
 tapi sifatnya tetap yang paling lembut.
+
+---
+
+## Iterasi 4 — dinamika (final)
+
+Keluhan berikutnya: gerakannya "kurang dinamis" — terasa kaku seperti senam.
+Sebelum menambah amplitudo, lebih dulu diukur **ritmenya** dengan
+`eval/dynamics-audit.mjs` (satu instance GLTF bersih per dance; memakai engine
+yang sama dengan app, tapi dijalankan deterministik 60 fps):
+
+| dance | kecepatan | p95 | p95/mean | pantul panggul/ketuk | ayun kepala |
+|---|---|---|---|---|---|
+| neon-groove | 0.60 m/s | 1.75 | 2.91 | 9.1 cm | 48 cm |
+| wave-rider | 0.39 m/s | 0.61 | 1.57 | 3.2 cm | 34 cm |
+| break-circuit | 0.73 m/s | 4.36 | 5.97 | 5.2 cm | 52 cm |
+| robot-pop | 0.39 m/s | 2.11 | 5.46 | 5.6 cm | 39 cm |
+
+Diagnosis: **bukan amplitudo yang kurang, tapi aksen.** Rentang tangan sudah
+0.9–1.7 m, jadi badannya besar — masalahnya **kapan** gerak itu terjadi. Pantulan
+panggul per ketukan cuma 3–9 cm (dan sebagian besar berasal dari *crouch* yang
+bertahan beberapa ketukan, bukan hentakan), sementara `p95/mean` 5.5–6.0× di
+break & robot berarti gerak menumpuk di sedikit frame lalu diam. Penyebabnya key
+ditulis pada grid 2–3 ketukan dengan easing `smooth` (atau `snap` yang menahan
+78% segmen) — jadi tidak ada "bobot" yang jatuh tiap ketukan, dan `wave-rider`
+hampir tidak punya aksen sama sekali (p95/mean 1.57 = kecepatan konstan).
+
+Perbaikan:
+
+1. **Lapisan impuls per ketukan** (`dynamics` di tiap dance): panggul turun
+   `kick` ≈ 3–5 cm tepat di ketukan (IK lutut otomatis menekuk), ditambah pop
+   dada/kepala/bahu/lengan dengan `lag` ~0.05–0.12 ketukan untuk follow-through,
+   `barBoost` di ketukan pertama tiap bar, dan `swing` (aksen agak telat).
+   Kurva: `sharp` (break/robot), `soft` (groove), `bounce` (wave).
+2. **Attack 40 ms** pada impuls, supaya nilainya 0 tepat di batas loop → pose
+   akhir loop identik dengan awal (tanpa pop), tapi hentakan tetap terasa.
+3. **`snap` diperpendek** (tahan 78% → 70% segmen) agar pose tidak terlalu lama
+   membeku, dan beberapa key `smooth` → `snap` di wave-rider untuk aksen.
+4. **Slider Dinamika** (0–2×) di panel kontrol untuk menyetel intensitas lapisan
+   ini, plus metrik **dinamika** baru di panel QA.
+
+Hasil:
+
+| dance | energi | slip | lantai | jerk | seam | balance | ritme | dinamika | skor |
+|---|---|---|---|---|---|---|---|---|---|
+| neon-groove | 0.66 | 0.03 | −0.000 | 34 | 0.006 | 0.05 | 1.00 | 86 | 94 |
+| wave-rider | 0.55 | 0.01 | −0.002 | 26 | 0.000 | 0.03 | 1.00 | 77 | 95 |
+| break-circuit | 0.83 | 0.04 | 0.001 | 43 | 0.000 | 0.07 | 0.97 | 89 | 94 |
+| robot-pop | 0.48 | 0.01 | 0.003 | 33 | 0.000 | 0.05 | 1.00 | 80 | 95 |
+
+| dance | kecepatan | p95 | p95/mean | pantul panggul/ketuk | ayun kepala |
+|---|---|---|---|---|---|
+| neon-groove | 0.70 m/s | 1.73 | 2.47 | 9.9 cm | 52 cm |
+| wave-rider | 0.58 m/s | 1.27 | 2.18 | 7.5 cm | 36 cm |
+| break-circuit | 0.88 m/s | 3.77 | 4.31 | 6.7 cm | 56 cm |
+| robot-pop | 0.53 m/s | 1.59 | 3.02 | 6.0 cm | 42 cm |
+
+Kecepatan rata-rata naik 1.2× (neon 0.60→0.70, wave 0.39→0.58, break 0.73→0.88,
+robot 0.39→0.53). Yang lebih penting: **pantulan panggul per ketukan** naik
+1.1–2.3× (terbesar di wave-rider 3.2→7.5 cm) dan gerak tidak lagi menumpuk —
+`p95/mean` break 5.97→4.31, robot 5.46→3.02. Di wave-rider kontras justru naik
+(1.57→2.18) karena dance legato itu sebelumnya nyaris tanpa aksen. Skor
+rata-rata **88 → 94**.
+
+> Catatan jujur: `robot-pop` tetap paling pelan (0.53 m/s) karena sifatnya
+> staccato — pose ditahan lalu pindah cepat. Yang bertambah di sana adalah
+> aksennya (kontras 3.0×), bukan kecepatan rata-rata.
+
 
 ---
 
@@ -133,6 +200,10 @@ tapi sifatnya tetap yang paling lembut.
 | 5 | sol turun 1–2 cm saat lutut ditekuk dalam | panjang tulang dikalibrasi sekali, padahal clip menganimasikan *scale*; shear skala parent | panjang per frame + 2 iterasi koreksi posisi |
 | 6 | transisi dance bisa membuat sol miring permanen | `calibrateStance()` dipanggil saat crossfade masih berjalan | kalibrasi sekali pada clip bersih |
 | 7 | pose "maju" saat pause | `Math.abs(step)/FADE \|\| 0.05` → 0 dianggap falsy | eksplisit `step === 0 ? 0 : …` |
+| 8 | audit dinamika melaporkan semua dance nyaris beku (0.03 m/s) | jumlah frame dihitung `beats*60/bpm` (detik, bukan frame) → hanya 8 frame tersampel | `frames = loopSeconds*60` |
+| 9 | metrik `loop` selalu 100 padahal loop "pop" 30 cm; dinamika terbaca 0.8 cm/ketuk | `frames` menyimpan **referensi** ke buffer sendi yang dipakai ulang (double-buffer) → seluruh riwayat menunjuk pose terakhir | snapshot `{x,y,z}` tiap frame |
+| 10 | setelah #9 diperbaiki, seam = 30 cm di semua dance | pose tari adalah offset di atas clip `idle`, dan fase clip tidak pernah sinkron saat loop kembali ke awal | fase clip dikunci ke posisi loop (`clipCycles`) |
+| 11 | `_loopSeam()` membandingkan frame berfase beda | pencarian frame "satu putaran kemudian" tidak ada, jadi jatuh ke frame terakhir | cari frame di `beat ≈ awal + k·beats` |
 
 ---
 

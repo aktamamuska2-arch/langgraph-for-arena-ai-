@@ -70,7 +70,9 @@ untuk membandingkan hasil koreografi dengan animasi bawaan, dan tombol
 | Preset kamera | Hero · Depan · Samping · Close-up · Atas |
 
 Slider **Intensitas** menskalakan seluruh amplitudo koreografi (0 = kembali ke
-pose clip dasar), **Tempo** menskalakan waktu (0.5×–1.6×).
+pose clip dasar), **Dinamika** mengatur lapisan impuls per-ketukan (0 = tari
+tanpa aksen, 1 = disetel, 2 = maksimal), **Tempo** menskalakan waktu
+(0.5×–1.6×).
 
 ---
 
@@ -161,11 +163,25 @@ Easing per key: `smooth`, `snap` (tahan lalu hentak), `pop` (overshoot),
 `hold`, `out`, `in`. Osilator sekunder (`osc`) menambahkan gelombang menjalar
 dengan fase bertingkat di sepanjang tulang belakang dan lengan.
 
+**Lapisan dinamika.** Key saja menghasilkan gerak yang "senam": mulus, tapi
+tanpa bobot. Tiap dance punya blok `dynamics` — impuls per ketukan dengan kurva
+peluruhan (`sharp` / `soft` / `bounce`), attack ~40 ms, `barBoost` di ketukan
+pertama tiap bar, `swing` (aksen agak telat) dan `lag` untuk follow-through:
+
+```js
+dynamics: { kick: 0.046, chest: 5, head: 5, arm: 7, curve: 'soft',
+            swing: 0.04, barBoost: 1.35, lag: 0.08 }
+```
+
+`kick` menurunkan panggul tepat di ketukan; IK tungkai otomatis menekuk lutut,
+jadi badannya benar-benar "jatuh" ke ketukan. Attack pendek dipakai supaya nilai
+impuls 0 tepat di batas loop — pose akhir loop identik dengan awal (seam 0 mm).
+
 ---
 
 ## 5. Evaluasi gerak (iteratif)
 
-`src/motionQA.js` mengukur 7 aspek dari lintasan sendi dunia:
+`src/motionQA.js` mengukur 8 aspek dari lintasan sendi dunia:
 
 | aspek | definisi | target |
 |---|---|---|
@@ -176,6 +192,7 @@ dengan fase bertingkat di sepanjang tulang belakang dan lengan.
 | balance | jarak horizontal panggul ke titik tengah kaki | < 0.15 m |
 | loop | selisih pose frame awal vs akhir satu loop | < 0.1 m |
 | rhythm | fraksi ketukan yang punya puncak percepatan (aksen) | > 0.5 |
+| dynamics | pantulan panggul **di dalam satu ketukan** + kontras puncak/rata-rata | pantul > 6 cm, kontras > 2 |
 
 Catatan metodologi (penting): slip diukur di **pergelangan**, bukan ujung jari,
 supaya gerakan berputar-di-tempat (pivot) tidak salah dihitung sebagai slaid.
@@ -196,10 +213,20 @@ Panel **Motion QA** di kanan layar menjalankan metrik yang sama secara live
 
 ```
 dance            bpm   energi  slip    lantai   jerk    seam    balance  ritme   skor
-neon-groove      110   0.59    0.03    -0.001   26      0.003   0.05     0.56    90
-wave-rider        96   0.39    0.01    -0.005   16      0.000   0.03     0.17    85
-break-circuit    128   0.72    0.04    -0.005   34      0.000   0.07     0.41    87
-robot-pop        120   0.40    0.01    -0.003   25      0.000   0.05     0.50    89
+neon-groove      110   0.66    0.03    -0.000   34      0.006   0.05     1.00    94
+wave-rider        96   0.55    0.01    -0.002   26      0.000   0.03     1.00    95
+break-circuit    128   0.83    0.04     0.001   43      0.000   0.07     0.97    94
+robot-pop        120   0.48    0.01     0.003   33      0.000   0.05     1.00    95
+```
+
+Dinamika (diukur `eval/dynamics-audit.mjs`, satu instance GLTF bersih per dance):
+
+```
+dance           kecepatan  p95   kontras  pantul/ketuk  ayun kepala
+neon-groove      0.70 m/s  1.73    2.47      9.9 cm        52 cm
+wave-rider       0.58 m/s  1.27    2.18      7.5 cm        36 cm
+break-circuit    0.88 m/s  3.77    4.31      6.7 cm        56 cm
+robot-pop        0.53 m/s  1.59    3.02      6.0 cm        42 cm
 ```
 
 Contact sheet (8 pose per dance, tampak depan & samping) ada di
@@ -213,6 +240,13 @@ Contact sheet (8 pose per dance, tampak depan & samping) ada di
 | 1 | + IK dua-tulang & target telapak | 0.16 m/s | 75 |
 | 2 | + auto-step, unwrap yaw, metrik slip diperbaiki | 0.03 m/s | 87 |
 | 3 | + postur dasar, servo IK 2 iterasi, toe-flat, pagar lantai | 0.02 m/s | 88 |
+| 4 | + lapisan impuls per ketukan, kunci fase clip dasar, snapshot QA | 0.02 m/s | 94 |
+
+Iterasi 4 berangkat dari keluhan "kurang dinamis". Audit menunjukkan bukan
+amplitudo yang kurang, tapi **aksen**: panggul hanya memantul 1–3 cm tiap
+ketukan dan `p95/mean` 6× (gerak menumpuk di sedikit frame, sisanya diam).
+Setelah impuls per ketukan + `snap` yang lebih pendek: pantul 6–10 cm, kontras
+2.2–4.3×. Sekaligus dua bug pengukuran ketahuan — lihat [`eval/report.md`](eval/report.md).
 
 Detail lengkap tiap iterasi (termasuk bug yang ditemukan) ada di
 [`eval/report.md`](eval/report.md).

@@ -144,6 +144,7 @@ const NEON_GROOVE = {
     K(30, 'smooth', 'Goalpost kiri', merge(ARM.goalpost, TORSO.swayL), { root: [-0.05, -0.06, 0], feet: F.wide }),
     K(31, 'smooth', 'Goalpost kanan', merge(ARM.goalpost, TORSO.swayR), { root: [0.05, -0.06, 0], feet: F.wide }),
   ],
+  dynamics: { kick: 0.046, hipPitch: 2.5, chest: 5, head: 5, arm: 7, elbow: 6, shoulder: 3, curve: 'soft', swing: 0.04, barBoost: 1.35, lag: 0.08 },
   osc: [
     { group: 'head', axis: 0, amp: 4.5, freq: 1, wave: 'sin', phase: 0.05 },
     { group: 'chest', axis: 1, amp: 3, freq: 0.5, wave: 'sin', phase: 0.25 },
@@ -172,29 +173,33 @@ const WAVE_RIDER = {
   keys: [
     K(0, 'smooth', 'Gelombang turun', merge(ARM.guardLow, TORSO.swayL), { root: [-0.05, -0.02, 0], feet: F.wide }),
     K(3, 'smooth', 'Gelombang naik', merge(ARM.guard, TORSO.lift), { root: [0.03, 0.02, 0], feet: F.wide }),
-    K(6, 'smooth', 'Buka lebar', merge(ARM.out, { hips: [-3, 0, -4], chest: [-4, 0, 4], head: [-8, 0, 3] }), {
+    K(6, 'snap', 'Buka lebar', merge(ARM.out, { hips: [-3, 0, -4], chest: [-4, 0, 4], head: [-8, 0, 3] }), {
       root: [0.05, -0.04, 0], feet: F.wide, yaw: -10,
     }),
     K(9, 'smooth', 'Angkat', merge(ARM.waveHighL, { hips: [0, 0, 6], chest: [-2, 0, -6], head: [-4, 0, -4] }), {
       root: [-0.05, 0.01, 0], feet: F.wide, yaw: -4,
     }),
     K(12, 'smooth', 'Silang', merge(ARM.guard, TORSO.twistR), { root: [0.04, -0.05, 0], feet: F.wide, yaw: 12 }),
-    K(15, 'smooth', 'Gelombang dalam', merge(ARM.goalpost, TORSO.dip), {
+    K(15, 'snap', 'Gelombang dalam', merge(ARM.goalpost, TORSO.dip), {
       root: [0, -0.14, 0], feet: F.wide, yaw: 4,
     }),
     K(18, 'smooth', 'Putar', merge(ARM.waveHighR, TORSO.swayL), { root: [-0.04, -0.03, 0], feet: F.wide, yaw: 22 }),
     K(21, 'smooth', 'Kembali', merge(ARM.guardLow, TORSO.swayR), { root: [0.03, -0.06, 0], feet: F.wide, yaw: 8 }),
   ],
+  dynamics: { kick: 0.05, chest: 5, spine: 3, head: 5.5, arm: 8, elbow: 7, shoulder: 3, curve: 'bounce', swing: 0.1, barBoost: 1.35, lag: 0.1 },
   osc: [
     // aksen halus tiap ketukan (menjaga "legato" tapi tetap terasa pulse-nya)
     { group: 'chest', axis: 0, amp: 5.2, freq: 1, wave: 'pulse', phase: 0.25 },
     { group: 'hips', axis: 0, amp: 3.2, freq: 1, wave: 'pulse', phase: 0.25 },
     { group: 'head', axis: 0, amp: 4.5, freq: 1, wave: 'pulse', phase: 0.35 },
-    { group: 'hips', axis: 2, amp: 5, freq: 0.5, wave: 'sin', phase: 0.0 },
-    { group: 'spine1', axis: 2, amp: 5, freq: 0.5, wave: 'sin', phase: -0.09 },
-    { group: 'spine2', axis: 2, amp: 6, freq: 0.5, wave: 'sin', phase: -0.18 },
-    { group: 'chest', axis: 2, amp: 6.5, freq: 0.5, wave: 'sin', phase: -0.27 },
-    { group: 'chest2', axis: 2, amp: 5, freq: 0.5, wave: 'sin', phase: -0.36 },
+    { group: 'shoulderL', axis: 2, amp: 4, freq: 0.5, wave: 'sin', phase: -0.2 },
+    { group: 'shoulderR', axis: 2, amp: -4, freq: 0.5, wave: 'sin', phase: -0.2 },
+    { group: 'hips', axis: 2, amp: 7.5, freq: 0.5, wave: 'sin', phase: 0.0 },
+    { group: 'spine1', axis: 2, amp: 7.5, freq: 0.5, wave: 'sin', phase: -0.09 },
+    { group: 'spine2', axis: 2, amp: 9, freq: 0.5, wave: 'sin', phase: -0.18 },
+    { group: 'chest', axis: 2, amp: 9.5, freq: 0.5, wave: 'sin', phase: -0.27 },
+    { group: 'chest2', axis: 2, amp: 7.5, freq: 0.5, wave: 'sin', phase: -0.36 },
+    { group: 'head', axis: 2, amp: 6, freq: 0.5, wave: 'sin', phase: -0.5 },
     { group: 'neck', axis: 0, amp: 4.5, freq: 0.5, wave: 'sin', phase: -0.45 },
     { group: 'head', axis: 0, amp: 5.5, freq: 0.5, wave: 'sin', phase: -0.54 },
     { group: 'armL', axis: 0, amp: 14, freq: 0.5, wave: 'sin', phase: 0.1 },
@@ -278,6 +283,7 @@ const BREAK_CIRCUIT = {
     K(30, 'snap', 'Rock kiri', merge(ARM.guard, TORSO.twistL), { root: [-0.06, -0.08, 0], feet: F.stepL, yaw: 360 }),
     K(31, 'snap', 'Rock kanan', merge(ARM.out, TORSO.twistR), { root: [0.06, -0.06, 0], feet: F.stepR, yaw: 360 }),
   ],
+  dynamics: { kick: 0.044, hipPitch: 2, chest: 5, head: 5.5, arm: 9, elbow: 8, shoulder: 4, curve: 'sharp', swing: 0, barBoost: 1.45, lag: 0.06 },
   osc: [
     { group: 'head', axis: 0, amp: 4, freq: 1, wave: 'sin', phase: 0.1 },
     { group: 'handL', axis: 1, amp: 12, freq: 1, wave: 'sin', phase: 0 },
@@ -313,6 +319,7 @@ const ROBOT_POP = {
     K(12, 'snap', 'Rendah kiri', merge(ARM.robotL, TORSO.dip), { root: [-0.06, -0.24, 0], feet: F.wide }),
     K(14, 'snap', 'Rendah kanan', merge(ARM.robotR, TORSO.dip), { root: [0.06, -0.24, 0], feet: F.wide }),
   ],
+  dynamics: { kick: 0.034, chest: 6, head: 6.5, arm: 8, elbow: 10, shoulder: 5, curve: 'sharp', swing: 0, barBoost: 1.5, lag: 0.05 },
   osc: [
     { group: 'head', axis: 0, amp: 2, freq: 2, wave: 'square', phase: 0 },
     { group: 'handL', axis: 2, amp: 5, freq: 2, wave: 'square', phase: 0.25 },
@@ -337,8 +344,8 @@ const EASE = {
   linear: (t) => t,
   smooth: (t) => t * t * (3 - 2 * t),
   snap: (t) => {
-    if (t < 0.78) return 0;
-    const u = (t - 0.78) / 0.22;
+    if (t < 0.7) return 0;
+    const u = (t - 0.7) / 0.3;
     return u * u * (3 - 2 * u);
   },
   pop: (t) => {
@@ -350,6 +357,19 @@ const EASE = {
   hold: () => 0,
   out: (t) => 1 - (1 - t) * (1 - t),
   in: (t) => t * t,
+};
+
+/**
+ * Kurva impuls per ketukan. φ = fase di dalam satu ketukan (0..1); nilai 1
+ * tepat di ketukan lalu meluruh. Inilah yang membuat gerakan "kena musik".
+ */
+const IMPULSE = {
+  // hentakan tajam (break/robot)
+  sharp: (phi) => Math.pow(1 - phi, 4),
+  // groove lembut (hip-hop)
+  soft: (phi) => Math.exp(-3.4 * phi) * (1 - phi * 0.15),
+  // memantul, dipakai untuk bobot badan
+  bounce: (phi) => Math.pow(Math.cos(Math.PI * phi * 0.5), 3),
 };
 
 const WAVES = {
@@ -433,6 +453,43 @@ export function samplePose(dance, beat, opts = {}) {
   const footAngle = {};
   for (const side of ['L', 'R']) {
     footAngle[side] = lerp3(k0.footAngle?.[side] || IDENTITY3, k1.footAngle?.[side] || IDENTITY3, t);
+  }
+
+  // ── lapisan dinamika: impuls tiap ketukan ──────────────────────────────
+  const dyn = dance.dynamics;
+  if (dyn && !opts.muteDyn) {
+    const gain = opts.dynScale ?? 1;
+    const swing = dyn.swing ?? 0;
+    const curve = IMPULSE[dyn.curve || 'soft'] || IMPULSE.soft;
+    const at = (bk) => {
+      const shifted = b + swing + (bk || 0);
+      const phi = ((shifted % 1) + 1) % 1;
+      const bar = Math.floor(shifted) % 4 === 0 ? (dyn.barBoost ?? 1.25) : 1;
+      // attack pendek (~40 ms): aksen tetap terasa "kena", tapi nilainya 0 tepat
+      // di batas loop sehingga pose akhir loop = pose awal (tanpa pop).
+      const attack = Math.min(1, phi / 0.07);
+      return curve(phi) * attack * bar * gain;
+    };
+    const hit = at(0);
+    const lag = at(dyn.lag ?? 0.07);
+
+    // panggul turun tepat di ketukan → IK otomatis menekuk lutut (bounce)
+    if (dyn.kick) root[1] -= dyn.kick * hit;
+    const bump = (group, axis, amount) => {
+      if (!amount) return;
+      groups[group] ||= [0, 0, 0];
+      groups[group][axis] += amount;
+    };
+    bump('hips', 0, -(dyn.hipPitch ?? 0) * hit);
+    bump('spine2', 0, -(dyn.spine ?? 0) * hit);
+    bump('chest', 0, -(dyn.chest ?? 0) * hit);
+    bump('head', 0, -(dyn.head ?? 0) * lag);
+    bump('shoulderL', 2, (dyn.shoulder ?? 0) * hit);
+    bump('shoulderR', 2, -(dyn.shoulder ?? 0) * hit);
+    bump('armL', 0, -(dyn.arm ?? 0) * lag);
+    bump('armR', 0, -(dyn.arm ?? 0) * lag);
+    bump('elbowL', 0, -(dyn.elbow ?? 0) * lag);
+    bump('elbowR', 0, -(dyn.elbow ?? 0) * lag);
   }
 
   // postur dasar: lawan "sit-back" alami saat lutut sedikit tertekuk

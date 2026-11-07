@@ -47,6 +47,8 @@ const dom = {
   btnMedley: document.getElementById('btn-medley'),
   intensity: document.getElementById('slider-intensity'),
   outIntensity: document.getElementById('out-intensity'),
+  dynamics: document.getElementById('slider-dynamics'),
+  outDynamics: document.getElementById('out-dynamics'),
   speed: document.getElementById('slider-speed'),
   outSpeed: document.getElementById('out-speed'),
   panel: document.getElementById('qa-panel'),
@@ -163,6 +165,7 @@ function boot(gltf) {
     queueMicrotask(() => selectDance(state.selected + 1));
   };
   engine.intensity = Number(dom.intensity.value);
+  engine.dynScale = Number(dom.dynamics.value);
   engine.speed = Number(dom.speed.value);
 
   dom.bones.textContent = Object.keys(engine.rig.bones).length;
@@ -190,6 +193,12 @@ dom.intensity.addEventListener('input', () => {
   const v = Number(dom.intensity.value);
   state.engine && (state.engine.intensity = v);
   dom.outIntensity.textContent = v.toFixed(2);
+});
+
+dom.dynamics.addEventListener('input', () => {
+  const v = Number(dom.dynamics.value);
+  state.engine && (state.engine.dynScale = v);
+  dom.outDynamics.textContent = `${v.toFixed(2)}×`;
 });
 
 dom.speed.addEventListener('input', () => {
@@ -262,7 +271,7 @@ function frame() {
 
     // telemetri QA live
     if (state.mode === 'dance' && state.qa && state.playing && engine.sampleJoints.hips) {
-      state.qa.push(engine.time, engine.beatPos ?? 0, engine.sampleJoints);
+      state.qa.push(engine.time, engine.beat ?? 0, engine.sampleJoints);
       state.qaClock += dt;
       if (state.qaClock > 0.45) {
         state.qaClock = 0;

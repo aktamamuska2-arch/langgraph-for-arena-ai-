@@ -35,6 +35,7 @@ export class DanceEngine {
     this.blend = 0;
     this.targetBlend = 0;
     this.intensity = 1;
+    this.dynScale = 1;
     this.oscScale = 1;
     this.speed = 1;
     this.pose = null;
@@ -93,6 +94,11 @@ export class DanceEngine {
     next.play();
     if (this.currentAction) next.crossFadeFrom(this.currentAction, fade, true);
     this.currentAction = next;
+    // Berapa kali clip dasar harus berputar dalam satu loop koreografi, supaya
+    // fasenya kembali tepat di titik loop (lihat penguncian fase di update()).
+    const dur = next.getClip().duration;
+    const loopSec = this.dance ? (this.dance.beats * 60) / this.dance.bpm : 0;
+    this.clipCycles = dur > 0 && loopSec ? Math.max(1, Math.round(loopSec / dur)) : 1;
   }
 
   /** dt dalam detik; kirim 0 untuk pause tanpa kehilangan pose. */
@@ -100,10 +106,31 @@ export class DanceEngine {
     const step = dt * this.speed;
     this.time += step;
 
+    this.beat = this.dance ? (this.time * this.dance.bpm) / 60 : 0;
+    const loopPos = this.dance ? ((this.beat % this.dance.beats) + this.dance.beats) % this.dance.beats : 0;
+    const loops = this.dance ? Math.floor(this.beat / this.dance.beats) : 0;
+    if (this.dance && loops > this.loopCount) {
+      this.loopCount = loops;
+      this.onLoop?.(this.dance, loops);
+    }
+
     // 1+2: bind pose → clip dasar (selalu, supaya offset frame lalu tidak menumpuk)
     this.rig.resetToRest();
     if (this.currentAction) this.currentAction.setEffectiveTimeScale(this.dance?.base?.timeScale ?? 1);
     this.mixer.update(step);
+
+    // Fase clip dasar dikunci ke posisi loop koreografi. Tanpa ini, clip terus
+    // berjalan dengan panjangnya sendiri sehingga pose di akhir loop tidak sama
+    // dengan pose di awal (loop "pop" puluhan sentimeter).
+    if (this.dance && this.currentAction) {
+      const act = this.currentAction;
+      const dur = act.getClip().duration;
+      if (dur > 0) {
+        const lp = ((this.beat % this.dance.beats) + this.dance.beats) % this.dance.beats;
+        act.time = ((lp / this.dance.beats) * this.clipCycles * dur) % dur;
+        this.mixer.update(0);
+      }
+    }
 
     if (!this.dance) {
       this.pose = null;
@@ -120,17 +147,9 @@ export class DanceEngine {
       if (Math.abs(this.targetBlend - this.blend) < 0.01) this.blend = this.targetBlend;
     }
 
-    this.beat = (this.time * this.dance.bpm) / 60;
-    const loopPos = ((this.beat % this.dance.beats) + this.dance.beats) % this.dance.beats;
-    const loops = Math.floor(this.beat / this.dance.beats);
-    if (loops > this.loopCount) {
-      this.loopCount = loops;
-      this.onLoop?.(this.dance, loops);
-    }
-
     // 4: layer prosedural
     this.rig.captureBase();
-    const pose = samplePose(this.dance, loopPos, { oscScale: this.oscScale });
+    const pose = samplePose(this.dance, loopPos, { oscScale: this.oscScale, dynScale: this.dynScale });
     this.pose = pose;
     this.rig.applyPose(pose, this.blend * this.intensity);
     this.rig.root.updateMatrixWorld(true);

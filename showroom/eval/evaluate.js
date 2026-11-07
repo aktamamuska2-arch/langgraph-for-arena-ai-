@@ -54,7 +54,11 @@ for (const dance of DANCES) {
   qa.contactOffset = engine.rig.contactFloorOffset;
 
   const dt = 1 / FPS;
-  engine.update(0); // isi pose & sampel sendi awal
+  // warm-up: frame pertama setelah ganti dance masih berupa crossfade/IK yang
+  // belum mengendap — kalau ikut diukur, metrik loop & dinamika jadi melenceng.
+  for (let i = 0; i < 12; i++) engine.update(dt);
+  engine.time = 0;
+  engine.update(0); // isi pose & sampel sendi awal (loop 0, state sudah stabil)
   const sheetFrames = [];
   for (let i = 0; i <= frames; i++) {
     if (i > 0) engine.update(dt);

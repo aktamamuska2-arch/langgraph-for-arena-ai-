@@ -10,6 +10,7 @@ export const QA_BARS = [
   { key: 'balance', label: 'balance' },
   { key: 'loop', label: 'loop' },
   { key: 'rhythm', label: 'ritme' },
+  { key: 'dynamics', label: 'dinamika' },
 ];
 
 export function buildPlaylist(container, dances, onSelect) {
@@ -98,6 +99,8 @@ export function renderQA(refs, summary, els) {
   }
   notes.innerHTML = `
     energi <b>${summary.energy.toFixed(2)}</b> m/s ·
+    pantul <b>${((summary.bouncePerBeat ?? 0) * 100).toFixed(1)}</b> cm/ketuk ·
+    kontras <b>${(summary.contrast ?? 0).toFixed(1)}×</b><br />
     slip <b>${summary.footSlip.toFixed(2)}</b> m/s ·
     lantai <b>${summary.floorMin >= -0.005 ? 'aman' : 'tembus'}</b><br />
     aksen <b>${Math.round(summary.beatSync * 100)}%</b> ketukan ·

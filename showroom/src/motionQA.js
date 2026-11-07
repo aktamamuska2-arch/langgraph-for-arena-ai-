@@ -154,7 +154,15 @@ export class MotionQA {
     }
 
     this.last = { t, beat, joints: keys, speed };
-    this.frames.push({ t, beat, joints: keys, speed });
+    // PENTING: rig memakai buffer ganda (dua objek Vector3 dipakai ulang tiap
+    // frame), jadi frame historis WAJIB di-snapshot — kalau menyimpan referensi,
+    // seluruh riwayat menunjuk pose terakhir dan metrik loop/dinamika jadi palsu.
+    const snap = {};
+    for (const g in keys) {
+      const v = keys[g];
+      snap[g] = { x: v.x, y: v.y, z: v.z };
+    }
+    this.frames.push({ t, beat, joints: snap, speed });
     if (this.frames.length > 3000) this.frames.shift();
   }
 
@@ -173,6 +181,33 @@ export class MotionQA {
     const seam = this._loopSeam();
     const { rate: beatSync, offsetMs } = this._beatSync();
 
+    // dinamika: seberapa jauh panggul memantul DI DALAM satu ketukan, dan
+    // seberapa kontras puncak kecepatan terhadap rata-rata (aksen vs mengalir)
+    const perBeat = new Map();
+    let speedSum = 0;
+    const speeds = [];
+    for (const fr of this.frames) {
+      const y = fr.joints.hips.y;
+      const k = Math.floor(fr.beat);
+      const cur = perBeat.get(k);
+      if (!cur) perBeat.set(k, { min: y, max: y });
+      else {
+        if (y < cur.min) cur.min = y;
+        if (y > cur.max) cur.max = y;
+      }
+      speedSum += fr.speed;
+      speeds.push(fr.speed);
+    }
+    let bouncePerBeat = 0;
+    for (const v of perBeat.values()) bouncePerBeat += v.max - v.min;
+    if (perBeat.size) bouncePerBeat /= perBeat.size;
+    speeds.sort((a, b) => a - b);
+    const meanSpeed = speeds.length ? speedSum / speeds.length : 0;
+    const p95 = speeds.length ? speeds[Math.min(speeds.length - 1, Math.floor(speeds.length * 0.95))] : 0;
+    const contrast = meanSpeed > 1e-6 ? p95 / meanSpeed : 0;
+    const dynamism =
+      clamp01((bouncePerBeat - 0.015) / 0.06) * 0.65 + clamp01((contrast - 1.3) / 2.0) * 0.35;
+
     // amplitudo: seberapa besar lengan & kepala benar-benar bergerak
     const armRange = (rom.handL ?? 0) + (rom.handR ?? 0);
     const headRange = rom.head ?? 0;
@@ -187,6 +222,7 @@ export class MotionQA {
       balance: Math.round(clamp01(1 - balance / 0.3) * 100),
       loop: Math.round(clamp01(1 - seam / 0.12) * 100),
       rhythm: Math.round(beatSync * 100),
+      dynamics: Math.round(dynamism * 100),
     };
     const vals = Object.values(scores).filter((v) => Number.isFinite(v));
     const overall = Math.round(vals.reduce((a, b) => a + b, 0) / Math.max(1, vals.length));
@@ -205,6 +241,8 @@ export class MotionQA {
       loopSeam: +seam.toFixed(4),
       beatSync: +beatSync.toFixed(2),
       offsetMs: Math.round(offsetMs),
+      bouncePerBeat: +bouncePerBeat.toFixed(3),
+      contrast: +contrast.toFixed(2),
       rom,
       scores,
       overall,
@@ -214,24 +252,35 @@ export class MotionQA {
   _loopSeam() {
     const f = this.frames;
     if (f.length < 4) return 0;
-    const beatLen = 60 / this.bpm;
     const target = f[0].beat;
-    // cari frame terakhir dengan fase beat ≈ frame pertama
+    const span = this.beats;
+    // Cari frame yang fasenya sama dengan frame pertama, TAPI satu (atau lebih)
+    // putaran kemudian: beat ≈ target + k·span. Membandingkan dengan frame
+    // terakhir apa adanya justru mengukur fase yang berbeda.
     let best = null;
-    for (let i = f.length - 1; i >= Math.floor(f.length * 0.5); i--) {
-      const d = Math.abs(f[i].beat - target);
-      if (d < 0.04) {
-        best = f[i];
-        break;
+    let bestD = Infinity;
+    for (let k = 1; k <= 4; k++) {
+      const want = target + k * span;
+      for (const fr of f) {
+        const d = Math.abs(fr.beat - want);
+        if (d < bestD) {
+          bestD = d;
+          best = fr;
+        }
       }
+      if (bestD < 0.5) break;
     }
-    if (!best) best = f[f.length - 1];
+    if (!best || bestD > 0.5) return 0; // belum ada putaran penuh terekam
     let sum = 0;
+    let n = 0;
     for (const g of KEY_JOINTS) {
-      sum += f[0].joints[g].distanceTo(best.joints[g]);
+      const a = f[0].joints[g];
+      const b = best.joints[g];
+      if (!a || !b) continue;
+      sum += Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+      n++;
     }
-    void beatLen;
-    return sum / KEY_JOINTS.length;
+    return n ? sum / n : 0;
   }
 
   /**
